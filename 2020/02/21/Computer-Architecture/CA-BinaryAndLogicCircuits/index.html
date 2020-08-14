@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="主要介绍逻辑电路中数的表示方法，CMOS 电路工艺及原理，Verilog，和一些未来计算机表示 0 和 1 的方法；">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Computer Architecture：二进制与逻辑电路">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-BinaryAndLogicCircuits/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="主要介绍逻辑电路中数的表示方法，CMOS 电路工艺及原理，Verilog，和一些未来计算机表示 0 和 1 的方法；">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/FloatFormat.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/FloatFormat1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/FloatParameters.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/Inverter.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/NMOSSchematic.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/MOSWorkingState.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/MOSPhotolithography.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/P-CMOSProcessFlow.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/InverterLayout.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/AndOrLayout.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/CMOSBasicGate.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/ExPNLogicSeries.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/Carnot.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/FulladdLogicDiagram.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/FulladdCMOSCircuit.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/SequentialComposition.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/RSStructure.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/RSExample.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/DDoorLatch.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/DLatch.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/TriggerDelay.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/EDFFStructure.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/EDFFExample.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/CMOSCircuitDelayPrinciple.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/TwoInNandGateDelay.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/FullAddDelay.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/ReduceDoors.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/LoadBalance.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/Verilog12.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/3-8Decoder.png">
+<meta property="article:published_time" content="2020-02-21T07:08:08.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:26:01.729Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="Computer Architecture">
+<meta property="article:tag" content="国科大研究生课程笔记">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/FloatFormat.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-BinaryAndLogicCircuits/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Computer Architecture：二进制与逻辑电路 | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-BinaryAndLogicCircuits/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Computer Architecture：二进制与逻辑电路
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-02-21 15:08:08" itemprop="dateCreated datePublished" datetime="2020-02-21T15:08:08+08:00">2020-02-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:26:01" itemprop="dateModified" datetime="2020-08-14T17:26:01+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">计算机体系结构</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/02/21/Computer-Architecture/CA-BinaryAndLogicCircuits/" class="post-meta-item leancloud_visitors" data-flag-title="Computer Architecture：二进制与逻辑电路" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/02/21/Computer-Architecture/CA-BinaryAndLogicCircuits/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/02/21/Computer-Architecture/CA-BinaryAndLogicCircuits/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>主要介绍逻辑电路中数的表示方法，CMOS 电路工艺及原理，Verilog，和一些未来计算机表示 0 和 1 的方法；</p>
+<a id="more"></a> 
+<h1 id="计算机中数的表示"><a href="#计算机中数的表示" class="headerlink" title="计算机中数的表示"></a>计算机中数的表示</h1><h2 id="二进制“1”和“0”的表示"><a href="#二进制“1”和“0”的表示" class="headerlink" title="二进制“1”和“0”的表示"></a>二进制“1”和“0”的表示</h2><ul>
+<li>用电压的高低表示，半导体工艺，CMOS</li>
+<li>用磁通量的有无表示，超导体工艺</li>
+<li>用能级的高低表示，量子计算机</li>
+<li>用基因序列表示，A, G, C, T, DNA计算机（本质也是二进制）</li>
+</ul>
+<h2 id="定点数的表示"><a href="#定点数的表示" class="headerlink" title="定点数的表示"></a>定点数的表示</h2><h3 id="原码"><a href="#原码" class="headerlink" title="原码"></a>原码</h3><p>表示形式：$A = a_{n-1}a_{n-2}…a_1a_0$</p>
+<ul>
+<li>最高位 $a_{n-1}$ 为符号位，0 表示正，1 表示负；</li>
+<li>其它位 $a_{n-2}…a_1a_0$ 表示数值；</li>
+</ul>
+<p>问题：</p>
+<ul>
+<li>加减法效率低；</li>
+<li>两个 “0”；</li>
+</ul>
+<h3 id="补码"><a href="#补码" class="headerlink" title="补码"></a>补码</h3><p>本质：</p>
+<ul>
+<li>取模运算，不包含符号位的 n 位数，$[Y]_补 =2 ^{n+1}+y$，如：$-2 \mod 8 = 6$</li>
+</ul>
+<p>表示形式：$A = a_{n-1}a_{n-2}…a_1a_0$</p>
+<ul>
+<li>表示：$-2^{n-1}a_{n-1}+a_{n-2}…a_1a_0$</li>
+<li>最高位 $a_{n-1}$ 为符号位，0 表示正，1 表示负；</li>
+</ul>
+<h3 id="运算"><a href="#运算" class="headerlink" title="运算"></a>运算</h3><p>原码补码转换：</p>
+<ul>
+<li>最高位为 0 时，一样；</li>
+<li>最高位为 1 时，最高位不变，其余位「按位取反加一」；</li>
+</ul>
+<p>补码运算：</p>
+<ul>
+<li>$A-B=A+B的负数=A+(B求补)$</li>
+</ul>
+<p>加法溢出判断:</p>
+<ul>
+<li>A 和 B 的最高位一样，且结果的最高位与 A 和 B 的最高位不一样；</li>
+</ul>
+<h2 id="浮点数的表示"><a href="#浮点数的表示" class="headerlink" title="浮点数的表示"></a>浮点数的表示</h2><h3 id="由来"><a href="#由来" class="headerlink" title="由来"></a>由来</h3><p>定点数表示范围有限，太大或太小的数都不能表示，且除法不精确；</p>
+<h3 id="IEEE-754标准"><a href="#IEEE-754标准" class="headerlink" title="IEEE 754标准"></a>IEEE 754标准</h3><p><strong>组成</strong>：符号位，阶码(exponent)，尾数(fraction)</p>
+<ol>
+<li><strong>符号位</strong>：最高位</li>
+<li><strong>阶码(exponent)</strong>：<ul>
+<li>阶码的移码表示：阶码=指数+偏移。（实际求解：$2^{阶码-偏移值}$）</li>
+<li>范围：0&lt; e &lt; 255（指数范围：-127 &lt; m &lt; 128）<ol>
+<li>e=255：无穷大数或非数</li>
+<li>e=0：非规格化数或正负0</li>
+</ol>
+<ul>
+<li>IEEE 754允许特别小的非规格化数：阶码能表示的最小指数为 -126，那更小的呢？<ul>
+<li>此时阶码为0，尾数前的1不再加，即浮点数：0.f * 2^（e-126）。</li>
+<li>例如：$2^{-128}=(0.01)_2 * 2^{-126}$。</li>
+<li>这样，就填补了最小规格化数和0之间的一段空隙。</li>
+<li>最小规格化数：$1.f \times 2^{-126}$</li>
+<li>非规格化数：$0.f \times 2^{-126}$，最小 $2^{-23} \times 2^{-126}$</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>尾数(fraction)</strong><ul>
+<li>规格化表示，尾数的最高位总为 1，因此可以不存;</li>
+<li>例如：$0.0012=1.02*2^{-3}$，最高位 1.0 不存；</li>
+</ul>
+</li>
+</ol>
+<p><strong>单精度32和双精度64（扩展的单双精度）</strong><br><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/FloatFormat.png" alt="FloatFormat"><br><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/FloatFormat1.png" alt="FloatFormat1"></p>
+<p><strong>IEEE 754 浮点格式参数</strong><br><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/FloatParameters.png" alt="FloatParameters"></p>
+<p><strong>NaN</strong>（not a number）实现方式：</p>
+<ol>
+<li>「Singaling NaN」：抛出异常的方式，无需定义 NaN 宏；</li>
+<li>「Quiet NaN」：计算机出现异常时不抛出异常来中断程序，而是把结果表示为一个特殊值 NaN，此时 NaN 宏会被定义；</li>
+</ol>
+<h1 id="CMOS-电路及工艺"><a href="#CMOS-电路及工艺" class="headerlink" title="CMOS 电路及工艺"></a>CMOS 电路及工艺</h1><h2 id="P-管与-N-管"><a href="#P-管与-N-管" class="headerlink" title="P 管与 N 管"></a>P 管与 N 管</h2><p><strong>「CMOS」</strong>：Complementary Metal Oxide Semiconductor 互补的金属氧化物半导体，有 NMOS 和 PMOS 两种；</p>
+<ul>
+<li><p><strong>NMOS</strong>：</p>
+<ul>
+<li>绘图时“无圈”</li>
+<li>门电压为高时导通，门电压为低时关闭；</li>
+<li>门电压现在在不断降低，现在在1v左右，甚至更低；</li>
+</ul>
+</li>
+<li><p><strong>PMOS</strong>：</p>
+<ul>
+<li>绘图时“有圈”</li>
+<li>门电压为高时关闭，门电压为低时导通；</li>
+</ul>
+</li>
+</ul>
+<h2 id="反相器"><a href="#反相器" class="headerlink" title="反相器"></a>反相器</h2><p>由上下两个互补的 PN 管组成电路：</p>
+<p><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/Inverter.png" alt="Inverter"></p>
+<p>这样设计上开下关，上关下开的好处是：</p>
+<ul>
+<li>没有直流电流，总有一头关死，能大幅降低功耗；</li>
+</ul>
+<p>取代了 TTL 和 ECL；</p>
+<h2 id="N-沟道-MOS-晶体管的示意图"><a href="#N-沟道-MOS-晶体管的示意图" class="headerlink" title="N 沟道 MOS 晶体管的示意图"></a>N 沟道 MOS 晶体管的示意图</h2><p><strong>工作原理</strong>：</p>
+<ul>
+<li>栅极不加电时，源漏之间是一对 PN 结，不导通；</li>
+<li>栅极加电后，吸引电子到栅氧化层下面，形成导电的沟道（附近会形成耗尽区）；</li>
+</ul>
+<p><strong>示意图</strong>：</p>
+<p><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/NMOSSchematic.png" alt="NMOSSchematic"></p>
+<p><strong>有关 Bulk</strong>:</p>
+<ul>
+<li>原理：空穴移动，加上电场，周围电子就会跑来填补空穴；<ul>
+<li>N 型材料：通过掺杂而形成多余电子的材料；</li>
+<li>P 型材料：通过掺杂而形成多余空穴的材料；</li>
+<li>“+”：掺杂含量大，“-”：掺杂含量小</li>
+</ul>
+</li>
+</ul>
+<p>P 管和 N 管沟道长度一定，但宽度不同（常为：2:1或1.5:1）：</p>
+<ul>
+<li>P 管多数载流子为空穴，空穴运动能力差；N 管多数载流子为空穴，空穴运动能力强；</li>
+<li>为了让 P 管和 N 管有相同的驱动能力（即：P，N 管导通时电阻相同），因此会让 P管偏宽；</li>
+</ul>
+<p>这样，反相器完成 0/1 跳变时，两种跳变斜率差不多：</p>
+<ul>
+<li>P 管导通，鬼输出结点充电，道沟决定了 0-&gt;1 上升沿多快；</li>
+<li>N 管导通，鬼输出结点放电，道沟决定了 1-&gt;0 下降沿多快；</li>
+</ul>
+<h2 id="MOS晶体管的工作状态"><a href="#MOS晶体管的工作状态" class="headerlink" title="MOS晶体管的工作状态"></a>MOS晶体管的工作状态</h2><p><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/MOSWorkingState.png" alt="MOSWorkingState"></p>
+<ul>
+<li>Vgs：产生耗尽区，形成桥梁；</li>
+<li>Vds：形成电压差，吸引电流从源端到漏端；</li>
+</ul>
+<h2 id="MOS基本工艺—-光刻"><a href="#MOS基本工艺—-光刻" class="headerlink" title="MOS基本工艺—-光刻"></a>MOS基本工艺—-光刻</h2><p><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/MOSPhotolithography.png" alt="MOSPhotolithography"></p>
+<h2 id="P衬底-nWell-CMOS工艺"><a href="#P衬底-nWell-CMOS工艺" class="headerlink" title="P衬底 nWell CMOS工艺"></a>P衬底 nWell CMOS工艺</h2><p><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/P-CMOSProcessFlow.png" alt="P-CMOSProcessFlow"></p>
+<h2 id="版图"><a href="#版图" class="headerlink" title="版图"></a>版图</h2><ol>
+<li><p>反相器版图<br><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/InverterLayout.png" alt="InverterLayout"></p>
+</li>
+<li><p>NAND2 和 NOR2 的电路及版图<br><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/AndOrLayout.png" alt="AndOrLayout"></p>
+</li>
+</ol>
+<h1 id="CMOS逻辑电路"><a href="#CMOS逻辑电路" class="headerlink" title="CMOS逻辑电路"></a>CMOS逻辑电路</h1><h2 id="基本逻辑电路"><a href="#基本逻辑电路" class="headerlink" title="基本逻辑电路"></a>基本逻辑电路</h2><ol>
+<li>组合逻辑电路：<ul>
+<li>电路中没有存储单元，逻辑电路的输出完全由当前的输入决定；</li>
+<li>单输入单输出有四种电路：输出恒 0，输出恒 1，输出反向，直通；</li>
+</ul>
+</li>
+<li>时序逻辑电路：<ul>
+<li>电路中有存储单元，逻辑电路的输出由原来状态和当前的输入决定；</li>
+<li>单输入单输出有无数种电路；</li>
+</ul>
+</li>
+</ol>
+<h2 id="逻辑表达式"><a href="#逻辑表达式" class="headerlink" title="逻辑表达式"></a>逻辑表达式</h2><p><strong>Boolean 代数的基本操作</strong>：</p>
+<ul>
+<li>与(*)、或(+)、非(^)</li>
+</ul>
+<p><strong>基本定律</strong>：<br>|1|2|3|4|<br>|—-|—-|—-|—-|<br>|$A+0=A$|$A \cdot 1=A$|$A+1=1$|$A\cdot0=0$|<br>|$A+A=A$|$A\cdot A=A$|$A+\overline{A}=1$|$A\cdot \overline{A}=0$|<br>|$A+B=B+A$|$A \cdot B=B \cdot A$|<br>|$A+(B+C)=(A+B)+C$|$A \cdot (B \cdot C)=(A \cdot B) \cdot C$|<br>|$A \cdot (B+C)=A \cdot B+A \cdot C$|$A+(B \cdot C)=(A+B) \cdot (A+C)$|<br>|$\overline{A \cdot B}=\overline{A}+\overline{B}$|$\overline{A+B}=\overline{A} \cdot \overline{B}$|<br>|$A+A \cdot B=A$|$A+\overline{A} \cdot B=A+B$|  </p>
+<p><strong>CMOS 中基本门</strong>：</p>
+<ul>
+<li>非、与非、或非<br><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/CMOSBasicGate.png" alt="CMOSBasicGate"></li>
+<li>晶体管数目：<ul>
+<li>非门：2</li>
+<li>与非门：4</li>
+<li>或非门：4</li>
+</ul>
+</li>
+<li>因此，逻辑表达式最好写成上述操作的组合。如：$A \cdot B+C \cdot D=\overline{\overline{A \cdot B} \cdot \overline{C \cdot D}}$</li>
+</ul>
+<h2 id="CMOS-组合电路"><a href="#CMOS-组合电路" class="headerlink" title="CMOS 组合电路"></a>CMOS 组合电路</h2><p>用 NMOS 组成正逻辑：</p>
+<ul>
+<li>串联表示与；并联表示并；</li>
+</ul>
+<p>用 PMOS 组成反逻辑：</p>
+<ul>
+<li>$\overline{A \cdot B}=\overline{A}+\overline{B}$，P 管并联；</li>
+<li>$\overline{A+B}=\overline{A} \cdot \overline{B}$，P 管串联；</li>
+</ul>
+<p>正反逻辑串联:</p>
+<ul>
+<li>由于 N 网络导通时接地，因此输出是反向的；</li>
+<li>例：$\overline{A \cdot B + C \cdot D}=\overline{A \cdot B} \cdot \overline{C \cdot D}=(\overline{A}+\overline{B})\cdot(\overline{C}+\overline{D})$<br><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/ExPNLogicSeries.png" alt="ExPNLogicSeries">        </li>
+<li>注意：串联级数不能太大，一般不超过四级，因为串联电阻大，延迟就大；</li>
+</ul>
+<h3 id="真值表"><a href="#真值表" class="headerlink" title="真值表"></a>真值表</h3><p>对于每一种可能的输入组合，给出输出值。</p>
+<ul>
+<li>对于一个 n 输入的电路，有 $2^n$ 项；</li>
+</ul>
+<p><strong>卡诺图</strong>：</p>
+<ul>
+<li>便于逻辑表达式，优化输入输出的关系表示；</li>
+<li>在图中相临的 “1” 或 “X” 合并成一项；</li>
+<li>例：一位全加器<br><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/Carnot.png" alt="Carnot"></li>
+</ul>
+<h3 id="逻辑图"><a href="#逻辑图" class="headerlink" title="逻辑图"></a>逻辑图</h3><p>直接用门及互连表示输入输出的逻辑关系；</p>
+<p>例：一位全加器</p>
+<ul>
+<li>逻辑图：<br>  <img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/FulladdLogicDiagram.png" alt="FulladdLogicDiagram"></li>
+<li>对应的 CMOS 电路：<br>  <img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/FulladdCMOSCircuit.png" alt="FulladdCMOSCircuit"></li>
+</ul>
+<p>补充问题：有关晶体管数目</p>
+<ul>
+<li>上述逻辑图中，标明的数字即每个门所需的晶体管数，最终一位全加器共需要 56 个晶体管；<ul>
+<li>非门：两个晶体管构成，一个 P 管，一个 N 管；</li>
+<li>与非门：2 输入的需要四个晶体管，3 输入需要 6 个,……</li>
+</ul>
+</li>
+<li>相当于每一个输入都需要 2 个晶体管；</li>
+</ul>
+<h2 id="CMOS-时序逻辑电路"><a href="#CMOS-时序逻辑电路" class="headerlink" title="CMOS 时序逻辑电路"></a>CMOS 时序逻辑电路</h2><h3 id="基础"><a href="#基础" class="headerlink" title="基础"></a>基础</h3><p>特点：</p>
+<ul>
+<li>时序逻辑电路内部有存储单元，其行为由输入和内部单元的值共同决定；</li>
+</ul>
+<p>组成结构：</p>
+<ul>
+<li><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/SequentialComposition.png" alt="SequentialComposition"></li>
+</ul>
+<p>分类：</p>
+<ul>
+<li>同步时序逻辑电路：<ul>
+<li>所有存储单元的变化由时钟统一触发；</li>
+<li>功耗大，简单；（计算机常用）</li>
+</ul>
+</li>
+<li>异步时序逻辑电路：<ul>
+<li>低功耗，复杂；</li>
+</ul>
+</li>
+</ul>
+<h3 id="触发器"><a href="#触发器" class="headerlink" title="触发器"></a>触发器</h3><h4 id="RS-触发器"><a href="#RS-触发器" class="headerlink" title="RS 触发器"></a>RS 触发器</h4><p>其他寄存器的基础；    </p>
+<p>基本结构：<br><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/RSStructure.png" alt="RSStructure">    </p>
+<p>加深理解：例题<br><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/RSExample.png" alt="RSExample">    </p>
+<h4 id="D-触发器"><a href="#D-触发器" class="headerlink" title="D 触发器"></a>D 触发器</h4><h5 id="D-门闩（D-锁存器）"><a href="#D-门闩（D-锁存器）" class="headerlink" title="D 门闩（D 锁存器）"></a>D 门闩（D 锁存器）</h5><ol>
+<li>结构：<br> <img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/DDoorLatch.png" alt="DDoorLatch">    </li>
+<li>工作原理：由时钟 C 电平进行控制，电平高时输入，低时保持<ul>
+<li>C 为 0 时：R 和 S 都为 1，输出保持原有状态；</li>
+<li>C 为 1 时：输出和输⼊ D 相同，相当于直通；</li>
+</ul>
+</li>
+</ol>
+<h5 id="D-触发器-1"><a href="#D-触发器-1" class="headerlink" title="D 触发器"></a>D 触发器</h5><ol>
+<li><p>结构：</p>
+<ul>
+<li>由两个 D 锁存器串联形成；<br><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/DLatch.png" alt="DLatch"></li>
+</ul>
+</li>
+<li><p>工作原理：</p>
+<ul>
+<li>通过时钟 C 跳沿（非电平）来锁存数据：<ul>
+<li>C=1 时，锁 1 直通，锁 2 保持；</li>
+<li>C=0 时，锁 1 保持，锁 2 直通；</li>
+<li>C 从 1-&gt;0 时，把 D 的值锁存；</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>$触发器延迟=Setup+{CLK-to-Q}$<br><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/TriggerDelay.png" alt="TriggerDelay"></p>
+</li>
+<li><p>三个重要时间参数：</p>
+<ul>
+<li><strong>「Hold」</strong>：时钟下降后数据变化不影响第一级 D-Latch（可负）<ul>
+<li>在本电路中为 0 </li>
+</ul>
+</li>
+<li><strong>「Setup」</strong>：时钟沿下降之前保证数据已采到第一级 D-latch（可负）<ul>
+<li>1 级反相器 + 3 级与非门（Q 端从 1 变 0） </li>
+</ul>
+</li>
+<li><strong>「Clock-to-Q」</strong>：时钟沿下降后引起 Q 的变化<ul>
+<li>1 级反相器（C 反相器与 D 方向器并行）+ 3 级与非门</li>
+</ul>
+</li>
+<li>上述只是初略计算，具体的值需要仿真</li>
+</ul>
+</li>
+</ol>
+<h5 id="EDFF-电路"><a href="#EDFF-电路" class="headerlink" title="EDFF 电路"></a>EDFF 电路</h5><ol>
+<li>结构：<ul>
+<li>带输入使能的 D 触发器（只有 E 有效，才能输入）；<br><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/EDFFStructure.png" alt="EDFFStructure"></li>
+</ul>
+</li>
+<li>例题：加深理解<br> <img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/EDFFExample.png" alt="EDFFExample"></li>
+</ol>
+<h2 id="CMOS-电路延迟原理"><a href="#CMOS-电路延迟原理" class="headerlink" title="CMOS 电路延迟原理"></a>CMOS 电路延迟原理</h2><h3 id="电压变化"><a href="#电压变化" class="headerlink" title="电压变化"></a>电压变化</h3><p>输入电压变化时，输出电压的变化不是瞬时完成的；<br><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/CMOSCircuitDelayPrinciple.png" alt="CMOSCircuitDelayPrinciple"></p>
+<h3 id="延迟模型"><a href="#延迟模型" class="headerlink" title="延迟模型"></a>延迟模型</h3><p>与延迟有关的因素：输入 transition、内部延迟、输出负载  </p>
+<p>$CMOS延迟=自身延迟（ns）+负载延迟（ns/fF*负载）$</p>
+<ul>
+<li>负载包括：下一级负载、连线延迟等</li>
+<li>ns 是电容单位，fF 是负载单位</li>
+</ul>
+<p>例子：</p>
+<ol>
+<li>二输入与非门<br> <img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/TwoInNandGateDelay.png" alt="TwoInNandGateDelay">        </li>
+<li>全加器<br> <img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/FullAddDelay.png" alt="FullAddDelay"></li>
+</ol>
+<h3 id="标准单元延迟的计算"><a href="#标准单元延迟的计算" class="headerlink" title="标准单元延迟的计算"></a>标准单元延迟的计算</h3><ol>
+<li>深亚微米电路中连线延迟占总延迟的大部分；</li>
+<li>连线延迟的计算是一个不断迭代求精的过程，</li>
+</ol>
+<ul>
+<li>综合时根据负载个数估计线长，非常粗略；</li>
+<li>布局后根据距离估计线长，比较准确了；</li>
+<li>布线后进一步考虑具体连线、互相干扰、过孔等精确连线信息；</li>
+</ul>
+<h3 id="降低延迟的方法"><a href="#降低延迟的方法" class="headerlink" title="降低延迟的方法"></a>降低延迟的方法</h3><ol>
+<li><p>通过结构设计降低延迟：</p>
+<ul>
+<li>如流水级的划分、cache 读出和命中比较是否在同一级、浮点流水级设计、Pipeline stalling signal 的设置；</li>
+</ul>
+</li>
+<li><p>逻辑设计：</p>
+<ul>
+<li>减少门的级数；<br><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/ReduceDoors.png" alt="ReduceDoors">        </li>
+<li>负载平衡：CMOS 的负载能力较低，分推<br><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/LoadBalance.png" alt="LoadBalance"><ul>
+<li>如多选一通路的选择次序、加法器算法、流水级间的局部调整等</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>物理设计：<ul>
+<li>动态电路、clock skew、clock jitter、transition time、布局布线</li>
+</ul>
+</li>
+</ol>
+<h1 id="从-Verilog-到版图"><a href="#从-Verilog-到版图" class="headerlink" title="从 Verilog 到版图"></a>从 Verilog 到版图</h1><h2 id="Verilog-语言"><a href="#Verilog-语言" class="headerlink" title="Verilog 语言"></a>Verilog 语言</h2><p>组合逻辑和时序逻辑：<br><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/Verilog12.png" alt="Verilog12"></p>
+<p>模块调用：<br><figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//四位串行加法器</span></span><br><span class="line"><span class="keyword">module</span> adder4(a,b,cin,s,cout);</span><br><span class="line"><span class="keyword">input</span> [<span class="number">3</span>:<span class="number">0</span>] a;</span><br><span class="line"><span class="keyword">input</span> [<span class="number">3</span>:<span class="number">0</span>] b;</span><br><span class="line"><span class="keyword">input</span> cin;</span><br><span class="line"><span class="keyword">output</span> [<span class="number">3</span>:<span class="number">0</span>] s;</span><br><span class="line"><span class="keyword">output</span> cout;</span><br><span class="line"><span class="keyword">wire</span> carry[<span class="number">2</span>:<span class="number">0</span>]</span><br><span class="line">full_adder bit0(<span class="variable">.a</span>(a[<span class="number">0</span>]),<span class="variable">.b</span>(b[<span class="number">0</span>]),<span class="variable">.c</span>(cin[<span class="number">0</span>]),<span class="variable">.s</span>(s[<span class="number">0</span>]),<span class="variable">.cout</span>(carry[<span class="number">0</span>]));</span><br><span class="line">full_adder bit1(<span class="variable">.a</span>(a[<span class="number">1</span>]),<span class="variable">.b</span>(b[<span class="number">1</span>]),<span class="variable">.c</span>(carry[<span class="number">0</span>]),<span class="variable">.s</span>(s[<span class="number">1</span>]),<span class="variable">.cout</span>(carry[<span class="number">1</span>]));</span><br><span class="line">full_adder bit2(<span class="variable">.a</span>(a[<span class="number">2</span>]),<span class="variable">.b</span>(b[<span class="number">2</span>]),<span class="variable">.c</span>(carry[<span class="number">1</span>]),<span class="variable">.s</span>(s[<span class="number">2</span>]),<span class="variable">.cout</span>(carry[<span class="number">2</span>]));</span><br><span class="line">full_adder bit3(<span class="variable">.a</span>(a[<span class="number">3</span>]),<span class="variable">.b</span>(b[<span class="number">3</span>]),<span class="variable">.c</span>(carry[<span class="number">2</span>]),<span class="variable">.s</span>(s[<span class="number">3</span>]),<span class="variable">.cout</span>(cout));</span><br><span class="line"><span class="keyword">endmodule</span></span><br></pre></td></tr></table></figure></p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//四位计数器</span></span><br><span class="line"><span class="keyword">module</span> counter4(reset,en,clock,out);</span><br><span class="line"><span class="keyword">input</span> reset,en,clock;</span><br><span class="line"><span class="keyword">output</span> [<span class="number">3</span>:<span class="number">0</span>] out;</span><br><span class="line"><span class="keyword">reg</span> [<span class="number">3</span>:<span class="number">0</span>] counter;</span><br><span class="line"><span class="keyword">wire</span> [<span class="number">3</span>:<span class="number">0</span>] c_in;</span><br><span class="line"><span class="keyword">assign</span> out = counter;</span><br><span class="line">adder4 counter(<span class="variable">.a</span>(counter),<span class="variable">.b</span>(<span class="number">4</span>’b0),<span class="variable">.cin</span>(<span class="number">1</span>’b1),<span class="variable">.s</span>(c_in),<span class="variable">.cout</span>());</span><br><span class="line"><span class="keyword">always</span> (@<span class="keyword">posedge</span> clock) <span class="keyword">begin</span></span><br><span class="line">counter &lt;= reset ? <span class="number">0</span> : en ? c_in : counter;</span><br><span class="line"><span class="comment">//counter&lt;=reset ? 0 : en ? counter +1 : counter;</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"><span class="keyword">endmodule</span></span><br></pre></td></tr></table></figure>
+<h2 id="从-Verilog-到-GDSII"><a href="#从-Verilog-到-GDSII" class="headerlink" title="从 Verilog 到 GDSII"></a>从 Verilog 到 GDSII</h2><p>3-8译码器为例;    </p>
+<p>结构功能：</p>
+<ul>
+<li>从左边的三位输入，二进制换算为 0-7，分别选中 8 根输出线；</li>
+</ul>
+<p>Verilog：<br><figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">module</span> decode(in, out);</span><br><span class="line"><span class="keyword">input</span> [<span class="number">2</span>:<span class="number">0</span>] in;</span><br><span class="line"><span class="keyword">output</span> [<span class="number">7</span>:<span class="number">0</span>] out;</span><br><span class="line"><span class="keyword">assign</span> out[<span class="number">0</span>] = (!in[<span class="number">2</span>]) &amp;&amp; (!in [<span class="number">1</span>]) &amp;&amp; (!in[<span class="number">0</span>]); <span class="comment">// (in==3'b000)?1:0;</span></span><br><span class="line"><span class="keyword">assign</span> out[<span class="number">1</span>] = (!in[<span class="number">2</span>]) &amp;&amp; (!in [<span class="number">1</span>]) &amp;&amp; ( in[<span class="number">0</span>]); <span class="comment">// (in==3'b001)?1:0;</span></span><br><span class="line"><span class="keyword">assign</span> out[<span class="number">2</span>] = (!in[<span class="number">2</span>]) &amp;&amp; ( in [<span class="number">1</span>]) &amp;&amp; (!in[<span class="number">0</span>]); <span class="comment">// (in==3'b010)?1:0;</span></span><br><span class="line"><span class="keyword">assign</span> out[<span class="number">3</span>] = (!in[<span class="number">2</span>]) &amp;&amp; ( in [<span class="number">1</span>]) &amp;&amp; ( in[<span class="number">0</span>]); <span class="comment">// (in==3'b011)?1:0;</span></span><br><span class="line"><span class="keyword">assign</span> out[<span class="number">4</span>] = ( in[<span class="number">2</span>]) &amp;&amp; (!in [<span class="number">1</span>]) &amp;&amp; (!in[<span class="number">0</span>]); <span class="comment">// (in==3'b100)?1:0;</span></span><br><span class="line"><span class="keyword">assign</span> out[<span class="number">5</span>] = ( in[<span class="number">2</span>]) &amp;&amp; (!in [<span class="number">1</span>]) &amp;&amp; ( in[<span class="number">0</span>]); <span class="comment">// (in==3'b101)?1:0;</span></span><br><span class="line"><span class="keyword">assign</span> out[<span class="number">6</span>] = ( in[<span class="number">2</span>]) &amp;&amp; ( in [<span class="number">1</span>]) &amp;&amp; (!in[<span class="number">0</span>]); <span class="comment">// (in==3'b110)?1:0;</span></span><br><span class="line"><span class="keyword">assign</span> out[<span class="number">7</span>] = ( in[<span class="number">2</span>]) &amp;&amp; ( in [<span class="number">1</span>]) &amp;&amp; ( in[<span class="number">0</span>]); <span class="comment">// (in==3'b111)?1:0;</span></span><br><span class="line"><span class="keyword">endmodule</span></span><br></pre></td></tr></table></figure></p>
+<p>网表：<br><figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">module</span> decode ( in, out );</span><br><span class="line"><span class="keyword">input</span> [<span class="number">2</span>:<span class="number">0</span>] in;</span><br><span class="line"><span class="keyword">output</span> [<span class="number">7</span>:<span class="number">0</span>] out;</span><br><span class="line">	<span class="keyword">wire</span> n1, n2, n3;</span><br><span class="line">	AND3X1 U1 ( <span class="variable">.A</span>(in[<span class="number">1</span>]), <span class="variable">.B</span>(in[<span class="number">0</span>]), <span class="variable">.C</span>(in[<span class="number">2</span>]), <span class="variable">.Y</span>(out[<span class="number">7</span>]) );</span><br><span class="line">	AND3X1 U2 ( <span class="variable">.A</span>(in[<span class="number">1</span>]), <span class="variable">.B</span>(n1), <span class="variable">.C</span>(in[<span class="number">2</span>]), <span class="variable">.Y</span>(out[<span class="number">6</span>]) );</span><br><span class="line">	AND3X1 U3 ( <span class="variable">.A</span>(in[<span class="number">0</span>]), <span class="variable">.B</span>(n2), <span class="variable">.C</span>(in[<span class="number">2</span>]), <span class="variable">.Y</span>(out[<span class="number">5</span>]) );</span><br><span class="line">	AND3X1 U4 ( <span class="variable">.A</span>(n1), <span class="variable">.B</span>(n2), <span class="variable">.C</span>(in[<span class="number">2</span>]), <span class="variable">.Y</span>(out[<span class="number">4</span>]) );</span><br><span class="line">	AND3X1 U5 ( <span class="variable">.A</span>(in[<span class="number">0</span>]), <span class="variable">.B</span>(n3), <span class="variable">.C</span>(in[<span class="number">1</span>]), <span class="variable">.Y</span>(out[<span class="number">3</span>]) );</span><br><span class="line">	AND3X1 U6 ( <span class="variable">.A</span>(n1), <span class="variable">.B</span>(n3), <span class="variable">.C</span>(in[<span class="number">1</span>]), <span class="variable">.Y</span>(out[<span class="number">2</span>]) );</span><br><span class="line">	AND3X1 U7 ( <span class="variable">.A</span>(n2), <span class="variable">.B</span>(n3), <span class="variable">.C</span>(in[<span class="number">0</span>]), <span class="variable">.Y</span>(out[<span class="number">1</span>]) );</span><br><span class="line">	AND3X1 U8 ( <span class="variable">.A</span>(n2), <span class="variable">.B</span>(n3), <span class="variable">.C</span>(n1), <span class="variable">.Y</span>(out[<span class="number">0</span>]) );</span><br><span class="line">	INVX1 U9 ( <span class="variable">.A</span>(in[<span class="number">0</span>]), <span class="variable">.Y</span>(n1) );</span><br><span class="line">	INVX1 U10 ( <span class="variable">.A</span>(in[<span class="number">1</span>]), <span class="variable">.Y</span>(n2) );</span><br><span class="line">	INVX1 U11 ( <span class="variable">.A</span>(in[<span class="number">2</span>]), <span class="variable">.Y</span>(n3) );</span><br><span class="line"><span class="keyword">endmodule</span></span><br></pre></td></tr></table></figure><br><img src="http://img.thebetterkong.cn/blog/CA-BinaryAndLogicCircuits/3-8Decoder.png" alt="3-8Decoder"></p>
+<h1 id="其它-“0”-和-“1”-的表示方法"><a href="#其它-“0”-和-“1”-的表示方法" class="headerlink" title="其它 “0” 和 “1” 的表示方法"></a>其它 “0” 和 “1” 的表示方法</h1><h2 id="方法"><a href="#方法" class="headerlink" title="方法"></a>方法</h2><ul>
+<li>用磁通量的有无表示，超导体工艺</li>
+<li>用能级的高低表示，量子计算机</li>
+<li>用基因序列表示，A, G, C, T, DNA计算机</li>
+</ul>
+<h2 id="超导计算—-RSFQ-技术"><a href="#超导计算—-RSFQ-技术" class="headerlink" title="超导计算—-RSFQ 技术"></a>超导计算—-RSFQ 技术</h2><p>基本原理：</p>
+<ul>
+<li>超导(4-5K)环中的磁通量具有量子化特性；</li>
+<li>设计电路使超导环中的磁通量只变化一个磁通量；</li>
+<li>用磁通量的有无来表示二进制数位的 “1” 和 “0”；</li>
+<li>磁通量的变化由外加电流控制。</li>
+</ul>
+<p>特点：</p>
+<ol>
+<li>工作频率高：100 GHz (实验室已达370 GHz, 1.5P 工艺)。</li>
+<li>每个门的功率：0.1PW</li>
+<li>工艺比较简单；</li>
+</ol>
+<h2 id="量子计算"><a href="#量子计算" class="headerlink" title="量子计算"></a>量子计算</h2><h3 id="量子力学特性"><a href="#量子力学特性" class="headerlink" title="量子力学特性"></a>量子力学特性</h3><p>量子叠加态（superposed state）：</p>
+<ul>
+<li>量子器件的信息位称为量子位（qubit），它可处于叠加态；</li>
+<li>叠加态可以是 “0” 也可以是 “1”；</li>
+<li>通过测量或与其他物体发生相互作用可呈现出 “0” 态或 “1” 态；</li>
+<li>由于每个量子位都可以是 “0” 或 “1”， n 个量子位就可以表示 $2^n$ 个 n 位数；</li>
+<li>常规计算机的一个 n 位存储单元只能存放一个 n 位数，而 n 个量子位可以存放 $2^n$ 个 n 位数，可以实现超大容量的存储器。</li>
+</ul>
+<p>量子纠缠态（entangled state)）：</p>
+<ul>
+<li>用作运算的多个量子位还应处于纠缠态，即所有量子位的状态紧密相关。</li>
+<li>当测量某个量子位时，会影响其他量子位的测量结果。</li>
+</ul>
+<p>量子并行（quantum parallelism）：</p>
+<ul>
+<li>计算 f(x) 时，可同时计算出 x 的所有值的 f(x)。所以不需要多次循环，也不需要多个处理机并行计算；</li>
+</ul>
+<h3 id="应用领域"><a href="#应用领域" class="headerlink" title="应用领域"></a>应用领域</h3><p>大数 N 因子分解：</p>
+<ul>
+<li>令 $n = log_2N$ , 经典算法所需步骤为 $2^{\frac{n}{2}}$，Shor 量子并行算法所需步骤为 Poly(n)；</li>
+<li>Poly(n) 为 n 的多项式，该算法将 NP 问题转换为 P 问题；</li>
+</ul>
+<p>搜寻算法：</p>
+<ul>
+<li>在 N 个元素的集合中搜寻某个元素，经典算法搜寻 N/2 次后，找到的概率为 1/2， Grover 量子搜寻算法则只需 $N^{\frac{n}{2}}$ 次，即可达到同样概率；</li>
+</ul>
+<p>量子系统模拟：</p>
+<ul>
+<li>常规计算机不可能有效地模拟量子系统，因为它们的物理机制不同。用常规计算机模拟量子系统，所需的信息量和时间都远大于模拟经典系统。量子计算可用于研究高温高密度等离子体、量子色动力学、晶体固态模型、分子行为的量子模型等。</li>
+</ul>
+<h3 id="物理实现"><a href="#物理实现" class="headerlink" title="物理实现"></a>物理实现</h3><p>量子位的实现：</p>
+<ul>
+<li>任何两态的量子系统都可作为量子位，如原子的能级、电子或原子核的自旋、光子的正交偏振态等；</li>
+</ul>
+<p>量子计算机的实现：</p>
+<ul>
+<li>有多种可能，包括：核磁共振（用磁场中的原子核自旋作为量子位）、离子阱（用被俘获在线性量子阱中的离子作为量子位）、硅基半导体量子器件（杂质核自旋与电子自旋相互作用）等。</li>
+</ul>
+<h3 id="存在问题"><a href="#存在问题" class="headerlink" title="存在问题"></a>存在问题</h3><ul>
+<li>量子位的缠结态容易崩溃，位数越多，越难实现。</li>
+<li>量子器件之间的连接。</li>
+<li>为了维持量子逻辑的一致性，量子系统和环境的隔离。</li>
+<li>设备缺陷所引起的逻辑错误</li>
+</ul>
+<h2 id="分子计算机"><a href="#分子计算机" class="headerlink" title="分子计算机"></a>分子计算机</h2><p>原理：</p>
+<ul>
+<li>DNA 计算机利用 DNA 分子保存信息；</li>
+<li>DNA 分子是由 A, G, C, T 四种核苷酸（碱基）组成的序列，不同的序列可用来表示不同的信息；</li>
+<li>通过 DNA 分子之间的一系列生化反应来进行运算，可产生表示结果的 DNA 分子；</li>
+<li>已解决了 7 个城市的旅行售货员等问题；</li>
+</ul>
+<p>优点：</p>
+<ul>
+<li>高度并行：所有 DNA 分子同时运算；</li>
+<li>能耗低：半导体计算机的 $\frac{1}{10^{10}}$；</li>
+<li>存储密度大：磁存储器的 $10^{12}$ 倍；</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>生化反应慢、操作有随机性、DNA 分子容易水解、DNA 分子之间难以通信；</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-BinaryAndLogicCircuits/" title="Computer Architecture：二进制与逻辑电路">http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-BinaryAndLogicCircuits/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Computer-Architecture/" rel="tag"><i class="fa fa-tag"></i> Computer Architecture</a>
+              <a href="/tags/%E5%9B%BD%E7%A7%91%E5%A4%A7%E7%A0%94%E7%A9%B6%E7%94%9F%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 国科大研究生课程笔记</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/02/21/Computer-Architecture/CA-Introduction/" rel="prev" title="Computer Architecture：绪论">
+      <i class="fa fa-chevron-left"></i> Computer Architecture：绪论
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/02/21/Computer-Architecture/CA-ISA/" rel="next" title="Computer Architecture：指令系统结构ISA">
+      Computer Architecture：指令系统结构ISA <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#计算机中数的表示"><span class="nav-number">1.</span> <span class="nav-text">计算机中数的表示</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#二进制“1”和“0”的表示"><span class="nav-number">1.1.</span> <span class="nav-text">二进制“1”和“0”的表示</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#定点数的表示"><span class="nav-number">1.2.</span> <span class="nav-text">定点数的表示</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#原码"><span class="nav-number">1.2.1.</span> <span class="nav-text">原码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#补码"><span class="nav-number">1.2.2.</span> <span class="nav-text">补码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#运算"><span class="nav-number">1.2.3.</span> <span class="nav-text">运算</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#浮点数的表示"><span class="nav-number">1.3.</span> <span class="nav-text">浮点数的表示</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#由来"><span class="nav-number">1.3.1.</span> <span class="nav-text">由来</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IEEE-754标准"><span class="nav-number">1.3.2.</span> <span class="nav-text">IEEE 754标准</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#CMOS-电路及工艺"><span class="nav-number">2.</span> <span class="nav-text">CMOS 电路及工艺</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#P-管与-N-管"><span class="nav-number">2.1.</span> <span class="nav-text">P 管与 N 管</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#反相器"><span class="nav-number">2.2.</span> <span class="nav-text">反相器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#N-沟道-MOS-晶体管的示意图"><span class="nav-number">2.3.</span> <span class="nav-text">N 沟道 MOS 晶体管的示意图</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MOS晶体管的工作状态"><span class="nav-number">2.4.</span> <span class="nav-text">MOS晶体管的工作状态</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MOS基本工艺—-光刻"><span class="nav-number">2.5.</span> <span class="nav-text">MOS基本工艺—-光刻</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#P衬底-nWell-CMOS工艺"><span class="nav-number">2.6.</span> <span class="nav-text">P衬底 nWell CMOS工艺</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#版图"><span class="nav-number">2.7.</span> <span class="nav-text">版图</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#CMOS逻辑电路"><span class="nav-number">3.</span> <span class="nav-text">CMOS逻辑电路</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#基本逻辑电路"><span class="nav-number">3.1.</span> <span class="nav-text">基本逻辑电路</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#逻辑表达式"><span class="nav-number">3.2.</span> <span class="nav-text">逻辑表达式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CMOS-组合电路"><span class="nav-number">3.3.</span> <span class="nav-text">CMOS 组合电路</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#真值表"><span class="nav-number">3.3.1.</span> <span class="nav-text">真值表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#逻辑图"><span class="nav-number">3.3.2.</span> <span class="nav-text">逻辑图</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CMOS-时序逻辑电路"><span class="nav-number">3.4.</span> <span class="nav-text">CMOS 时序逻辑电路</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#基础"><span class="nav-number">3.4.1.</span> <span class="nav-text">基础</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#触发器"><span class="nav-number">3.4.2.</span> <span class="nav-text">触发器</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#RS-触发器"><span class="nav-number">3.4.2.1.</span> <span class="nav-text">RS 触发器</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#D-触发器"><span class="nav-number">3.4.2.2.</span> <span class="nav-text">D 触发器</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#D-门闩（D-锁存器）"><span class="nav-number">3.4.2.2.1.</span> <span class="nav-text">D 门闩（D 锁存器）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#D-触发器-1"><span class="nav-number">3.4.2.2.2.</span> <span class="nav-text">D 触发器</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#EDFF-电路"><span class="nav-number">3.4.2.2.3.</span> <span class="nav-text">EDFF 电路</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CMOS-电路延迟原理"><span class="nav-number">3.5.</span> <span class="nav-text">CMOS 电路延迟原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#电压变化"><span class="nav-number">3.5.1.</span> <span class="nav-text">电压变化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#延迟模型"><span class="nav-number">3.5.2.</span> <span class="nav-text">延迟模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#标准单元延迟的计算"><span class="nav-number">3.5.3.</span> <span class="nav-text">标准单元延迟的计算</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#降低延迟的方法"><span class="nav-number">3.5.4.</span> <span class="nav-text">降低延迟的方法</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#从-Verilog-到版图"><span class="nav-number">4.</span> <span class="nav-text">从 Verilog 到版图</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Verilog-语言"><span class="nav-number">4.1.</span> <span class="nav-text">Verilog 语言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#从-Verilog-到-GDSII"><span class="nav-number">4.2.</span> <span class="nav-text">从 Verilog 到 GDSII</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#其它-“0”-和-“1”-的表示方法"><span class="nav-number">5.</span> <span class="nav-text">其它 “0” 和 “1” 的表示方法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#方法"><span class="nav-number">5.1.</span> <span class="nav-text">方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#超导计算—-RSFQ-技术"><span class="nav-number">5.2.</span> <span class="nav-text">超导计算—-RSFQ 技术</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#量子计算"><span class="nav-number">5.3.</span> <span class="nav-text">量子计算</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#量子力学特性"><span class="nav-number">5.3.1.</span> <span class="nav-text">量子力学特性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#应用领域"><span class="nav-number">5.3.2.</span> <span class="nav-text">应用领域</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#物理实现"><span class="nav-number">5.3.3.</span> <span class="nav-text">物理实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#存在问题"><span class="nav-number">5.3.4.</span> <span class="nav-text">存在问题</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#分子计算机"><span class="nav-number">5.4.</span> <span class="nav-text">分子计算机</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

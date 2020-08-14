@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="② 综述 FPGA 里面的常见模块；">
+<meta property="og:type" content="article">
+<meta property="og:title" content="FPGA-Architecture">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/03/21/FPGA-technology/FPGA-Architecture/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="② 综述 FPGA 里面的常见模块；">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-Architecture/FPGAMicrochip.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-Architecture/FPGAArchitecture.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-Architecture/LECircuit.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-Architecture/ExampleLE.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-Architecture/ChannelBasedNetwork.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-Architecture/HierarchicalNetwork.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-Architecture/IslandStyleNetwork.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-Architecture/SwitchMatrixCircuit.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-Architecture/DisjointStyle.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-Architecture/UniversalStyle.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-Architecture/WiltonStyle.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-Architecture/InputOutput.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-Architecture/IOBStructure.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-Architecture/transceiver.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-Architecture/Strong0Weak1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-Architecture/solutions.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-Architecture/DesignSchematic.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-Architecture/DesignSchematic1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-Architecture/BasicMACBlockStructure.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-Architecture/FPGADSPvsStandardDSP.png">
+<meta property="article:published_time" content="2020-03-21T07:17:32.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:29:34.916Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="国科大研究生课程笔记">
+<meta property="article:tag" content="FPGA">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/FPGA-Architecture/FPGAMicrochip.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/03/21/FPGA-technology/FPGA-Architecture/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>FPGA-Architecture | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/03/21/FPGA-technology/FPGA-Architecture/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          FPGA-Architecture
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-03-21 15:17:32" itemprop="dateCreated datePublished" datetime="2020-03-21T15:17:32+08:00">2020-03-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:29:34" itemprop="dateModified" datetime="2020-08-14T17:29:34+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%8F%AF%E7%BC%96%E7%A8%8B%E9%80%BB%E8%BE%91%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1%E4%B8%8E-FPGA-%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">可编程逻辑系统设计与 FPGA 技术</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/03/21/FPGA-technology/FPGA-Architecture/" class="post-meta-item leancloud_visitors" data-flag-title="FPGA-Architecture" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/03/21/FPGA-technology/FPGA-Architecture/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/03/21/FPGA-technology/FPGA-Architecture/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>② 综述 FPGA 里面的常见模块；</p>
+<a id="more"></a> 
+<h1 id="总体结构"><a href="#总体结构" class="headerlink" title="总体结构"></a>总体结构</h1><h2 id="FPGA微芯片"><a href="#FPGA微芯片" class="headerlink" title="FPGA微芯片"></a>FPGA微芯片</h2><p><img src="http://img.thebetterkong.cn/blog/FPGA-Architecture/FPGAMicrochip.png" alt="FPGAMicrochip">  </p>
+<ul>
+<li>主要包含五部分：<ul>
+<li>CLB：configurable logic block，或称logic cluster，用作逻辑控制</li>
+<li>BRAM：block RAM ，用于信息存储</li>
+<li>DSP（MAC) Block：专用的乘、加运算器</li>
+<li>Interconnect Network：</li>
+<li>I/O Bank：</li>
+</ul>
+</li>
+</ul>
+<h2 id="FPGA体系结构"><a href="#FPGA体系结构" class="headerlink" title="FPGA体系结构"></a>FPGA体系结构</h2><p><img src="http://img.thebetterkong.cn/blog/FPGA-Architecture/FPGAArchitecture.png" alt="FPGAArchitecture">  </p>
+<ul>
+<li>基于LUT（查找表）的逻辑电路（组合逻辑和时序逻辑）；</li>
+<li>异构集成的处理内核（DSP，BRAM，DLL，PLL，I/O等）；</li>
+<li>精细的可重构计算—-位级别；</li>
+<li>存储在CRAM（配置随机存取存储器）中的配置bit流，用于定义逻辑电路和片上互连；</li>
+</ul>
+<h1 id="CLB-Logic-Cluster-or-Configurable-Logic-Block"><a href="#CLB-Logic-Cluster-or-Configurable-Logic-Block" class="headerlink" title="CLB (Logic Cluster or Configurable Logic Block)"></a>CLB (Logic Cluster or Configurable Logic Block)</h1><p>逻辑集群（或可配置逻辑块）是一个主电路单元，可以在给定一定数量的输入变量的情况下进行编程，以执行任何组合/时序逻辑功能；   </p>
+<p>每个逻辑集群都包含多个相同的<mark>逻辑元素logic elements（LEs）</mark>;</p>
+<h2 id="LE（logic-element）"><a href="#LE（logic-element）" class="headerlink" title="LE（logic element）"></a>LE（logic element）</h2><p>通用电路结构：<br><img src="http://img.thebetterkong.cn/blog/FPGA-Architecture/LECircuit.png" alt="LECircuit"></p>
+<ul>
+<li>通常，逻辑集群由几个LE组成（也称：Intel FPGA的ALM，Xilinx FPGA的Slice等等）；</li>
+<li>典型的LE由一个k输入LUT，一个全加法器（FA）和一个D型触发器（D-type flip-flop）组成；</li>
+</ul>
+<p>例子：<br><img src="http://img.thebetterkong.cn/blog/FPGA-Architecture/ExampleLE.png" alt="ExampleLE"></p>
+<ul>
+<li>LUT分为两个3输入LUT；</li>
+<li>在正常模式下，它们通过左边的MUX组合成4输入LUT；</li>
+<li>在算术模式下，它们的输出被送到加法器FA；</li>
+<li>模式的选择是通过编程中间的MUX；</li>
+<li>输出可以是同步的，也可以是异步的，具体取决于右侧MUX的编程。</li>
+<li>实际上，为了节省空间，加法器的全部或部分作为函数存储在LUT中。</li>
+</ul>
+<h1 id="Interconnection"><a href="#Interconnection" class="headerlink" title="Interconnection"></a>Interconnection</h1><p> Interconnection是可以通过编程，路由任何点对点的电气连接的电线通道网络；   </p>
+<p>Interconnection包括以下部分：</p>
+<ul>
+<li>Horizontal/Vertical interconnection channels，即：水平/垂直互连通道；</li>
+<li>Switch Matrixes，即：开关矩阵（例如接线盒，开关盒）；</li>
+</ul>
+<h2 id="Interconnection-channel"><a href="#Interconnection-channel" class="headerlink" title="Interconnection channel"></a>Interconnection channel</h2><p>主要有三种形式：Channel-based Network、Hierarchical Network、Island-style Network；</p>
+<h3 id="Channel-based-Network"><a href="#Channel-based-Network" class="headerlink" title="Channel-based Network"></a>Channel-based Network</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-Architecture/ChannelBasedNetwork.png" alt="ChannelBasedNetwork"></p>
+<blockquote>
+<p>空白圆圈:表示预制保险丝<br>实心圆圈:表示通过熔断的保险丝完成了互连</p>
+<ul>
+<li>水平通道贯穿整个设备，水平线布线到：逻辑集群的输入和输出、其他水平通道;</li>
+<li>水平和垂直通道的交点由反熔丝构成，使用反熔丝打开/关闭任意两个通道之间的连接；</li>
+<li>anti-fuses （反熔丝）：正常不导通，对其施加大电流熔断后导通；</li>
+</ul>
+</blockquote>
+<h3 id="Hierarchical-Network"><a href="#Hierarchical-Network" class="headerlink" title="Hierarchical Network"></a>Hierarchical Network</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-Architecture/HierarchicalNetwork.png" alt="HierarchicalNetwork"></p>
+<ul>
+<li>互连资源根据其层次结构进行划分:<ul>
+<li>仅底层的电线连接到逻辑块</li>
+<li>中线必须通过上线连接</li>
+<li>顶层的电线构成主要的互连路径</li>
+</ul>
+</li>
+<li>广泛用于早期CPLD（复杂可编程逻辑器件）;</li>
+<li>Level 3 &lt;-&gt; Level 2 &lt;-&gt; Level 1</li>
+<li>优势：可预测的路由延迟</li>
+<li>缺点：无法通过重新路由来改善关键路径</li>
+<li>现代FPGA不再基于此架构</li>
+</ul>
+<h3 id="Island-Style-Network"><a href="#Island-Style-Network" class="headerlink" title="Island-Style Network"></a>Island-Style Network</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-Architecture/IslandStyleNetwork.png" alt="IslandStyleNetwork"></p>
+<ul>
+<li>在现代FPGA中很流行</li>
+<li>每个逻辑块均通过其四个方向的输入/输出端口直接访问常规路由资源；</li>
+<li>通用路由资源包括各种长度的电线；</li>
+<li>路由线通过Switch Matrixes连接，多条连接线形成路由网；</li>
+</ul>
+<p>设计理念：</p>
+<ul>
+<li>通常，所有的布线通道都具有相同的宽度（线数）</li>
+<li>必须将应用电路映射到具有足够资源的FPGA中。虽然可以很容易地从设计中确定所需的CLB和I/O的数量，但即使在具有相同逻辑量的设计之间，所需的布线路径的数量也可能有很大不同。</li>
+<li>由于未使用的布线轨迹会增加零件的成本（并降低性能），却没有带来任何好处，因此FPGA制造商试图提供足够的轨迹，以便大多数适合查找表（LUT）和I/O的设计都可以被路由</li>
+<li>这是根据估算得出的，例如根据 Rent’s rule得出的估算值或通过对现有设计进行的实验得出的估算值：<ul>
+<li>Rent’s Rule：是一个经验公式，来大致估计<ul>
+<li>引脚pins（端子，T）数量和内部元件（g）的数量（如：逻辑门或标准单元）之间有一个显著的趋势，线性关系：$T = t \cdot g^p$，其中t和p是常数（p&lt;1.0)，通常：0.5 &lt; p &lt; 0.8</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="Switch-Matrix"><a href="#Switch-Matrix" class="headerlink" title="Switch Matrix"></a>Switch Matrix</h2><p>电路结构：<br><img src="http://img.thebetterkong.cn/blog/FPGA-Architecture/SwitchMatrixCircuit.png" alt="SwitchMatrixCircuit"></p>
+<ul>
+<li>使用晶体管开启和关闭；</li>
+<li>使用配置位控制晶体管状态；</li>
+</ul>
+<p>也有三种形式： Disjoint-style、Universal-style、Wilton-style</p>
+<h3 id="Disjoint-style"><a href="#Disjoint-style" class="headerlink" title="Disjoint-style"></a>Disjoint-style</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-Architecture/DisjointStyle.png" alt="DisjointStyle"></p>
+<ul>
+<li>input只能通过switch matrix连接到具有相同编号的output，不同编号的wires无法相连。（0-0,1-1,2-2,3-3,4-4）；</li>
+<li>灵活性较差；</li>
+</ul>
+<h3 id="Universal-style"><a href="#Universal-style" class="headerlink" title="Universal-style"></a>Universal-style</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-Architecture/UniversalStyle.png" alt="UniversalStyle"></p>
+<ul>
+<li>能将不同编号的wires相连，例如：input1能通过switch matrix 连到三个不同的ouput端，output的编号为1,1,3（1的补）；</li>
+<li>灵活性有所提高；</li>
+</ul>
+<h3 id="Wilton-style"><a href="#Wilton-style" class="headerlink" title="Wilton-style"></a>Wilton-style</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-Architecture/WiltonStyle.png" alt="WiltonStyle"></p>
+<ul>
+<li>也能将不同编号的wires相连，例如：input1能通过switch matrix 连到三个不同的ouput端，output的编号为0（1-1=0）,1,4（0的互补）；</li>
+<li>灵活性有所提高；</li>
+</ul>
+<h1 id="Input-Output"><a href="#Input-Output" class="headerlink" title="Input/Output"></a>Input/Output</h1><p><img src="http://img.thebetterkong.cn/blog/FPGA-Architecture/InputOutput.png" alt="InputOutput"></p>
+<ul>
+<li>可编程的I/O pads（焊盘）用于将逻辑块和路由架构连接到外部组件；</li>
+<li>I/O焊盘和周围的逻辑电路形成为I/O块（IOB），pin和IOB一一对应；这些模块占用了FPGA的很大一部分面积；</li>
+<li>I/O可编程块的设计很复杂，因为电源电压和参考电压之间存在很大差异；</li>
+<li>I/O标准的选择在I/O架构设计中很重要，支持大量的I/O标准可以增加I/O单元所需的硅芯片面积；</li>
+</ul>
+<p>IOB 的基础结构：<br><img src="http://img.thebetterkong.cn/blog/FPGA-Architecture/IOBStructure.png" alt="IOBStructure"></p>
+<p>可编程的 I/Os 应该支持：</p>
+<ul>
+<li>多种电压等级标准（例如1V，1.2V，1.8V，3.3V等）</li>
+<li>多种I / O标准（例如LVDS，CMOS，TTL等）</li>
+<li>变化的驱动强度（ID [n]，n = 1、2，…）</li>
+<li>Open-drain输出（数据总线）</li>
+<li>抖动控制（定时控制）</li>
+<li>Bus holder电路</li>
+<li>延迟控制</li>
+<li>各种 pull-up电阻</li>
+</ul>
+<p><mark>低压差分信号LVDS (Low Voltage Differential Signaling)</mark>：</p>
+<ul>
+<li>一种技术标准，规定了差分串行通信协议的电气特性；</li>
+<li>使用低廉的双绞铜线，可在低功率下运行，并能以极高的速度运行（gigabits at milliwatts)；</li>
+<li>仅是物理层规范，许多数据通信标准和应用程序都使用它并添加数据链路层;</li>
+</ul>
+<p><mark>高速SerDes数据收发器</mark>： </p>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-Architecture/transceiver.png" alt="transceiver"></p>
+<ul>
+<li>串行器/解串器是一对功能块，通常用于高速通信中，以补偿有限的输入/输出;</li>
+<li>这些块在每个方向上在串行数据和并行接口之间转换数据;</li>
+<li>“ SerDes”通常是指在各种技术和应用中使用的接口;</li>
+</ul>
+<h1 id="Block-RAM（mem）"><a href="#Block-RAM（mem）" class="headerlink" title="Block RAM（mem）"></a>Block RAM（mem）</h1><p>Block RAM 是一个专用的两端口内存，其中包含几千个 RAM，FPGA 包含几个（或多个）这些模块；   </p>
+<p>可以将 BRAM 配置为不同的存储模式：</p>
+<ul>
+<li>单端口模式：一个端口读或写</li>
+<li>简单双端口模式：一个读取端口和一个写入端口</li>
+<li>真正的双端口模式：两个端口同时读取； 两个端口同时写入； 读一个端口，写一个端口</li>
+<li>各种字节宽度</li>
+</ul>
+<h2 id="Pass-Transistor-Logic"><a href="#Pass-Transistor-Logic" class="headerlink" title="Pass Transistor Logic"></a>Pass Transistor Logic</h2><p>信号相关传导状态：<br><img src="http://img.thebetterkong.cn/blog/FPGA-Architecture/Strong0Weak1.png" alt="Strong0Weak1"></p>
+<ul>
+<li>弱传输：相当于 $V_{dd}-V_{th}$，导致电压变低，受影响；</li>
+</ul>
+<p>电压损失与恢复:</p>
+<ul>
+<li><img src="http://img.thebetterkong.cn/blog/FPGA-Architecture/solutions.png" alt="solutions"></li>
+</ul>
+<h2 id="设计原理"><a href="#设计原理" class="headerlink" title="设计原理"></a>设计原理</h2><p><img src="http://img.thebetterkong.cn/blog/FPGA-Architecture/DesignSchematic.png" alt="DesignSchematic"></p>
+<p>详细分析：<br><img src="http://img.thebetterkong.cn/blog/FPGA-Architecture/DesignSchematic1.png" alt="DesignSchematic1"> </p>
+<p>读写过程：</p>
+<ol>
+<li>首先，通过pre-charge进行预充电：<ul>
+<li>让pre-charge=0，则与之直接相连的三个PMOS管导通。此时，BL、BLB与Vdd导通，BL=BLB=Vdd，进而完成预充电。之后，置pre-charge=1。</li>
+</ul>
+</li>
+<li>Write 0（BL=0，BLB=1）的过程：<ul>
+<li>情景一：SRAM内部存储值为0（data=0，SRAM内部右半部分的P管导通，右部的内部状态点连接Vdd，呈现1状态；左半部分的N管导通，左部的内部状态点连接Vdd，呈现0状态）<ul>
+<li>这时，初始内部状态：与BL相连的NMOS管另一端值为0，与BLB相连的NMOS管另一端值为1。打开选择信号，即Word=1，使其控制的两个NMOS管导通。对于左边的NMOS管来说，其左端BL=0，右端内部状态也为0，所以内部保持0；同样，对于右边的NMOS管，其两端的值均为1，内部也保持为1。也即：write0后，SRAM内部保持存储值为0，data=0。</li>
+</ul>
+</li>
+<li>情景二：SRAM内部存储值为1（data=1）<ul>
+<li>这时，初始内部状态：与BL相连的NMOS管另一端值为1，与BLB相连的NMOS管另一端值为0。打开选择信号，即Word=1，使其控制的两个NMOS管导通。对于左边的NMOS管来说，其左端BL为强0信号，右端的内部状态为1，因此，右端的1信号值会向左端的强0信号放电，使得右端内部状态变成0。同理，对于右边的NMOS管来说，其左端内部状态为0，右端BLB为强1信号，右端对左端进行充电，使得左端的内部状态变成1。经过上述过程后，内部状态变成：与BL相连的NMOS管另一端值为0，与BLB相连的NMOS管另一端值为1。也即：write0后，SRAM内部存储值成为0，data=0。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>再次通过pre-charge进行预充电，使得BL=BLB=1；</li>
+<li>现在进行Read：<ul>
+<li>经过write 0操作后，此时的内部状态：与BL相连的NMOS管另一端值为0，相应的与BLB相连的NMOS管另一端值为1。（data=0）然后，打开选择信号，即Word=1，使其控制的两个NMOS管导通。预充电时，BL及BLB均为1。这时，对于右边的NMOS管来说，两端的值均为1，不会进行信号传输，BLB仍=1。但对于左边的NMOS管来说，左端的BL预充电为1，而右端内部状态初始为0，所以NMOS管左端会对右端进行放电，使得BL=0。经过上述过程，BL=0，BLB=1，于是就将内部的0信号读取出来了，也即完成了读0操作。</li>
+</ul>
+</li>
+</ol>
+<p>SRAM保持其状态:</p>
+<ul>
+<li>SRAM保持内部状态主要是针对，其数据读取过程中可能导致的数据丢失问题而引出的。</li>
+<li>在上述过程分析中，我们可以看到，在读取SRAM的0数据过程中，对左半部分的NMOS管，会出现其左端对右端放电的情况，这样，SRAM左半部分的内部状态点在接收到电荷后就可能出现弱1的状态，随着连续读取次数增多，其接收到的电荷越来越多，就可能影响到之后读取时左端向右端的放电，导致数据丢失。<br>-但是，注意到，图中的data控制信号，就可以通过其解决上述问题。当SRAM内存储值为0时，data=0，因此，SRAM左半部分N管导通，左边的内部状态点连接至gnd。因此，随着连续读操作的进行，不管左边的内部状态点接收到多少电荷，其始终会呈现出强0状态，也即，SRAM内部始终保持为0。其他情况，与该过程类似。</li>
+</ul>
+<h1 id="DSP（multiplier）"><a href="#DSP（multiplier）" class="headerlink" title="DSP（multiplier）"></a>DSP（multiplier）</h1><p>DSP模块架构经过优化，可实现各种通用DSP功能，并具有最佳性能和最小逻辑资源利用率；<br>除乘法器外，每个DSP模块还具有典型DSP算法中经常需要的功能，这些功能包括预加器，加法器，减法器，累加器，系数寄存器存储和求和单元；   </p>
+<p>DSP在DSP类型的应用中非常常见的一种操作称为<mark>乘加（MAC）单元</mark>；<br><img src="http://img.thebetterkong.cn/blog/FPGA-Architecture/BasicMACBlockStructure.png" alt="BasicMACBlockStructure"> </p>
+<p>商用FPGA产品包含DSP模块，可对它们进行编程以对各种字节宽度的数据输入执行加，减，乘，累加，乘法运算;   </p>
+<p>FPGA包含几个（或多个）DSP模块，它为高性能、高精度DSP应用提供了理想的解决方案:</p>
+<ul>
+<li>DSP资源可以选择为与逻辑资源结合使用，可实现诸如FIR（有限脉冲响应）滤波器，IIR（无限脉冲响应）滤波器，FFT（快速傅立叶变换），调制解调，加密，神经网络等IP核</li>
+</ul>
+<p>blocks DSP模块是非常高效的，并且在软实施中的工作频率远高于等效电路；   </p>
+<p><strong>FPGA DSP vs. Standard DSP</strong>：<br><img src="http://img.thebetterkong.cn/blog/FPGA-Architecture/FPGADSPvsStandardDSP.png" alt="FPGADSPvsStandardDSP"></p>
+<ul>
+<li>传统解决方案（使用数字信号处理器（DSP））与FPGA实现之间的区别在于：<ul>
+<li>DSP必须用汇编器或C编程，而FPGA算法则用HDL描述</li>
+</ul>
+</li>
+<li>FPGA适合并行计算；</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/03/21/FPGA-technology/FPGA-Architecture/" title="FPGA-Architecture">http://www.thebetterkong.cn/2020/03/21/FPGA-technology/FPGA-Architecture/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%9B%BD%E7%A7%91%E5%A4%A7%E7%A0%94%E7%A9%B6%E7%94%9F%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 国科大研究生课程笔记</a>
+              <a href="/tags/FPGA/" rel="tag"><i class="fa fa-tag"></i> FPGA</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/03/20/Computer-architecture-security/Overview_Spectre&Meltdown/" rel="prev" title="概述：幽灵漏洞&熔断漏洞">
+      <i class="fa fa-chevron-left"></i> 概述：幽灵漏洞&熔断漏洞
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/03/22/FPGA-technology/FPGA-DesignFlow/" rel="next" title="FPGA-DesignFlow">
+      FPGA-DesignFlow <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#总体结构"><span class="nav-number">1.</span> <span class="nav-text">总体结构</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#FPGA微芯片"><span class="nav-number">1.1.</span> <span class="nav-text">FPGA微芯片</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#FPGA体系结构"><span class="nav-number">1.2.</span> <span class="nav-text">FPGA体系结构</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#CLB-Logic-Cluster-or-Configurable-Logic-Block"><span class="nav-number">2.</span> <span class="nav-text">CLB (Logic Cluster or Configurable Logic Block)</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#LE（logic-element）"><span class="nav-number">2.1.</span> <span class="nav-text">LE（logic element）</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Interconnection"><span class="nav-number">3.</span> <span class="nav-text">Interconnection</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Interconnection-channel"><span class="nav-number">3.1.</span> <span class="nav-text">Interconnection channel</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Channel-based-Network"><span class="nav-number">3.1.1.</span> <span class="nav-text">Channel-based Network</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Hierarchical-Network"><span class="nav-number">3.1.2.</span> <span class="nav-text">Hierarchical Network</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Island-Style-Network"><span class="nav-number">3.1.3.</span> <span class="nav-text">Island-Style Network</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Switch-Matrix"><span class="nav-number">3.2.</span> <span class="nav-text">Switch Matrix</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Disjoint-style"><span class="nav-number">3.2.1.</span> <span class="nav-text">Disjoint-style</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Universal-style"><span class="nav-number">3.2.2.</span> <span class="nav-text">Universal-style</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Wilton-style"><span class="nav-number">3.2.3.</span> <span class="nav-text">Wilton-style</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Input-Output"><span class="nav-number">4.</span> <span class="nav-text">Input&#x2F;Output</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Block-RAM（mem）"><span class="nav-number">5.</span> <span class="nav-text">Block RAM（mem）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Pass-Transistor-Logic"><span class="nav-number">5.1.</span> <span class="nav-text">Pass Transistor Logic</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#设计原理"><span class="nav-number">5.2.</span> <span class="nav-text">设计原理</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#DSP（multiplier）"><span class="nav-number">6.</span> <span class="nav-text">DSP（multiplier）</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

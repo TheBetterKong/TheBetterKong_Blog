@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="FPGA 路由设计，即布线设计方法；">
+<meta property="og:type" content="article">
+<meta property="og:title" content="FPGA-Routing Design Methodology">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/03/31/FPGA-technology/FPGA-RoutingDesignMethodology/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="FPGA 路由设计，即布线设计方法；">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/ExamplesFsAndFc.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/ConnectionBlock.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/AdjacencyMatrix.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/ExampleParametersOfConnectionBlock.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/ExampleRoutability.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/SimulatedAnnealingAlgorithm.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/ExampleAlgorithm.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/results1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/results2.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/DesignFlow.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/CircuitsSpeedVsSwitchBlockTopology.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/AreaVsSwitchBlockTopology.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/DriverDesign.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/DistributedBuffering.png">
+<meta property="article:published_time" content="2020-03-31T08:01:24.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:32:00.875Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="国科大研究生课程笔记">
+<meta property="article:tag" content="FPGA">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/ExamplesFsAndFc.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/03/31/FPGA-technology/FPGA-RoutingDesignMethodology/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>FPGA-Routing Design Methodology | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/03/31/FPGA-technology/FPGA-RoutingDesignMethodology/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          FPGA-Routing Design Methodology
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-03-31 16:01:24" itemprop="dateCreated datePublished" datetime="2020-03-31T16:01:24+08:00">2020-03-31</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:32:00" itemprop="dateModified" datetime="2020-08-14T17:32:00+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%8F%AF%E7%BC%96%E7%A8%8B%E9%80%BB%E8%BE%91%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1%E4%B8%8E-FPGA-%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">可编程逻辑系统设计与 FPGA 技术</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/03/31/FPGA-technology/FPGA-RoutingDesignMethodology/" class="post-meta-item leancloud_visitors" data-flag-title="FPGA-Routing Design Methodology" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/03/31/FPGA-technology/FPGA-RoutingDesignMethodology/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/03/31/FPGA-technology/FPGA-RoutingDesignMethodology/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>FPGA 路由设计，即布线设计方法；</p>
+<a id="more"></a> 
+<h1 id="FPGA-Interconnect-的灵活性"><a href="#FPGA-Interconnect-的灵活性" class="headerlink" title="FPGA Interconnect 的灵活性"></a>FPGA Interconnect 的灵活性</h1><p>定义 FPGA 互连结构灵活性的参数：</p>
+<ul>
+<li>Channel width，通道宽度（W）：路由通道中的轨道数</li>
+<li>Wire segment length，导线段长度（L）：导线段经过的逻辑块数</li>
+<li>Population of Switch Box（Fs）：一条轨道可以通过 switches 连接到的轨道数量</li>
+<li>Population of Connection Box（Fc）：连接到 CLB 引脚的相邻信道中的路由轨道的比例：<ul>
+<li>Fc（in）：CLB 的输入部分灵活性，注意，这里的 in/out 是针对 CLB 来说的</li>
+<li>Fc（out）：CLB 的输出部分灵活性</li>
+</ul>
+</li>
+</ul>
+<p>例子：<br>  <img src="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/ExamplesFsAndFc.png" alt="ExamplesFsAndFc"></p>
+<h1 id="Design-of-Connection-Block"><a href="#Design-of-Connection-Block" class="headerlink" title="Design of Connection Block"></a>Design of Connection Block</h1><h2 id="认识回顾"><a href="#认识回顾" class="headerlink" title="认识回顾"></a>认识回顾</h2><p>Connection Block：<br>  <img src="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/ConnectionBlock.png" alt="ConnectionBlock"></p>
+<p>如果采取 fully connected CB：</p>
+<ul>
+<li>需要 $n \times m$ 个 switchs；</li>
+<li>面积更大，延迟更长</li>
+</ul>
+<p>设计目标：</p>
+<ul>
+<li>增加路由能力</li>
+<li>限制条件：开关数量最少，面积较小，延时较短</li>
+</ul>
+<h2 id="相关概念定义"><a href="#相关概念定义" class="headerlink" title="相关概念定义"></a>相关概念定义</h2><p>Connection Block 的邻接矩阵：<mark>$A_G=[a_{i,j}]_{n \times m}$</mark><br>  <img src="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/AdjacencyMatrix.png" alt="AdjacencyMatrix"></p>
+<p>Connection Block 的设计参数：</p>
+<ul>
+<li><mark>$fan_{out}(i)$</mark>：对于输入 i，它所能连接到的输出的数量；（邻接矩阵中，i 行有多少个 1）</li>
+<li><mark>$fan_{in}(j)$</mark>：对于输出 j，它所能连接到的输入的数量；（邻接矩阵中，j 列有多少个 1）</li>
+<li><mark>$\delta_c=\max_{1\leq i \leq n}(fan_{out}(i))-\min_{1\leq i \leq n}(fan_{out}(i))$</mark>；（对所有行：1 数量最大值减去最小值）</li>
+<li><mark>$\delta_p=\max_{1\leq j \leq m}(fan_{in}(j))-\min_{1\leq j \leq m}(fan_{in}(j))$</mark>；（对所有列：1 数量最大值减去最小值）</li>
+<li><mark>w</mark>：CB 中的开关总数<br><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/ExampleParametersOfConnectionBlock.png" alt="ExampleParametersOfConnectionBlock"></li>
+</ul>
+<p>Connection Block 的设计约束：</p>
+<ul>
+<li>最小化：$\delta_c$ 和 $\delta_p$</li>
+</ul>
+<p>评估 CB 结构：</p>
+<ol>
+<li>Routability<ul>
+<li>对于具有 n 个输入和 m 个输出的 CB，<mark>可路由路径的总数（total routable path）</mark>：输入到输出路由的所有可能组合的计数。（注意：是组合的计数，只要是从同样的输入到输出就只算一条）<ul>
+<li>计算方法：取 m，n 中的较小者，例如下图是 m=2，然后将所有可能的组合方式用元组形式罗列出来，注意：如果元组内元素相同，顺序不同，也是对于同一种相同方式。</li>
+<li>例如：图二的所有可能组合为：$(0,2),(0,3),(0,4),(1,2),(1,3),(1,4)$；</li>
+</ul>
+</li>
+<li><mark>$Routability=\frac{total\ routable\ path}{C_n^m}$</mark>，其中 $C_n^m=\frac{n!}{m!(n-m)!}$<br><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/ExampleRoutability.png" alt="ExampleRoutability"></li>
+</ul>
+</li>
+<li>Area-delay product</li>
+</ol>
+<h2 id="设计-CB-架构的总体模型"><a href="#设计-CB-架构的总体模型" class="headerlink" title="设计 CB 架构的总体模型"></a>设计 CB 架构的总体模型</h2><ol>
+<li>给定 $n \times m$ 的 CB 的邻接矩阵：$A_G=[a_{i,j}]_{n \times m}$</li>
+<li>给定约束，关于：固定的 w 和最小化 $\delta_c$，$\delta_p$ 的约束；</li>
+<li>获得最优的 routability 和 area-delay product；</li>
+</ol>
+<ul>
+<li><mark>$Cost function=\frac{\alpha}{routability}+\frac{\beta}{area-delay\  product}$</mark></li>
+</ul>
+<h2 id="算法：Simulated-Annealing-Algorithm"><a href="#算法：Simulated-Annealing-Algorithm" class="headerlink" title="算法：Simulated Annealing Algorithm"></a>算法：Simulated Annealing Algorithm</h2><p><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/SimulatedAnnealingAlgorithm.png" alt="SimulatedAnnealingAlgorithm"></p>
+<h2 id="用-Simulated-Annealing-Algorithm-寻找最佳的-routability"><a href="#用-Simulated-Annealing-Algorithm-寻找最佳的-routability" class="headerlink" title="用 Simulated Annealing Algorithm 寻找最佳的 routability"></a>用 Simulated Annealing Algorithm 寻找最佳的 routability</h2><ul>
+<li>Inputs: n, m, w</li>
+<li>Constraint(约束): 最小化的 $\delta_c$，$\delta_p$</li>
+<li>Cost function: CB 的可路由性</li>
+<li>Output: 最优化的邻接矩阵 $A_G$<br><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/ExampleAlgorithm.png" alt="Example:Algorithm"></li>
+</ul>
+<h2 id="Experimental-results"><a href="#Experimental-results" class="headerlink" title="Experimental results"></a>Experimental results</h2><h3 id="Routability-vs-w-n-m"><a href="#Routability-vs-w-n-m" class="headerlink" title="Routability vs. w, n, m"></a>Routability vs. w, n, m</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/results1.png" alt="results1"><br>$(n-m+1) \times m$ 是 full Routability 所需的最小 switches 数</p>
+<ul>
+<li>当 $\frac{w}{(n-m+1)\times m}  \geq 0.7$，$Routability \geq 90\%$；</li>
+<li>当 $\frac{w}{(n-m+1)\times m}  = 0.8$，$Routability \approx 100\%$；</li>
+<li>当 $\frac{w}{(n-m+1)\times m}  = 1$，$Routability = 100\%$；</li>
+</ul>
+<h3 id="Routability-vs-delta-c-，-delta-p"><a href="#Routability-vs-delta-c-，-delta-p" class="headerlink" title="Routability vs. $\delta_c$，$\delta_p$"></a>Routability vs. $\delta_c$，$\delta_p$</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/results2.png" alt="results2"></p>
+<ul>
+<li>40% populations 就是我们能接受的范围了；</li>
+</ul>
+<h1 id="Design-of-Switch-Block"><a href="#Design-of-Switch-Block" class="headerlink" title="Design of Switch Block"></a>Design of Switch Block</h1><h2 id="基础"><a href="#基础" class="headerlink" title="基础"></a>基础</h2><p>Switch Block 拓扑结构：</p>
+<ul>
+<li>Disjoint</li>
+<li>Wilton</li>
+<li>Combined structure</li>
+</ul>
+<p>Switch Block 设计参数：</p>
+<ul>
+<li>Channel width(W)</li>
+<li>Segment length(L)</li>
+<li>Population of switch block and connection clock</li>
+</ul>
+<h2 id="设计流程"><a href="#设计流程" class="headerlink" title="设计流程"></a>设计流程</h2><p>  <img src="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/DesignFlow.png" alt="DesignFlow"></p>
+<h2 id="对比分析"><a href="#对比分析" class="headerlink" title="对比分析"></a>对比分析</h2><h3 id="Circuits-speed-vs-Switch-block-topology"><a href="#Circuits-speed-vs-Switch-block-topology" class="headerlink" title="Circuits speed vs. Switch block topology"></a>Circuits speed vs. Switch block topology</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/CircuitsSpeedVsSwitchBlockTopology.png" alt="Circuits speed vs. Switch block topology"></p>
+<h3 id="Area-vs-Switch-block-topology"><a href="#Area-vs-Switch-block-topology" class="headerlink" title="Area vs. Switch block topology"></a>Area vs. Switch block topology</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/AreaVsSwitchBlockTopology.png" alt="Area vs. Switch block topology"></p>
+<h2 id="长导线互连驱动设计"><a href="#长导线互连驱动设计" class="headerlink" title="长导线互连驱动设计"></a>长导线互连驱动设计</h2><blockquote>
+<p>带有周围电路的长度为 2 的电线的附加细节;<br>与一般的 ASIC repeater(中继器) insertion 问题不同的是：FPGA 互连设计使用一根长的、直的导线，沿着导线的内部点扇出;<br>这些被称为“早期转向”的 taps 或 turns 始终存在，但不一定总是使用；<br>FPGA 互连也有“可编程”的要求;<br>这是通过位于信号驱动器前面的 front-end multiplexer 实现的;</p>
+</blockquote>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/DriverDesign.png" alt="driver design">  </p>
+<p>长导线互连延迟：</p>
+<ul>
+<li>分段驱动；<br><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/DistributedBuffering.png" alt="distributed buffering"></li>
+<li>使用称为 “path delay profile”（PDP）的度量；<ul>
+<li>这些 path delay profile 表明：分布式 buffering 更快，因为沿着线路的几个内部点更早地接收到信号；</li>
+</ul>
+</li>
+<li>分布式设计比一端集中 buffering 更快，因为信号在中间点之前提前到达导线位置；</li>
+</ul>
+<h2 id="互连延迟最小化"><a href="#互连延迟最小化" class="headerlink" title="互连延迟最小化"></a>互连延迟最小化</h2><ul>
+<li>给定金属导线RC特性和目标总物理导线长度L;    </li>
+<li>找出 inverters 的最佳数量 N，每个 inverter 的尺寸 ($B_0…B_{N-1}$) 和每个 inverter 之间的导线数量 ($L_0…L_{N-1}$)，以使从互连导线开始到结束的信号传播延迟最小;</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/03/31/FPGA-technology/FPGA-RoutingDesignMethodology/" title="FPGA-Routing Design Methodology">http://www.thebetterkong.cn/2020/03/31/FPGA-technology/FPGA-RoutingDesignMethodology/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%9B%BD%E7%A7%91%E5%A4%A7%E7%A0%94%E7%A9%B6%E7%94%9F%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 国科大研究生课程笔记</a>
+              <a href="/tags/FPGA/" rel="tag"><i class="fa fa-tag"></i> FPGA</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/03/29/FPGA-technology/FPGA-RoutingArchitecture/" rel="prev" title="FPGA-Routing Architecture">
+      <i class="fa fa-chevron-left"></i> FPGA-Routing Architecture
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/04/04/Blog-Related/Markdown-Writing/" rel="next" title="Markdown 写作指南">
+      Markdown 写作指南 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#FPGA-Interconnect-的灵活性"><span class="nav-number">1.</span> <span class="nav-text">FPGA Interconnect 的灵活性</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Design-of-Connection-Block"><span class="nav-number">2.</span> <span class="nav-text">Design of Connection Block</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#认识回顾"><span class="nav-number">2.1.</span> <span class="nav-text">认识回顾</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#相关概念定义"><span class="nav-number">2.2.</span> <span class="nav-text">相关概念定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#设计-CB-架构的总体模型"><span class="nav-number">2.3.</span> <span class="nav-text">设计 CB 架构的总体模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#算法：Simulated-Annealing-Algorithm"><span class="nav-number">2.4.</span> <span class="nav-text">算法：Simulated Annealing Algorithm</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#用-Simulated-Annealing-Algorithm-寻找最佳的-routability"><span class="nav-number">2.5.</span> <span class="nav-text">用 Simulated Annealing Algorithm 寻找最佳的 routability</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Experimental-results"><span class="nav-number">2.6.</span> <span class="nav-text">Experimental results</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Routability-vs-w-n-m"><span class="nav-number">2.6.1.</span> <span class="nav-text">Routability vs. w, n, m</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Routability-vs-delta-c-，-delta-p"><span class="nav-number">2.6.2.</span> <span class="nav-text">Routability vs. $\delta_c$，$\delta_p$</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Design-of-Switch-Block"><span class="nav-number">3.</span> <span class="nav-text">Design of Switch Block</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#基础"><span class="nav-number">3.1.</span> <span class="nav-text">基础</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#设计流程"><span class="nav-number">3.2.</span> <span class="nav-text">设计流程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#对比分析"><span class="nav-number">3.3.</span> <span class="nav-text">对比分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Circuits-speed-vs-Switch-block-topology"><span class="nav-number">3.3.1.</span> <span class="nav-text">Circuits speed vs. Switch block topology</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Area-vs-Switch-block-topology"><span class="nav-number">3.3.2.</span> <span class="nav-text">Area vs. Switch block topology</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#长导线互连驱动设计"><span class="nav-number">3.4.</span> <span class="nav-text">长导线互连驱动设计</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#互连延迟最小化"><span class="nav-number">3.5.</span> <span class="nav-text">互连延迟最小化</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

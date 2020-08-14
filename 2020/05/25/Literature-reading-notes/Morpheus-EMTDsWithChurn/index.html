@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="目前，主要安全措施都是通过检测异常行为，实现被动防御。而本文主要针对控制流劫持，提出了一种 Morpheus 架构的主动防御机制，它结合移动目标防御将那些正常程序不需要而攻击需要的信息进行随机化和加密处理，以此提高攻击难度，让攻击者需要更多的时间完成 probe，同时，采用一种 churn 方式进一步打乱攻击者攻击节奏。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《Morpheus:A Vulnerability-Tolerant Secure Architecture Based on EMTDs with Churn》阅读笔记">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/05/25/Literature-reading-notes/Morpheus-EMTDsWithChurn/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="目前，主要安全措施都是通过检测异常行为，实现被动防御。而本文主要针对控制流劫持，提出了一种 Morpheus 架构的主动防御机制，它结合移动目标防御将那些正常程序不需要而攻击需要的信息进行随机化和加密处理，以此提高攻击难度，让攻击者需要更多的时间完成 probe，同时，采用一种 churn 方式进一步打乱攻击者攻击节奏。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/Morpheus-EMTDsWithChurn/AttackDetector.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/Morpheus-EMTDsWithChurn/EMTDsChurn.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/Morpheus-EMTDsWithChurn/MorpheusSecureArchitecture.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/Morpheus-EMTDsWithChurn/PointerDisplacement.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/Morpheus-EMTDsWithChurn/DomainEncryption.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/Morpheus-EMTDsWithChurn/Churn.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/Morpheus-EMTDsWithChurn/Effect.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/Morpheus-EMTDsWithChurn/Performance.png">
+<meta property="article:published_time" content="2020-05-25T08:28:21.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:32:49.185Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="Computer Architecture">
+<meta property="article:tag" content="ASLR">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/Morpheus-EMTDsWithChurn/AttackDetector.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/05/25/Literature-reading-notes/Morpheus-EMTDsWithChurn/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>《Morpheus:A Vulnerability-Tolerant Secure Architecture Based on EMTDs with Churn》阅读笔记 | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/05/25/Literature-reading-notes/Morpheus-EMTDsWithChurn/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          《Morpheus:A Vulnerability-Tolerant Secure Architecture Based on EMTDs with Churn》阅读笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-05-25 16:28:21" itemprop="dateCreated datePublished" datetime="2020-05-25T16:28:21+08:00">2020-05-25</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:32:49" itemprop="dateModified" datetime="2020-08-14T17:32:49+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%96%87%E7%8C%AE%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">文献阅读笔记</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/05/25/Literature-reading-notes/Morpheus-EMTDsWithChurn/" class="post-meta-item leancloud_visitors" data-flag-title="《Morpheus:A Vulnerability-Tolerant Secure Architecture Based on EMTDs with Churn》阅读笔记" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/05/25/Literature-reading-notes/Morpheus-EMTDsWithChurn/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/05/25/Literature-reading-notes/Morpheus-EMTDsWithChurn/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>目前，主要安全措施都是通过检测异常行为，实现被动防御。<br>而本文主要针对控制流劫持，提出了一种 Morpheus 架构的主动防御机制，它结合移动目标防御将那些正常程序不需要而攻击需要的信息进行随机化和加密处理，以此提高攻击难度，让攻击者需要更多的时间完成 probe，同时，采用一种 churn 方式进一步打乱攻击者攻击节奏。</p>
+<a id="more"></a> 
+<p><a href="https://dl.acm.org/doi/10.1145/3297858.3304037" target="_blank" rel="noopener">《Morpheus：A Vulnerability-Tolerant Secure Architecture Based on Ensembles of Moving Target Defenses with Churn》</a></p>
+<h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>通过观察现有的许许多多的攻击例子，我们可以发现一个大致的规律：<strong>正常程序一般使用给定的程序级语义，但是恶意程序会严重依赖于未定义的语义去完成攻击</strong>。所以，可以说正是因为程序中这些未定义的语义，带来了很大的脆弱性！ </p>
+<ul>
+<li><strong>Undefined semantics</strong>：程序运行时，因底层实现的差异没有被明确定义的语义，比如：数据越界访问、未初始化变量、执行时间、架构共享（如：LLC）。程序员因为各种底层实现的不同，它们不会关注这些语义，但攻击者则会利用这些语义实现攻击。</li>
+</ul>
+<h1 id="主要原理"><a href="#主要原理" class="headerlink" title="主要原理"></a>主要原理</h1><p>针对这种脆弱性，作者就提出来 Morpheus 架构来主要防御针对控制流的攻击，它主要有两个特点：</p>
+<ol>
+<li>利用 <strong>EMTDs（ensembles of moving target defenses）</strong>，类似 ALSR 对关键性的程序数据进行<strong>随机化</strong>和<strong>加密</strong>；</li>
+<li>采取 <strong>churn 机制</strong>，在运行中对程序进行随机化处理；</li>
+</ol>
+<p>具体来说：以往，ASLR 是在程序运行时完成随机化处理，但是这种一次性的处理方式，攻击者在程序运行期间可以实现类似 AnC 的攻击来获取目标值。   </p>
+<p>对此 Morpheus 采用 EMTDs，提供了一个 504 位（熵）的随机地址空间，即随机化指针存储的位置，同时加密指针的内容。这样，攻击者就需要花费更多大量的时间和精力去 probe。<br>但这肯定还不够，于是又引入了 churn 机制，它最大的特点就是可以在程序运行期间再次进行随机化，它有两种触发方式：</p>
+<ol>
+<li>按初始化的周期，周期性发生（为了短于攻击者 probe 的时间，这个周期会在保证性能的情况下尽量短，文章选为 50ms）；</li>
+<li>被一些潜在的攻击（未定义语义）触发（因为这种时候程序往往正在被攻击，例如攻击者频繁的probe），这一点得益于<strong>攻击检测器</strong>，它有两种规则：「<strong>ABORT 规则</strong>」监视特别严重的操作（明确的攻击行为），并触发终止程序的异常；「<strong>CHURN 规则</strong>」检测到可能正利用未定义行为在进行攻击，针对这些违规行为，启动更改 churn cycle。（攻击检测器逻辑图如下）：<br><img src="http://img.thebetterkong.cn/blog/Morpheus-EMTDsWithChurn/AttackDetector.png" alt="AttackDetector"></li>
+</ol>
+<p>通过这两种方式来触发 churn，使得攻击者花费大量时间和精力去 probe 想要获取信息（还未获得）时，重新对关键值进行随机化和加密，于是攻击者只能重新开始攻击，但是下一次同样的情况仍会发生，最终攻击失败。这就是 Morpheus 架构的主要防御原理。见图：   </p>
+<p><img src="http://img.thebetterkong.cn/blog/Morpheus-EMTDsWithChurn/EMTDsChurn.png" alt="EMTDsChurn"></p>
+<h1 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h1><p><img src="http://img.thebetterkong.cn/blog/Morpheus-EMTDsWithChurn/MorpheusSecureArchitecture.png" alt="MorpheusSecureArchitecture"></p>
+<h2 id="Tag"><a href="#Tag" class="headerlink" title="Tag"></a>Tag</h2><p>EMTDs 依赖于域标记机制来精确跟踪运行时所有内存对象的域。</p>
+<p>基于 Morpheus LLVM 的编译器收到未修改的 C 源文件。 然后，在全局变量域分析，将静态初始化的数据部分中的每个内存对象标记为数据，代码指针或数据指针（使用 2 位域标记跟踪四个不同的域：代码(C)、代码指针(CP)、数据指针(DP)、其他数据(D)），之后，生成一个带标签的二进制文件和一个域标签文件，其中包含内存对象的初始标签。   </p>
+<p>对此，为体系结构也做出改变：所有寄存器都扩展 2 bit tags，并将 tag 附加到每个 64 位 aligned word；将 DRAM 和 cache 也搭配上 tag 域，其中，将标签集中到 DRAM 中的固定位置，以简化 churn 过程；所有 data cache blocks 都以每 64 位字扩展 2 位的方式扩展，以在每个缓存块中存储增加的域标签位。</p>
+<h2 id="EMTDs"><a href="#EMTDs" class="headerlink" title="EMTDs"></a>EMTDs</h2><h3 id="PART1：指针移位（Pointer-Displacement）"><a href="#PART1：指针移位（Pointer-Displacement）" class="headerlink" title="PART1：指针移位（Pointer Displacement）"></a>PART1：指针移位（Pointer Displacement）</h3><p><img src="http://img.thebetterkong.cn/blog/Morpheus-EMTDsWithChurn/PointerDisplacement.png" alt="PointerDisplacement"></p>
+<p>如图所示，就是在指针原来的位置上加上了一个 $d_{CODE}(DAS_C)$ 或 $d_{DATA}(DAS_D)$ 的偏移量，并且这个偏移量是随机产生的。</p>
+<h3 id="PART2：域加密（Domain-Encryption）"><a href="#PART2：域加密（Domain-Encryption）" class="headerlink" title="PART2：域加密（Domain Encryption）"></a>PART2：域加密（Domain Encryption）</h3><p><img src="http://img.thebetterkong.cn/blog/Morpheus-EMTDsWithChurn/DomainEncryption.png" alt="DomainEncryption"></p>
+<p>使用强密码（由域标记选择的它们自己的域密钥，分别对应 $K_C、K_{CP}、K_{DP}$，并且他们会在内存里受到保护）将内存中的代码，代码指针和数据指针的表示随机化。</p>
+<p>如图所示，当在 L1-L2 边界之间读取内存（加载或取指令）时，将对受保护域进行解密，并在 L1-L2 边界之间写入（存储）内存时对受保护域进行加密，从而使 L2 缓存和 DRAM 保持加密状态。</p>
+<p>由 tag 选择适当的密码密钥，密钥和物理地址通过密码进行组合，让包含相同值的内存位置不相关。对地址进行加密后，就可以使用反向模式的密码，在这种模式下，会生成密钥流，并与受保护的 value 进行 XOR 运算，以对其进行加密或解密。</p>
+<h2 id="Churn"><a href="#Churn" class="headerlink" title="Churn"></a>Churn</h2><p><img src="http://img.thebetterkong.cn/blog/Morpheus-EMTDsWithChurn/Churn.png" alt="Churn"></p>
+<p>在程序运行过程中，会周期性的经历 churn，每一次的 churn 又包含如下四个阶段：</p>
+<ol>
+<li>管道刷新；</li>
+<li>新密钥生成和寄存器更新；</li>
+<li>使用阈值寄存器来协调新位移和加密密钥下存储器中的更新值；</li>
+<li>churn 完成时，所有域都已更新，有效地处置了攻击者先前可能已获取的任何信息；</li>
+</ol>
+<p>总的来说，就是 churn 会周期性的更新加密用的域秘钥（$K_C、K_{CP}、K_{DP}$）和指针移位（$d_{CODE}$、$d_{DATA}$），但是更新后的这两项会与原先的旧值产生冲突，于是引入了一个<strong>阀值寄存器</strong>来协调，它将使用新 key 和 displacement 状态记为 “clean”，而旧值的记为 “stale”，以此进行区分。</p>
+<h1 id="效果"><a href="#效果" class="headerlink" title="效果"></a>效果</h1><p><img src="http://img.thebetterkong.cn/blog/Morpheus-EMTDsWithChurn/Effect.png" alt="Effect"></p>
+<ul>
+<li>可以防御表 4 所示的所有攻击，并且他们都能触发攻击感测器进一步提高了防御效果；</li>
+<li>在没有加入 Morpheus 防御机制的情况下，完成 probe 穿透所需的时间就已经是 churn cycle（50ms）的很多倍（5020），所以说，在加入了EMTDs 后，完全可以保证在攻击者彻底完成 probe 穿透前，触发 churn。</li>
+</ul>
+<h1 id="性能影响"><a href="#性能影响" class="headerlink" title="性能影响"></a>性能影响</h1><p><img src="http://img.thebetterkong.cn/blog/Morpheus-EMTDsWithChurn/Performance.png" alt="Performance"></p>
+<p>自古 「安全-性能」 就很难两全其美，前面看到了 Morpheus 在防御上的优势，那么这种机制对性能的影响也肯定是一个需要考量的因素。   </p>
+<p>文中提到，将 50ms 作为正常的 churn 周期，由图一可看到，平均情况下，它对处理器性能的影响只下降了 1% 左右，这是一个很好的结果。</p>
+<p>即使在 SPEC’06 基准测试的最坏情况下，由图二我们也能看出它仅仅只是在 403-gcc 这一项上造成了相对高的性能损耗，这也是我们能接受的范围。</p>
+<p>所以，总的来说就是，Morpheus 采用 EMTDs 和 churn 这两种机制，以较低的性能损耗大大提高了安全性。</p>
+<h1 id="不成熟的两个小想法"><a href="#不成熟的两个小想法" class="headerlink" title="不成熟的两个小想法"></a>不成熟的两个小想法</h1><ol>
+<li>文中并未具体谈论到 churn cycle 初始值（50ms）如何设置，攻击者似乎可以先攻击 churn cycle，人为修改它的值？</li>
+<li>攻击检测器的存在，会因为检测到攻击而触发 churn 或者直接中断程序，对此，如果攻击者起初的目标不是获取信息，那么他也可以利用这个性质不断地“伪造攻击”，进而不断触发攻击检测器，这样大大拖低处理器性能，甚至导致程序瘫痪。</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/05/25/Literature-reading-notes/Morpheus-EMTDsWithChurn/" title="《Morpheus:A Vulnerability-Tolerant Secure Architecture Based on EMTDs with Churn》阅读笔记">http://www.thebetterkong.cn/2020/05/25/Literature-reading-notes/Morpheus-EMTDsWithChurn/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Computer-Architecture/" rel="tag"><i class="fa fa-tag"></i> Computer Architecture</a>
+              <a href="/tags/ASLR/" rel="tag"><i class="fa fa-tag"></i> ASLR</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/05/22/Crawler/CrawlSEPBatchDownload/" rel="prev" title="利用爬虫实现课程网站资源的批量下载">
+      <i class="fa fa-chevron-left"></i> 利用爬虫实现课程网站资源的批量下载
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/05/30/Skills/ResolveCopyProhibition/" rel="next" title="干货分享 | 网页文档不让复制？带你一起破解网页限制">
+      干货分享 | 网页文档不让复制？带你一起破解网页限制 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#主要原理"><span class="nav-number">2.</span> <span class="nav-text">主要原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#具体实现"><span class="nav-number">3.</span> <span class="nav-text">具体实现</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Tag"><span class="nav-number">3.1.</span> <span class="nav-text">Tag</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#EMTDs"><span class="nav-number">3.2.</span> <span class="nav-text">EMTDs</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#PART1：指针移位（Pointer-Displacement）"><span class="nav-number">3.2.1.</span> <span class="nav-text">PART1：指针移位（Pointer Displacement）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PART2：域加密（Domain-Encryption）"><span class="nav-number">3.2.2.</span> <span class="nav-text">PART2：域加密（Domain Encryption）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Churn"><span class="nav-number">3.3.</span> <span class="nav-text">Churn</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#效果"><span class="nav-number">4.</span> <span class="nav-text">效果</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#性能影响"><span class="nav-number">5.</span> <span class="nav-text">性能影响</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#不成熟的两个小想法"><span class="nav-number">6.</span> <span class="nav-text">不成熟的两个小想法</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

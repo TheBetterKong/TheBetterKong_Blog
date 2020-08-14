@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="树（tree）是一种抽象数据类型（ADT）或是实现这种抽象数据类型的数据结构，用来模拟具有树状结构性质的数据集合。它是由 n （$n \geq 0$）个有限节点组成一个具有层次关系的集合。在任意一棵非空树中，它都满足如下特点：              有且仅有一个特定的称为根（Root）的结点；当 $n &gt;1$ 时，其余结点可分为 m（$m &gt;0$）个互不相交的有限集 $">
+<meta property="og:type" content="article">
+<meta property="og:title" content="java 数据结构之树">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/07/09/DataStructure-Algorithm/DataStructure-Tree/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="树（tree）是一种抽象数据类型（ADT）或是实现这种抽象数据类型的数据结构，用来模拟具有树状结构性质的数据集合。它是由 n （$n \geq 0$）个有限节点组成一个具有层次关系的集合。在任意一棵非空树中，它都满足如下特点：              有且仅有一个特定的称为根（Root）的结点；当 $n &gt;1$ 时，其余结点可分为 m（$m &gt;0$）个互不相交的有限集 $">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/header.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/TreeTerms.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/TreeCategory.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/TreeExpression.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/TreeImpleBaseArray.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/ParentsTree.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/ChildsTree.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/ChildLinkedTree.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/TreeLinkedList.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/BinaryTreeFiveStructure.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/SpecialFormBinaryTree.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/LRChild.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/TraverseBinaryTree.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/TreeToBinaryTree.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/BinaryTreeToTree.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/ClueBinaryTreeStruct.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/ForestToBinaryTree.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/BinaryTreeToForest.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/HuffmanWPL.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/HuffmanTreeBuild.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/HuffmanCode.png">
+<meta property="article:published_time" content="2020-07-09T14:05:23.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:28:31.984Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="DataStructure">
+<meta property="article:tag" content="java">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/header.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/07/09/DataStructure-Algorithm/DataStructure-Tree/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>java 数据结构之树 | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/07/09/DataStructure-Algorithm/DataStructure-Tree/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          java 数据结构之树
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-07-09 22:05:23" itemprop="dateCreated datePublished" datetime="2020-07-09T22:05:23+08:00">2020-07-09</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:28:31" itemprop="dateModified" datetime="2020-08-14T17:28:31+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/DataStructure-Algorithm/" itemprop="url" rel="index"><span itemprop="name">DataStructure & Algorithm</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/07/09/DataStructure-Algorithm/DataStructure-Tree/" class="post-meta-item leancloud_visitors" data-flag-title="java 数据结构之树" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/07/09/DataStructure-Algorithm/DataStructure-Tree/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/07/09/DataStructure-Algorithm/DataStructure-Tree/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <div align="center"> <img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/header.png" width="100%" alt="header.png" /> </div>  
+
+<p><strong>树</strong>（tree）是一种抽象数据类型（ADT）或是实现这种抽象数据类型的数据结构，用来模拟具有树状结构性质的数据集合。它是由 n （$n \geq 0$）个有限节点组成一个具有层次关系的集合。在任意一棵非空树中，它都满足如下特点：</p>
+<div class="note warning">
+            <ul><li>有且仅有一个特定的称为根（Root）的结点；</li><li>当 $n &gt;1$ 时，其余结点可分为 m（$m &gt;0$）个互不相交的有限集 $T_1,T_2,…,T_m$，其中每一个集合本身又是一棵树，并且称为根的子树（SubTree）；</li></ul>
+          </div>
+<a id="more"></a> 
+<h1 id="树"><a href="#树" class="headerlink" title="树"></a>树</h1><h2 id="Why-tree？"><a href="#Why-tree？" class="headerlink" title="Why tree？"></a>Why tree？</h2><p>我们知道两种十分常用的线性表：有序数组、链表。在实际使用中，它们都有着自己的优势与不足：</p>
+<ul>
+<li>在有序数组中插入数据项太慢：<ul>
+<li>数组的特点是查找迅速，根据 <code>index</code> 可以快速定位到一个元素。但是，如果要插入一个元素，就需要将这个元素位置之后的所有元素后移。平均来讲，一个长度为 $N$ 的有序数组，插入元素要移动的元素个数为 $N/2$。有序数组的插入和删除的时间复杂度为 $O(N)$，效率很低；</li>
+</ul>
+</li>
+<li>在链表中查找太慢：<ul>
+<li>链表的插入和删除效率就很高，只要改变一些值的引用就行了，时间复杂度为 $O(1)$。但是链表的查询效率却很低，每次都要从头开始找，依次访问链表的每个数据项。平均来说，要从一个有 $N$ 个元素的链表查询一个元素，要遍历 $N/2$ 个元素，时间复杂度为 $O(N)$；</li>
+</ul>
+</li>
+</ul>
+<p>而树的存在，就很好的权衡了这两种结构，它结合了数组和链表的优点，在实际中有十分广泛的应用领域。可以说生活中几乎无处不存在树，例如：家族族谱、企业用人结构、体育竞赛组织结构、HTML 的文档对象模型（DOM），特别是操作系统的文件目录组织结构你一定不可能不知道吧！</p>
+<h2 id="相关概念"><a href="#相关概念" class="headerlink" title="相关概念"></a>相关概念</h2><p><img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/TreeTerms.png" alt="TreeTerms">  </p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>解释</th>
+<th>例子</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>根结点</td>
+<td>树最顶层结点</td>
+<td>结点 A</td>
+</tr>
+<tr>
+<td>边</td>
+<td>两个结点之间的连接</td>
+<td>略</td>
+</tr>
+<tr>
+<td>父节点</td>
+<td>若一个节点含有子节点，则这个节点称为其子节点的父节点；</td>
+<td>H 的父结点为 F；</td>
+</tr>
+<tr>
+<td>子节点</td>
+<td>一个节点含有的子树的根节点称为该节点的子节点；</td>
+<td>C 的子节点为 F、G；</td>
+</tr>
+<tr>
+<td>兄弟节点</td>
+<td>具有相同父节点的节点互称为兄弟节点；</td>
+<td>I 的兄弟结点为 H、J；</td>
+</tr>
+<tr>
+<td>堂兄弟节点</td>
+<td>父节点在同一层的节点互为堂兄弟；</td>
+<td>结点 E 和 F 为堂兄弟结点；</td>
+</tr>
+<tr>
+<td>节点的祖先</td>
+<td>从根到该节点所经分支上的所有节点；</td>
+<td>F 的祖先为 C、A；</td>
+</tr>
+<tr>
+<td>子孙</td>
+<td>以某节点为根的子树中任一节点都称为该节点的子孙；</td>
+<td>F 的子孙为 H、I、J；</td>
+</tr>
+<tr>
+<td>节点的度</td>
+<td>一个节点含有的子树的个数称为该节点的度；</td>
+<td>结点 C 的度为 2；</td>
+</tr>
+<tr>
+<td>树的度</td>
+<td>一棵树中，最大的节点度称为树的度；</td>
+<td>上述树的度为 3；</td>
+</tr>
+<tr>
+<td>叶节点（终端节点）</td>
+<td>度为零的节点；</td>
+<td>D、E、G、H、I、J；</td>
+</tr>
+<tr>
+<td>分支节点（非终端节点）</td>
+<td>度不为零的节点；</td>
+<td>A、B、C、F；</td>
+</tr>
+<tr>
+<td>节点的层次</td>
+<td>从根开始定义起，根为第 0 层，根的子节点为第 1 层，以此类推；</td>
+<td>见图中标注；</td>
+</tr>
+<tr>
+<td>路径</td>
+<td>从某个节点依次到达另外一个节点所经过的所有节点，就是这两个节点之间的路径；</td>
+<td>结点 A 到结点 I 的路径为：A、C、F、I；</td>
+</tr>
+<tr>
+<td>深度</td>
+<td>对于任意节点 n，n 的深度为从根到 n 的唯一路径长（经过的结点个数），根的深度为 1；</td>
+<td>结点 F 的深度为 3；</td>
+</tr>
+<tr>
+<td>高度</td>
+<td>对于任意节点 n，n 的高度为从 n 到一片树叶的最长路径长（路径上结点个数的最大值），所有树叶的高度为 1；</td>
+<td>结点 F 的深度为 2；</td>
+</tr>
+<tr>
+<td>森林</td>
+<td>由 m（$m \geq 0$）棵互不相交的树的集合称为森林；</td>
+<td>见后面的讲解；</td>
+</tr>
+</tbody>
+</table>
+</div>
+<ul>
+<li>注意：有关高度、深度这两个概念，在不同的地方初始值的设定可能有所不同。有些地方习惯将根结点的深度定为 0，将叶结点的高度定为 0，我们没必要特别纠结于到底谁对谁错。关键还是得弄清高度和深度的含义。</li>
+</ul>
+<h2 id="树的分类"><a href="#树的分类" class="headerlink" title="树的分类"></a>树的分类</h2><p><img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/TreeCategory.png" alt="TreeCategory"></p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>解释</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>无序树（自由树）</td>
+<td>树中任意节点的子节点之间没有顺序关系；</td>
+<td></td>
+</tr>
+<tr>
+<td>有序树</td>
+<td>树中任意节点的子节点之间有顺序关系；</td>
+<td></td>
+</tr>
+<tr>
+<td>二叉树</td>
+<td>每个节点最多含有两个子树的树；</td>
+<td></td>
+</tr>
+<tr>
+<td>完全二叉树</td>
+<td>对于一颗二叉树，假设其深度为 d（d&gt;1）。除了第 d 层外，其它各层的节点数目均已达最大值，且第 d 层所有节点从左向右连续地紧密排列，这样的二叉树被称为完全二叉树；</td>
+<td>见本文二叉树部分；</td>
+</tr>
+<tr>
+<td>满二叉树</td>
+<td>所有叶节点都在最底层的完全二叉树；</td>
+<td>见本文二叉树部分；</td>
+</tr>
+<tr>
+<td>平衡二叉树（AVL 树）</td>
+<td>当且仅当任何节点的两棵子树的高度差不大于 1 的二叉树；</td>
+<td>参见：<a href="http://www.thebetterkong.cn/2020/06/15/DataStructure-Algorithm/SearchingAlgorithm/#more">查找算法（详解 + java 实现）</a>；</td>
+</tr>
+<tr>
+<td>排序二叉树（Binary Search Tree）</td>
+<td>也称二叉搜索树、有序二叉树、二叉查找树；</td>
+<td>也可参见上述文章；</td>
+</tr>
+<tr>
+<td>B 树</td>
+<td>一种对读写操作进行优化的自平衡的二叉查找树，能够保持数据有序，拥有多于两个子树；</td>
+<td>也可参见上述文章；</td>
+</tr>
+<tr>
+<td>霍夫曼树（最优二叉树）</td>
+<td>带权路径最短的二叉树；</td>
+<td>本文后面会详细介绍；</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="树的表示方法"><a href="#树的表示方法" class="headerlink" title="树的表示方法"></a>树的表示方法</h2><p>树的结构定义是一个基于递归的定义（即在树的定义中又用到树的概念），这道出了树的固有特性；   </p>
+<p>除去前面展示过的树形图外，树还有其他三种常用表示形式：</p>
+<ul>
+<li>以<strong>嵌套集合</strong>（即一些集合的集体，对于其中任何两个集合，或者不相交，或者一个包含另一个）的形式表示；</li>
+<li><strong>广义表</strong>的形式，根作为由子树森林组成的表的名字写在表的左边；</li>
+<li><strong>凹入法</strong>（类似书的目录）；</li>
+</ul>
+<p><img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/TreeExpression.png" alt="TreeExpression"></p>
+<h2 id="树的遍历"><a href="#树的遍历" class="headerlink" title="树的遍历"></a>树的遍历</h2><p>树的遍历有两种方法：</p>
+<ul>
+<li>先根（次序）遍历树：先访问树的根结点，然后依次先根遍历根的每棵子树；<ul>
+<li>上图的遍历结果为：<code>A B E K L F C G D H M I J</code></li>
+</ul>
+</li>
+<li>后根（次序）遍历树：先依次后根遍历每棵子树，然后访问根结点；<ul>
+<li>上图遍历结果为：<code>K L E F B G C M H I J D A</code></li>
+</ul>
+</li>
+</ul>
+<h2 id="树的抽象（ADT）及实现"><a href="#树的抽象（ADT）及实现" class="headerlink" title="树的抽象（ADT）及实现"></a>树的抽象（ADT）及实现</h2><p>树作为一个抽象的数据类型，它主要有基于数组、基于链表这两种实现方式；</p>
+<h3 id="基于数组实现"><a href="#基于数组实现" class="headerlink" title="基于数组实现"></a>基于数组实现</h3><p>使用数组实现，节点在数组中的位置对应于它在树中的位置:</p>
+<ul>
+<li>下标为 0 的节点是根，下标为 1 的节点是根的左子节点，依次类推，按从左到右的顺序存储树的每一层；</li>
+<li>树中的每个位置，无论是否存在节点，都对应数组中的一个位置。把节点插入树的一个位置， 意味着要在数组的相应位置插入一个数据项。树中没有节点的位置在数组中的对应位置用 0 或 null 来表示；</li>
+</ul>
+<p><img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/TreeImpleBaseArray.png" alt="TreeImpleBaseArray"></p>
+<p>在这种表示方式中，如果树是一棵二叉树（每个结点最多只有两个子节点），那么找节点的子节点和父节点就可以利用简单的算术计算它们在数组中的索引值：</p>
+<ul>
+<li>设节点索引值为 $index$，则节点的左子节点是：$2 \times index + 1$，它的右子节点是$2 \times index + 2$，它的父节点是 $\frac{index-1}{2}$；</li>
+</ul>
+<p>通过上述的定义，我们就能看出这种实现方式的优缺点如下：</p>
+<ul>
+<li>因为树中的每个位置都需要在数组中表示出来（不管该位置有无结点），这样树中空缺的结点或者被删除的结点都会在数组里留下 “空洞”，造成了内存浪费；</li>
+<li>如果树中某个结点被删除后，需要调整树的结构（移动子树），那么子树对应到数组的每个元素都需要移动位置，在大型的树结构中，这一操作将十分耗时；</li>
+<li>上述问题反映的也可以说是数组的劣势。当然了，如果某种树结构中不允许有删除操作，特别是在为结点动态分配空间比较耗时的情况下，这种实现方式也将很好的展现出它的优势；</li>
+</ul>
+<h3 id="基于链表实现"><a href="#基于链表实现" class="headerlink" title="基于链表实现"></a>基于链表实现</h3><h4 id="双亲表示法"><a href="#双亲表示法" class="headerlink" title="双亲表示法"></a>双亲表示法</h4><p>假设以一组<strong>连续空间</strong>存储树的结点，同时<strong>在每个结点中附设一个指示器指示其双亲结点在链表中的位置</strong>；</p>
+<p>该结构利用的是每个结点（除根节点外）只有唯一双亲的性质。示意图如下：<br><img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/ParentsTree.png" alt="ParentsTree"></p>
+<h4 id="孩子表示法"><a href="#孩子表示法" class="headerlink" title="孩子表示法"></a>孩子表示法</h4><p>树中每个结点可能有多棵子树，则可用多重链表，即每个结点有多个指针域，其中每个指针指向一棵子树的根结点，此时链表中的结点可以有以下两种结点格式：<br><img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/ChildsTree.png" alt="ChildsTree"></p>
+<ul>
+<li>第一种结构，多重链表中的结点时同构的，其中 d 为树的度。由于树中很多结点的度小于 d，因此链表中会有很多空链表，造成空间浪费；</li>
+<li>第二种结构，多重链表中的结点时不同构的，其中 $\overline{d}$ 是结点的度，degree 域的值同 $\overline{d}$。此时虽然节约存储空间，但操作不方便；</li>
+</ul>
+<p>还有一种办法：把每个结点的孩子结点排列起来，看成是一个线性表，且以单链表作存储结构（上面的树存储为如下形式）：<br><img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/ChildLinkedTree.png" alt="ChildLinkedTree"></p>
+<h4 id="孩子兄弟表示法"><a href="#孩子兄弟表示法" class="headerlink" title="孩子兄弟表示法"></a>孩子兄弟表示法</h4><p>基于链表实现时采用的是 <code>父亲-长子-弟弟</code> 模型来定义，结构示意图如下：<br><img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/TreeLinkedList.png" alt="TreeLinkedList"></p>
+<p>首先，定义树的接口：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> treelinkedlist;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@Author</span> TheBetterKong</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@Description</span> //TODO 树的接口</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@Date</span> 0:25 2020/7/11</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Tree</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> Object <span class="title">getElem</span><span class="params">()</span></span>;  <span class="comment">// 返回当前节点中存放的对象</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Object <span class="title">setElem</span><span class="params">(Object obj)</span></span>; <span class="comment">// 将当前结点的对象元素替换为 obj，并返回被替换的元素</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> TreeLinkedList <span class="title">getParent</span><span class="params">()</span></span>; <span class="comment">// 返回当前节点的父节点</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> TreeLinkedList <span class="title">getFirstChild</span><span class="params">()</span></span>;  <span class="comment">// 返回当前节点的长子（左孩子）</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> TreeLinkedList <span class="title">getNextSibling</span><span class="params">()</span></span>; <span class="comment">// 返回当前节点的最大弟弟</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getSize</span><span class="params">()</span></span>; <span class="comment">//返回当前节点后代元素的数目，即以当前节点为根的子树的规模（结点个数）</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getHeight</span><span class="params">()</span></span>;  <span class="comment">// 返回当前节点的高度</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getDepth</span><span class="params">()</span></span>; <span class="comment">// 返回当前节点的深度</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接口实现：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> treelinkedlist;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@Author</span> TheBetterKong</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@Description</span> //TODO 实现树接口</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@Date</span> 0:36 2020/7/11</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TreeLinkedList</span> <span class="keyword">implements</span> <span class="title">Tree</span></span>&#123;</span><br><span class="line">    <span class="keyword">private</span> Object element; <span class="comment">// 树根节点</span></span><br><span class="line">    <span class="keyword">private</span> TreeLinkedList parent, firstChild, nextSibling; <span class="comment">// 父节点、长子及最大的弟弟</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 构造方法</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">TreeLinkedList</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>(<span class="keyword">null</span>, <span class="keyword">null</span>, <span class="keyword">null</span>, <span class="keyword">null</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">TreeLinkedList</span><span class="params">(Object object, TreeLinkedList parent, TreeLinkedList firstChild, TreeLinkedList nextSibling)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.element = object;</span><br><span class="line">        <span class="keyword">this</span>.parent = parent;</span><br><span class="line">        <span class="keyword">this</span>.firstChild = firstChild;</span><br><span class="line">        <span class="keyword">this</span>.nextSibling = nextSibling;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 返回当前结点存放的对象元素</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Object <span class="title">getElem</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> element;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将当前结点的对象元素替换为 obj，并返回被替换的元素</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Object <span class="title">setElem</span><span class="params">(Object obj)</span> </span>&#123;</span><br><span class="line">        Object bak = element;</span><br><span class="line">        element = obj;</span><br><span class="line">        <span class="keyword">return</span> bak;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 返回当前节点的父节点</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> TreeLinkedList <span class="title">getParent</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> parent;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 返回当前节点的长子（左孩子）</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> TreeLinkedList <span class="title">getFirstChild</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> firstChild;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 返回当前节点的最大弟弟</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> TreeLinkedList <span class="title">getNextSibling</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> nextSibling;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 返回当前节点后代元素的数目，即以当前节点为根的子树的规模（结点个数）</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getSize</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> size = <span class="number">1</span>; <span class="comment">// 当前节点也是自己的后代</span></span><br><span class="line">        TreeLinkedList subtree = firstChild; <span class="comment">// 从长子开始</span></span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">null</span> != subtree) &#123;</span><br><span class="line">            size += subtree.getSize(); <span class="comment">// 累加</span></span><br><span class="line">            subtree = subtree.getNextSibling(); <span class="comment">// 所有孩子的后代数目</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> size; <span class="comment">// 得到当前节点的后代总数</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 返回当前节点的高度</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getHeight</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> height = <span class="number">0</span>;</span><br><span class="line">        TreeLinkedList subtree = firstChild; <span class="comment">// 从长子开始</span></span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">null</span> != subtree) &#123;</span><br><span class="line">            height = Math.max(height, subtree.getHeight()); <span class="comment">// 在所有孩子中取最大高度</span></span><br><span class="line">            subtree = subtree.getNextSibling();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> height + <span class="number">1</span>; <span class="comment">// 每往下一行高度加 1</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 返回当前节点的深度</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getDepth</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> depth = <span class="number">1</span>;</span><br><span class="line">        TreeLinkedList p = parent; <span class="comment">// 从父亲开始</span></span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">null</span> != p) &#123;</span><br><span class="line">            depth++;</span><br><span class="line">            p = p.getParent(); <span class="comment">// 访问各个真祖先</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> depth; <span class="comment">// 真祖先的数目，即为当前节点的深度</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="二叉树"><a href="#二叉树" class="headerlink" title="二叉树"></a>二叉树</h1><h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>二叉树（Binary Tree）是另一种树型结构，它的特点是每个结点至多只有两颗子树（即二叉树中不存在度大于 2 的结点），并且二叉树的子树有左右之分，其次序不能任意颠倒。 </p>
+<p>根据定义就能看出二叉树的 5 种基本形态如下：<br><img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/BinaryTreeFiveStructure.png" alt="BinaryTreeFiveStructure">   </p>
+<p>具有特殊形态的二叉树如下所示：<br><img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/SpecialFormBinaryTree.png" alt="SpecialFormBinaryTree"></p>
+<h2 id="二叉树的性质"><a href="#二叉树的性质" class="headerlink" title="二叉树的性质"></a>二叉树的性质</h2><p><strong>性质 1</strong>：二叉树的第 i 层上至多有 $2^{i-1}$ 个结点（$i \geq 1$）；</p>
+<ul>
+<li>证明：利用归纳法<ul>
+<li>当 $i = 1$ 时，只有一个根节点，显然成立；</li>
+<li>假设对所有的 $j$，$1 \leq j &lt; i$，命题成立，即第 $j$ 层上至多有 $2^{j-1}$ 个结点；</li>
+<li>由于二叉树每个结点的度至多为 2，则对于 $j+1$ 层来说：至多有 $2 \times 2^{j-1}=2^j$ 个结点，上述命题也成立；</li>
+<li>因此，命题为真；</li>
+</ul>
+</li>
+</ul>
+<p><strong>性质 2</strong>：深度为 k 的二叉树至多有 $2^k-1$ 个结点（$k \geq1$）；</p>
+<ul>
+<li>证明：由性质 1，深度为 k 的二叉树的最大节点数为：<script type="math/tex">\sum^k_{i=1}\ (第\ i\ 层上的最大结点数)=\sum^k_{i=1}\ 2^{i-1}=2^k-1</script></li>
+</ul>
+<p><strong>性质 3</strong>：对任何一棵二叉树 T，如果其终端节点数为 $n_0$，度为 2 的结点数为 $n_2$，则 $n_0=n_2+1$；</p>
+<ul>
+<li>证明：设 $n_1$ 为二叉树 T 中度为 1 的节点数，$n$ 为二叉树的总结点数，则：$n=n_0+n_1+n_2$；</li>
+<li>考察二叉树的分支数。除了根节点外，其余结点都有一个分支进入，设 $B$ 为分支总数，则 $n=B+1$；</li>
+<li>由于这些分支是由度为 1 或 2 的结点射出的，所以又有 $B=n_1+2\cdot n_2$；</li>
+<li>将上述表达式联合起来也就不难推出：$n_0=n_2+1$；</li>
+</ul>
+<p>由于完全二叉树在实际中的运用比较多，接下来的两条性质就是围绕完全二叉树展开：   </p>
+<p><strong>性质 4</strong>：具有 n 个结点的完全二叉树的深度为 $\lfloor log_2n \rfloor+1$；</p>
+<ul>
+<li>证明：假设深度为 k，则根据性质 2 和完全二叉树的定义有：<script type="math/tex">2^{k-1}-1 < n \leq 2^k-1\ 或\ 2^{k-1} \leq n < 2^k</script>，于是 $k-1 \leq log_2n &lt; k$，因为 k 是整数，所以 $k=\lfloor log_2n \rfloor+1$；</li>
+</ul>
+<p><strong>性质 5</strong>：如果对一棵有 n 个结点的完全二叉树（其深度为 $\lfloor log_2n \rfloor+1$）的结点按层序编号（从第 1 层到第 $\lfloor log_2n \rfloor+1$ 层，每层从左到右），则对任一结点 i（$1\leq i \leq n$），有：</p>
+<ol>
+<li>如果 $i=1$，则结点 i 是二叉树的根，无双亲；如果 $i&gt;1$，则其双亲 $PARENT(i)$ 是结点 $\lfloor i/2 \rfloor$；</li>
+<li>如果 $2i&gt;n$，则结点 i 无左孩子（结点 i 为叶子结点）；否则其左孩子 $LCHILD(I)$ 是结点 $2i$；</li>
+<li>如果 $2i+1&gt;n$，则结点 i 无右孩子；否则其右孩子 $RCHILD(i)$ 是结点 $2i+1$；</li>
+</ol>
+<ul>
+<li>证明：结论 1 可由结论 2 和 3 推导而出；<ul>
+<li>对于 $i=1$ 的情况，很好推出；</li>
+<li>对 $i&gt;1$ 分两种情况讨论：<ul>
+<li>设第 $j（1 \leq j \leq \lfloor log_2n \rfloor）$层的第一个结点的编号为 i（由前面性质易推出 $i=2^{j-1}$）：<ul>
+<li>则其左孩子必为第 $j+1$ 层的第一个结点，其编号为 $2^j=2(2^{j-1})=2i$，若 $2i&gt;n$，则无左孩子；</li>
+<li>其右孩子必为第 $j+1$ 层的第二个结点，其编号为 $2i+1$，若 $2i+1&gt;n$，则无右孩子；</li>
+</ul>
+</li>
+<li>假设第 $j(1 \leq j \leq \lfloor log_2n \rfloor)$ 层上某个结点的编号为 $i(2^{j-1} \leq i &lt; 2^j-1)$，且 $2i+1&lt;n$：则其左孩子为 $2i$，右孩子为 $2i+1$；<ul>
+<li>又编号为 $i+1$ 的结点是编号为 $i$ 的结点的右兄弟或者堂兄弟，若它有左孩子，则编号必为 $2i+2=2(i+1)$，若它有右孩子，则其编号必为 $2i+3=2(i+1)+1$;</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>文字描述比较抽象，可以参照具体的完全二叉树的图示：<br><img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/LRChild.png" alt="LRChild"></li>
+</ul>
+</li>
+</ul>
+<h2 id="二叉树的遍历"><a href="#二叉树的遍历" class="headerlink" title="二叉树的遍历"></a>二叉树的遍历</h2><p>假设用下面的图示来表示表达式：<code>a+b*(c-d)-e/f</code><br><img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/TraverseBinaryTree.png" alt="TraverseBinaryTree"></p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>先序遍历</th>
+<th>中序遍历</th>
+<th>后序遍历</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>定义</td>
+<td>先访问根结点，再访问左子树，再访问右子树；</td>
+<td>先访问左子树，再访问根结点，再访问右子树；</td>
+<td>先访问左子树，在访问右子树，再访问根结点；</td>
+</tr>
+<tr>
+<td>遍历结果</td>
+<td><code>-+a*b-cd/ef</code></td>
+<td><code>a+b*c-d-e/f</code></td>
+<td><code>abcd-*+ef/-</code></td>
+</tr>
+<tr>
+<td>表达式类型</td>
+<td>前缀表达式（波兰式）</td>
+<td>中缀表达式</td>
+<td>后缀表达式（逆波兰式）</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="树与二叉树的转换"><a href="#树与二叉树的转换" class="headerlink" title="树与二叉树的转换"></a>树与二叉树的转换</h2><p><strong>树转换为二叉树</strong>：</p>
+<ul>
+<li>加线：在所有的兄弟结点之间加线</li>
+<li>去线：对树中的每一个结点，只保留它与第一个结点的连线，删除与其他孩子结点之间的连线</li>
+<li>层次调整：调整成一颗二叉树（第一个孩子是二叉树的左孩子，兄弟转换过来是它的右孩子）</li>
+</ul>
+<p><img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/TreeToBinaryTree.png" alt="TreeToBinaryTree"></p>
+<p><strong>二叉树转换为树</strong>：就是树转换成二叉树的逆过程</p>
+<ul>
+<li>加线：若某结点的左孩子结点存在，则将左孩子的n个右孩子结点与此结点连接在一起</li>
+<li>去线：删除二叉树中所有结点与其右孩子之间的连线</li>
+<li>层次调整</li>
+</ul>
+<p><img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/BinaryTreeToTree.png" alt="BinaryTreeToTree"></p>
+<h2 id="java-实现"><a href="#java-实现" class="headerlink" title="java 实现"></a>java 实现</h2><p>这里只是给出一种实现示例，该数据结构使用十分广泛，实际运用时可根据需求进行调整，例如：《<a href="http://www.thebetterkong.cn/2020/06/15/DataStructure-Algorithm/SearchingAlgorithm/#more">查找算法（详解 + java 实现）</a>》 文章里的 『二叉搜索树』、『平衡二叉树』、 『B 树』等；</p>
+<details>
+  <summary><b>二叉树的 java 实现示例</b></summary> 
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br><span class="line">276</span><br><span class="line">277</span><br><span class="line">278</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> binarytree;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.util.Stack;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@Author</span> WWX</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@Modify</span> TheBetterKong</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@Description</span> //TODO 二叉树的链式存储结构</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@Date</span> 0:07 2020/7/12</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">BinaryTree</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 二叉树的节点数据结构</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="class"><span class="keyword">class</span>  <span class="title">TreeNode</span></span>&#123;</span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">int</span> key=<span class="number">0</span>; <span class="comment">// 序号</span></span><br><span class="line">        <span class="keyword">private</span> String data=<span class="keyword">null</span>; <span class="comment">// 值（数据域）</span></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">boolean</span> isVisted=<span class="keyword">false</span>; <span class="comment">// 用来判断结点是否被访问到</span></span><br><span class="line">        <span class="keyword">private</span> TreeNode leftChild=<span class="keyword">null</span>; <span class="comment">// 左儿子节点</span></span><br><span class="line">        <span class="keyword">private</span> TreeNode rightChild=<span class="keyword">null</span>; <span class="comment">// 右儿子节点</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 构造方法</span></span><br><span class="line">        <span class="comment">// 默认构造方法</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">TreeNode</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line">        <span class="comment">// 带参数构造方法</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">TreeNode</span><span class="params">(<span class="keyword">int</span> key,String data)</span></span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.key=key;</span><br><span class="line">            <span class="keyword">this</span>.data=data;</span><br><span class="line">            <span class="keyword">this</span>.leftChild=<span class="keyword">null</span>;</span><br><span class="line">            <span class="keyword">this</span>.rightChild=<span class="keyword">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> TreeNode root=<span class="keyword">null</span>;  <span class="comment">// 二叉树根节点</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 默认构造方法</span></span><br><span class="line"><span class="comment">     * 指定根节点</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">BinaryTree</span><span class="params">()</span></span>&#123;</span><br><span class="line">        root=<span class="keyword">new</span> TreeNode(<span class="number">1</span>,<span class="string">"rootNode(A)"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 手动创建一棵二叉树</span></span><br><span class="line"><span class="comment">     * &lt;pre&gt;</span></span><br><span class="line"><span class="comment">     *           A</span></span><br><span class="line"><span class="comment">     *     B          C</span></span><br><span class="line"><span class="comment">     *  D     E            F</span></span><br><span class="line"><span class="comment">     *  &lt;/pre&gt;</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">createBinTree</span><span class="params">(TreeNode root)</span></span>&#123;</span><br><span class="line">        TreeNode newNodeB = <span class="keyword">new</span> TreeNode(<span class="number">2</span>,<span class="string">"B"</span>);</span><br><span class="line">        TreeNode newNodeC = <span class="keyword">new</span> TreeNode(<span class="number">3</span>,<span class="string">"C"</span>);</span><br><span class="line">        TreeNode newNodeD = <span class="keyword">new</span> TreeNode(<span class="number">4</span>,<span class="string">"D"</span>);</span><br><span class="line">        TreeNode newNodeE = <span class="keyword">new</span> TreeNode(<span class="number">5</span>,<span class="string">"E"</span>);</span><br><span class="line">        TreeNode newNodeF = <span class="keyword">new</span> TreeNode(<span class="number">6</span>,<span class="string">"F"</span>);</span><br><span class="line"></span><br><span class="line">        newNodeC.rightChild = newNodeF;<span class="comment">//root.rightChild.rightChild=newNodeF;</span></span><br><span class="line">        newNodeB.leftChild = newNodeD;<span class="comment">//root.leftChild.leftChild=newNodeD;</span></span><br><span class="line">        newNodeB.rightChild = newNodeE;<span class="comment">//root.leftChild.rightChild=newNodeE;</span></span><br><span class="line"></span><br><span class="line">        root.leftChild = newNodeB;</span><br><span class="line">        root.rightChild = newNodeC;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 判断根节点是否为空</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">isEmpty</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> root == <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 树的高度</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">height</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> height(root);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 树的规模（树中结点个数）</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">size</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> size(root);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 计算二叉树某个节点的高度</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">int</span> <span class="title">height</span><span class="params">(TreeNode subTree)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(subTree == <span class="keyword">null</span>)</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span>;<span class="comment">//递归结束：空树高度为0</span></span><br><span class="line">        <span class="keyword">else</span>&#123;</span><br><span class="line">            <span class="keyword">int</span> i = height(subTree.leftChild);</span><br><span class="line">            <span class="keyword">int</span> j = height(subTree.rightChild);</span><br><span class="line">            <span class="keyword">return</span> (i &lt; j) ? (j + <span class="number">1</span>) : (i + <span class="number">1</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 以当前节点为根的子树的规模（结点个数）</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">int</span> <span class="title">size</span><span class="params">(TreeNode subTree)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(subTree == <span class="keyword">null</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="number">1</span> + size(subTree.leftChild) + size(subTree.rightChild);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 查找某结点的父结点</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> TreeNode <span class="title">parent</span><span class="params">(TreeNode element)</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> (root == <span class="keyword">null</span> || root == element) ? <span class="keyword">null</span> : parent(root, element);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 以 subTree 为根的树中，element 的父结点</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> TreeNode <span class="title">parent</span><span class="params">(TreeNode subTree,TreeNode element)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(subTree == <span class="keyword">null</span>)</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">        <span class="keyword">if</span>(subTree.leftChild == element || subTree.rightChild == element)</span><br><span class="line">            <span class="comment">//返回父结点地址</span></span><br><span class="line">            <span class="keyword">return</span> subTree;</span><br><span class="line">        TreeNode p;</span><br><span class="line">        <span class="comment">//现在左子树中找，如果左子树中没有找到，才到右子树去找</span></span><br><span class="line">        <span class="keyword">if</span>((p = parent(subTree.leftChild, element)) != <span class="keyword">null</span>)</span><br><span class="line">            <span class="comment">//递归在左子树中搜索</span></span><br><span class="line">            <span class="keyword">return</span> p;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">            <span class="comment">//递归在右子树中搜索</span></span><br><span class="line">            <span class="keyword">return</span> parent(subTree.rightChild, element);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 返回左孩子结点</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> TreeNode <span class="title">getLeftChildNode</span><span class="params">(TreeNode element)</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> (element != <span class="keyword">null</span>) ? element.leftChild : <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 返回右孩子结点</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> TreeNode <span class="title">getRightChildNode</span><span class="params">(TreeNode element)</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> (element != <span class="keyword">null</span>) ? element.rightChild : <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 返回根节点</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> TreeNode <span class="title">getRoot</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> root;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 删除根为 subTree 的子树</span></span><br><span class="line">    <span class="comment">//   在释放某个结点时，该结点的左右子树都已经释放，</span></span><br><span class="line">    <span class="comment">//   所以应该采用后续遍历，当访问某个结点时将该结点的存储空间释放</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">(TreeNode subTree)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(subTree != <span class="keyword">null</span>)&#123;</span><br><span class="line">            <span class="comment">//删除左子树</span></span><br><span class="line">            destroy(subTree.leftChild);</span><br><span class="line">            <span class="comment">//删除右子树</span></span><br><span class="line">            destroy(subTree.rightChild);</span><br><span class="line">            <span class="comment">//删除根结点</span></span><br><span class="line">            subTree=<span class="keyword">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 遍历二叉树</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">traverse</span><span class="params">(TreeNode subTree)</span></span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"key:"</span> + subTree.key + <span class="string">"--name:"</span> + subTree.data);;</span><br><span class="line">        traverse(subTree.leftChild);</span><br><span class="line">        traverse(subTree.rightChild);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//前序遍历</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">preOrder</span><span class="params">(TreeNode subTree)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(subTree != <span class="keyword">null</span>)&#123;</span><br><span class="line">            visted(subTree); <span class="comment">// 输出根节点</span></span><br><span class="line">            preOrder(subTree.leftChild); <span class="comment">// 递归遍历左子树</span></span><br><span class="line">            preOrder(subTree.rightChild); <span class="comment">// 递归遍历右子树</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//中序遍历</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">inOrder</span><span class="params">(TreeNode subTree)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(subTree != <span class="keyword">null</span>)&#123;</span><br><span class="line">            inOrder(subTree.leftChild);</span><br><span class="line">            visted(subTree);</span><br><span class="line">            inOrder(subTree.rightChild);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//后续遍历</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">postOrder</span><span class="params">(TreeNode subTree)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (subTree != <span class="keyword">null</span>) &#123;</span><br><span class="line">            postOrder(subTree.leftChild);</span><br><span class="line">            postOrder(subTree.rightChild);</span><br><span class="line">            visted(subTree);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//前序遍历的非递归实现</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">nonRecPreOrder</span><span class="params">(TreeNode p)</span></span>&#123;</span><br><span class="line">        Stack&lt;TreeNode&gt; stack=<span class="keyword">new</span> Stack&lt;TreeNode&gt;();</span><br><span class="line">        TreeNode node=p;</span><br><span class="line">        <span class="keyword">while</span>(node!=<span class="keyword">null</span>||stack.size()&gt;<span class="number">0</span>)&#123;</span><br><span class="line">            <span class="keyword">while</span>(node!=<span class="keyword">null</span>)&#123;</span><br><span class="line">                visted(node);</span><br><span class="line">                stack.push(node);</span><br><span class="line">                node=node.leftChild;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">while</span> (stack.size()&gt;<span class="number">0</span>)&#123;</span><br><span class="line">                node=stack.pop();</span><br><span class="line">                node=node.rightChild;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//中序遍历的非递归实现</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">nonRecInOrder</span><span class="params">(TreeNode p)</span></span>&#123;</span><br><span class="line">        Stack&lt;TreeNode&gt; stack =<span class="keyword">new</span> Stack&lt;BinaryTree.TreeNode&gt;();</span><br><span class="line">        TreeNode node =p;</span><br><span class="line">        <span class="keyword">while</span>(node!=<span class="keyword">null</span>||stack.size()&gt;<span class="number">0</span>)&#123;</span><br><span class="line">            <span class="comment">//存在左子树</span></span><br><span class="line">            <span class="keyword">while</span>(node!=<span class="keyword">null</span>)&#123;</span><br><span class="line">                stack.push(node);</span><br><span class="line">                node=node.leftChild;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">//栈非空</span></span><br><span class="line">            <span class="keyword">if</span>(stack.size()&gt;<span class="number">0</span>)&#123;</span><br><span class="line">                node=stack.pop();</span><br><span class="line">                visted(node);</span><br><span class="line">                node=node.rightChild;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//后序遍历的非递归实现</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">noRecPostOrder</span><span class="params">(TreeNode p)</span></span>&#123;</span><br><span class="line">        Stack&lt;TreeNode&gt; stack=<span class="keyword">new</span> Stack&lt;BinaryTree.TreeNode&gt;();</span><br><span class="line">        TreeNode node =p;</span><br><span class="line">        <span class="keyword">while</span>(p!=<span class="keyword">null</span>)&#123;</span><br><span class="line">            <span class="comment">//左子树入栈</span></span><br><span class="line">            <span class="keyword">for</span>(;p.leftChild!=<span class="keyword">null</span>;p=p.leftChild)&#123;</span><br><span class="line">                stack.push(p);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">//当前结点无右子树或右子树已经输出</span></span><br><span class="line">            <span class="keyword">while</span>(p!=<span class="keyword">null</span>&amp;&amp;(p.rightChild==<span class="keyword">null</span>||p.rightChild==node))&#123;</span><br><span class="line">                visted(p);</span><br><span class="line">                <span class="comment">//纪录上一个已输出结点</span></span><br><span class="line">                node =p;</span><br><span class="line">                <span class="keyword">if</span>(stack.empty())</span><br><span class="line">                    <span class="keyword">return</span>;</span><br><span class="line">                p=stack.pop();</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">//处理右子树</span></span><br><span class="line">            stack.push(p);</span><br><span class="line">            p=p.rightChild;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 被访问到就输出</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">visted</span><span class="params">(TreeNode subTree)</span></span>&#123;</span><br><span class="line">        subTree.isVisted=<span class="keyword">true</span>;</span><br><span class="line">        System.out.println(<span class="string">"key:"</span>+subTree.key+<span class="string">"--name:"</span>+subTree.data);;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//测试</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        BinaryTree bt = <span class="keyword">new</span> BinaryTree();</span><br><span class="line">        bt.createBinTree(bt.root);</span><br><span class="line">        System.out.println(<span class="string">"the size of the tree is "</span> + bt.size());</span><br><span class="line">        System.out.println(<span class="string">"the height of the tree is "</span> + bt.height());</span><br><span class="line"></span><br><span class="line">        System.out.println(<span class="string">"*******(前序遍历)[ABDECF]遍历*****************"</span>);</span><br><span class="line">        bt.preOrder(bt.root);</span><br><span class="line"></span><br><span class="line">        System.out.println(<span class="string">"*******(中序遍历)[DBEACF]遍历*****************"</span>);</span><br><span class="line">        bt.inOrder(bt.root);</span><br><span class="line"></span><br><span class="line">        System.out.println(<span class="string">"*******(后序遍历)[DEBFCA]遍历*****************"</span>);</span><br><span class="line">        bt.postOrder(bt.root);</span><br><span class="line"></span><br><span class="line">        System.out.println(<span class="string">"***非递归实现****(前序遍历)[ABDECF]遍历*****************"</span>);</span><br><span class="line">        bt.nonRecPreOrder(bt.root);</span><br><span class="line"></span><br><span class="line">        System.out.println(<span class="string">"***非递归实现****(中序遍历)[DBEACF]遍历*****************"</span>);</span><br><span class="line">        bt.nonRecInOrder(bt.root);</span><br><span class="line"></span><br><span class="line">        System.out.println(<span class="string">"***非递归实现****(后序遍历)[DEBFCA]遍历*****************"</span>);</span><br><span class="line">        bt.noRecPostOrder(bt.root);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+</details>
+
+<h2 id="线索二叉树"><a href="#线索二叉树" class="headerlink" title="线索二叉树"></a>线索二叉树</h2><p>线索二叉树是在二叉树的基础上新增了下列规则：</p>
+<ul>
+<li>若结点有左子树，则其 lchild 域指示其左孩子，否则令 lchild 域指示其前驱；</li>
+<li>若结点有右子树，则其 rchild 域指示其右孩子，否则令 rchild 域指示其后继；</li>
+</ul>
+<p>为了避免混淆，尚需改变结点结构，增加两个标志域：<br><img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/ClueBinaryTreeStruct.png" alt="ClueBinaryTreeStruct">   </p>
+<p>由定义的结构，我们知道线索二叉树也应该分为：前序线索树、中序线索树、后序线索树。这其中在后序线索树中找结点后继较复杂，以其为例，分为 3 种情况考虑：</p>
+<ul>
+<li>若结点 x 是二叉树的根，则其后继为空；</li>
+<li>若结点 x 是其双亲的右孩子，或是其双亲的左孩子且其双亲没有右子树，则其后继即为双亲结点；</li>
+<li>若结点 x 是其双亲的左孩子，且其双亲有右子树，则其后继为双亲的右子树上按后序遍历列出的第一个结点；</li>
+</ul>
+<p>若在某程序中所用二叉树需经常遍历或查找结点在遍历所得线性序列中的前驱和后继，则应采用线索链表作为存储结构；</p>
+<h1 id="森林"><a href="#森林" class="headerlink" title="森林"></a>森林</h1><p>前面已经说过，森林是 $m（m \geq 0）$棵互不相交的树的集合；   </p>
+<p><strong>将森林转换为二叉树</strong>：</p>
+<ul>
+<li>转换：把每一棵树转换成二叉树</li>
+<li>连线：第一棵二叉树不变，从第二棵二叉树开始，依次将后一棵二叉树的根节点作为前一棵二叉树根节点的右孩子，用线连起来</li>
+</ul>
+<p><img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/ForestToBinaryTree.png" alt="ForestToBinaryTree"></p>
+<p><strong>二叉树转换为森林</strong>：</p>
+<ul>
+<li>判断二叉树转换成森林还是树：二叉树的根节点是否有右孩子，若有是森林，否则是树</li>
+<li>从根节点开始，若有右孩子，则把与右孩子结点的连线删除，再看分离后的二叉树，若还有右孩子连线继续删除，则到没有为止</li>
+<li>将分离的二叉树转换成树</li>
+</ul>
+<p><img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/BinaryTreeToForest.png" alt="BinaryTreeToForest"></p>
+<p><strong>森林的遍历</strong>：</p>
+<ul>
+<li>先序遍历：<ul>
+<li>若森林非空，则按如下规则遍历：<ul>
+<li>访问森林中第一棵树的根结点；</li>
+<li>先序遍历第一棵树中根结点的子树森林；</li>
+<li>先序遍历除去第一棵树之后剩余的树构成的森林；</li>
+</ul>
+</li>
+<li>上述森林的遍历结果：<code>A B C D E F G H J I</code></li>
+</ul>
+</li>
+<li>中序遍历：<ul>
+<li>若森林非空，则按如下规则遍历：<ul>
+<li>中序遍历森林中第一棵树的根结点的子树森林；</li>
+<li>访问第一棵树的根结点；</li>
+<li>中序遍历除去第一棵树之后剩余的树构成的森林；</li>
+</ul>
+</li>
+<li>上述森林的遍历结果：<code>B C D A F E J H I G</code></li>
+</ul>
+</li>
+</ul>
+<h1 id="哈夫曼（Huffman）树"><a href="#哈夫曼（Huffman）树" class="headerlink" title="哈夫曼（Huffman）树"></a>哈夫曼（Huffman）树</h1><p>哈（赫）夫曼树又称最优树，它是 n 个带权叶子结点构成的所有二叉树中，带权路径长度最小的二叉树；</p>
+<h2 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h2><p><strong>路径与路径长</strong>：</p>
+<ul>
+<li><strong>路径</strong>：从树中的一个结点到另一个结点之间的分支构成的部分，而分支（边）的数目就是<strong>路径长度</strong>；</li>
+<li><strong>树的路径长度</strong>：就是从树根到每一结点的路径长度之和；</li>
+</ul>
+<p><strong>考虑带权的结点</strong>：</p>
+<ul>
+<li><strong>结点的带权路径长度</strong>：从该结点到树根之间的路径长度与结点上权的乘积；</li>
+<li><strong>树的带权路径长度 WPL</strong>（weighted path length）：树中所有叶子结点的带权路径长度之和；<ul>
+<li>假设一个有 $n$ 个带权叶子结点的二叉树，其权值为 $\{w_1,w_2,….w_n\}$，每个叶子结点带权 $w_k$，每个叶子的路径长度为 $l_k$，则从根结点到各个叶子结点的路径长度与相应的权值的乘积之和叫做<strong>二叉树的带权路径长度</strong>，通常记作：<script type="math/tex">WPL = \sum^n_{k=1}\ w_kl_k</script></li>
+<li>示例：<br><img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/HuffmanWPL.png" alt="HuffmanWPL"></li>
+</ul>
+</li>
+</ul>
+<p>观察上述示例，（b）所示的二叉树的 WPL 最小，为哈夫曼树（最优树）；</p>
+<ul>
+<li>注意：由相同权值的一组叶子结点所构成的二叉树有不同的形态和不同的带权路径。在由 n 个带权叶子结点所构成的二叉树中，满二叉树或完全二叉树不一定是最优二叉树。<strong>权值越大的结点离根结点越近的二叉树才是最优二叉树</strong>；</li>
+</ul>
+<h2 id="哈夫曼算法"><a href="#哈夫曼算法" class="headerlink" title="哈夫曼算法"></a>哈夫曼算法</h2><p>哈夫曼算法是用来构造二叉树的，其描述如下：</p>
+<ul>
+<li>根据给定的 $n$ 个叶子结点的权值 $\{w_1,w_2,….w_n\}$ 构成 $n$ 棵二叉树的集合 $F=\{T_1,T_2,…T_n\}$，其中每棵二叉树 $T_i$ 中只有一个带权为 $w_i$的根结点，其左右子树均为空;</li>
+<li>在 $F$ 中选取两棵根结点的权值最小的树作为左右子树构造一棵新的二叉树，且置新的二叉树的根结点的权值为左右子树上根结点的权值之和；</li>
+<li>在 $F$ 中删除这两棵树，同时将新得到的二叉树加入 $F$ 中；</li>
+<li>重复步骤 2、3，直到 $F$ 只含一棵树为止。这棵树便是哈夫曼树；</li>
+</ul>
+<p>示例如下：<br><img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/HuffmanTreeBuild.png" alt="HuffmanTreeBuild"></p>
+<h2 id="应用：哈夫曼编码"><a href="#应用：哈夫曼编码" class="headerlink" title="应用：哈夫曼编码"></a>应用：哈夫曼编码</h2><p>在数字通信中，经常需要将传送的文字转换成由二进制字符 <code>0、1</code> 组成的二进制串，这一过程被称为<strong>编码</strong>。在传送电文时，总是希望电文代码尽可能短，采用哈夫曼编码构造的电文的总长最短。</p>
+<ul>
+<li>从根节点出发，每个父节点都会有分支，现在给左右分支各赋予一个数值，左分支表示 <code>0</code>，右分支表示 <code>1</code>；</li>
+<li>当从根节点一直数到叶子结点过程中所经历的左右分支以 <code>0</code>、<code>1</code> 表示时，每个叶子结点会形成一个特定的编码，这个就是哈夫曼编码。如图所示：<br><img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/HuffmanCode.png" alt="HuffmanCode"></li>
+</ul>
+<div class="note warning">
+            <p>来自：<a href="https://blog.csdn.net/qq_34975710/article/details/78563461" target="_blank" rel="noopener">本段来源</a><br>在电文传输中，需要将电文中出现的每个字符进行二进制编码。在设计编码时需要遵守两个原则：</p><ul><li>发送方传输的二进制编码，到接收方解码后必须具有唯一性，即解码结果与发送方发送的电文完全一样；</li><li>发送的二进制编码尽可能地短;</li></ul><p>下面我们介绍两种编码的方式。</p><ol><li><p>等长编码：</p><ul><li>这种编码方式的特点是每个字符的编码长度相同（编码长度就是每个编码所含的二进制位数）；</li><li>假设字符集只含有 4 个字符 A，B，C，D，用二进制两位表示的编码分别为 00，01，10，11。若现在有一段电文为：ABACCDA，则应发送二进制序列：00010010101100，总长度为 14 位。当接收方接收到这段电文后，将按两位一段进行译码。</li><li>这种编码的特点是译码简单且具有唯一性，但编码长度并不是最短的。</li></ul></li><li><p>不等长编码：</p><ul><li>在传送电文时，为了使其二进制位数尽可能地少，可以将每个字符的编码设计为不等长的，使用频度较高的字符分配一个相对比较短的编码，使用频度较低的字符分配一个比较长的编；</li><li>例如，可以为 A，B，C，D 四个字符分别分配 0，00，1，01，并可将上述电文用二进制序列：000011010 发送，其长度只有 9 个二进制位，但随之带来了一个问题，接收方接到这段电文后无法进行译码，因为无法断定前面 4 个 0 是 4 个 A，1 个 B、2 个 A，还是 2 个 B，即译码不唯一，因此这种编码方法不可使用。</li><li>因此，为了设计长短不等的编码，以便减少电文的总长，还必须考虑编码的唯一性，即（<strong>前缀编码</strong>）在建立不等长编码时必须使任何一个字符的编码都不是另一个字符的前缀。<strong>这个问题可以采用哈夫曼编码解决</strong>。</li></ul></li></ol>
+          </div>
+<h3 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h3><p>将一个字符串中出现的字符生成其对应的哈夫曼编码，分为以下几步：</p>
+<ol>
+<li>统计出现的字符及频率；</li>
+<li>将各个字符创建为叶子结点，频率为结点的权值，用链表保存这些叶子结点；</li>
+<li>将结点队列中的结点按权值升序排列；</li>
+<li>取出权值最小的两个结点构建父节点（要从链表中删除取出的结点），将新生成的父节点添加到结点链表，并从新排序；</li>
+<li>重复（4）步骤，直到只剩下一个结点；</li>
+<li>返回最后的结点，即为哈夫曼树的根节点；</li>
+</ol>
+<details>
+  <summary><b>哈夫曼树的 java 实现</b></summary> 
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br><span class="line">276</span><br><span class="line">277</span><br><span class="line">278</span><br><span class="line">279</span><br><span class="line">280</span><br><span class="line">281</span><br><span class="line">282</span><br><span class="line">283</span><br><span class="line">284</span><br><span class="line">285</span><br><span class="line">286</span><br><span class="line">287</span><br><span class="line">288</span><br><span class="line">289</span><br><span class="line">290</span><br><span class="line">291</span><br><span class="line">292</span><br><span class="line">293</span><br><span class="line">294</span><br><span class="line">295</span><br><span class="line">296</span><br><span class="line">297</span><br><span class="line">298</span><br><span class="line">299</span><br><span class="line">300</span><br><span class="line">301</span><br><span class="line">302</span><br><span class="line">303</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> huffmantree;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.util.LinkedList;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@Author</span> LiRui</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@Modify</span> TheBetterKong</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@Description</span> //TODO 哈夫曼树的实现</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@Date</span> 23:47 2020/7/12</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">HuffmanTree</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 哈夫曼树的结点类</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">HNode</span> </span>&#123;</span><br><span class="line">        <span class="keyword">public</span> String code = <span class="string">""</span>; <span class="comment">// 节点的哈夫曼编码</span></span><br><span class="line">        <span class="keyword">public</span> String data = <span class="string">""</span>; <span class="comment">// 节点的数据</span></span><br><span class="line">        <span class="keyword">public</span> <span class="keyword">int</span> count;        <span class="comment">// 节点的权值</span></span><br><span class="line">        <span class="keyword">public</span> HNode lChild;     <span class="comment">// 左孩子</span></span><br><span class="line">        <span class="keyword">public</span> HNode rChild;     <span class="comment">// 右孩子</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 构造方法</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">HNode</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">HNode</span><span class="params">(String data, <span class="keyword">int</span> count)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.data = data;</span><br><span class="line">            <span class="keyword">this</span>.count = count;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">HNode</span><span class="params">(<span class="keyword">int</span> count, HNode lChild, HNode rChild)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.count = count;</span><br><span class="line">            <span class="keyword">this</span>.lChild = lChild;</span><br><span class="line">            <span class="keyword">this</span>.rChild = rChild;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">HNode</span><span class="params">(String data, <span class="keyword">int</span> count, HNode lChild, HNode rChild)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.data = data;</span><br><span class="line">            <span class="keyword">this</span>.count = count;</span><br><span class="line">            <span class="keyword">this</span>.lChild = lChild;</span><br><span class="line">            <span class="keyword">this</span>.rChild = rChild;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 哈夫曼树部分</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">private</span> String str;                     <span class="comment">// 最初用于压缩的字符串</span></span><br><span class="line">    <span class="keyword">private</span> HNode root;                     <span class="comment">// 哈夫曼二叉树的根节点</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">boolean</span> flag;                   <span class="comment">// 最新的字符是否已经存在的标签</span></span><br><span class="line">    <span class="keyword">private</span> LinkedList&lt;CharData&gt; charList;  <span class="comment">// 存储不同字符的队列 相同字符存在同一位置</span></span><br><span class="line">    <span class="keyword">private</span> LinkedList&lt;HNode&gt; NodeList;     <span class="comment">// 存储节点的队列</span></span><br><span class="line">    <span class="comment">// 字符类</span></span><br><span class="line">    <span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">CharData</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> num = <span class="number">1</span>; <span class="comment">// 字符个数</span></span><br><span class="line">        <span class="keyword">char</span> c; <span class="comment">// 字符</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">CharData</span><span class="params">(<span class="keyword">char</span> ch)</span></span>&#123;</span><br><span class="line">            c = ch;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 构建哈夫曼树</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> str 最初用于压缩的字符串</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">creatHfmTree</span><span class="params">(String str)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.str = str;</span><br><span class="line"></span><br><span class="line">        NodeList = <span class="keyword">new</span> LinkedList&lt;HNode&gt;();</span><br><span class="line">        charList = <span class="keyword">new</span> LinkedList&lt;CharData&gt;();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 1.统计字符串中字符以及字符的出现次数</span></span><br><span class="line">        <span class="comment">// 以CharData类来统计出现的字符和个数</span></span><br><span class="line">        getCharNum(str);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 2.根据第一步的结构，创建节点</span></span><br><span class="line">        creatNodes();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 3.对节点权值升序排序</span></span><br><span class="line">        Sort(NodeList);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 4.取出权值最小的两个节点，生成一个新的父节点</span></span><br><span class="line">        <span class="comment">// 5.删除权值最小的两个节点，将父节点存放到列表中</span></span><br><span class="line">        creatTree();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 6.重复第四五步，就是那个while循环</span></span><br><span class="line">        <span class="comment">// 7.将最后的一个节点赋给根节点</span></span><br><span class="line">        root = NodeList.get(<span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/***********************以下是构造哈夫曼树的子方法实现*************************/</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 统计出现的字符及其频率</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> str 最初用于压缩的字符串</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">getCharNum</span><span class="params">(String str)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; str.length(); i++) &#123;</span><br><span class="line">            <span class="keyword">char</span> ch = str.charAt(i); <span class="comment">// 从给定的字符串中取出字符</span></span><br><span class="line">            flag = <span class="keyword">true</span>;</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; charList.size(); j++) &#123; <span class="comment">// charList中存放的是已经识别出来的字符</span></span><br><span class="line">                CharData data = charList.get(j);</span><br><span class="line">                <span class="keyword">if</span>(ch == data.c)&#123; <span class="comment">// 字符对象链表中有相同字符则将个数加1</span></span><br><span class="line">                    data.num++;</span><br><span class="line">                    flag = <span class="keyword">false</span>;  <span class="comment">// 标志该字符已被识别出来不再加入 charList</span></span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span>(flag)&#123;</span><br><span class="line">                charList.add(<span class="keyword">new</span> CharData(ch)); <span class="comment">// 字符对象链表中没有相同字符,则创建新对象加如链表</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 将出现的字符创建成哈夫曼树单个的结点对象</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">creatNodes</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; charList.size(); i++) &#123;</span><br><span class="line">            String data = charList.get(i).c + <span class="string">""</span>;</span><br><span class="line">            <span class="keyword">int</span> count = charList.get(i).num;</span><br><span class="line">            HNode node = <span class="keyword">new</span> HNode(data, count); <span class="comment">// 创建节点对象</span></span><br><span class="line">            NodeList.add(node); <span class="comment">// 加入到节点链表</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 构建哈夫曼树</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">creatTree</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">while</span> (NodeList.size() &gt; <span class="number">1</span>) &#123;    <span class="comment">// 当节点数目大于一时</span></span><br><span class="line">            <span class="comment">// 4.取出权值最小的两个节点，生成一个新的父节点</span></span><br><span class="line">            <span class="comment">// 5.删除权值最小的两个节点，将父节点存放到列表中</span></span><br><span class="line">            HNode left = NodeList.poll();</span><br><span class="line">            HNode right = NodeList.poll();</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 在构建哈夫曼树时设置各个结点的哈夫曼编码</span></span><br><span class="line">            left.code = <span class="string">"0"</span>;  <span class="comment">// 左节点为 1</span></span><br><span class="line">            right.code = <span class="string">"1"</span>; <span class="comment">// 右节点为 0</span></span><br><span class="line">            setCode(left);</span><br><span class="line">            setCode(right);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">int</span> parentWeight = left.count + right.count; <span class="comment">// 父节点权值等于子节点权值之和</span></span><br><span class="line">            HNode parent = <span class="keyword">new</span> HNode(parentWeight, left, right);</span><br><span class="line">            NodeList.addFirst(parent); <span class="comment">// 将父节点置于首位</span></span><br><span class="line">            Sort(NodeList); <span class="comment">// 重新排序，避免新节点权值大于链表首个结点的权值</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 升序排序</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> nodelist</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">Sort</span><span class="params">(LinkedList&lt;HNode&gt; nodelist)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; nodelist.size() - <span class="number">1</span>; i++) &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> j = i + <span class="number">1</span>; j &lt; nodelist.size(); j++) &#123;</span><br><span class="line">                HNode temp;</span><br><span class="line">                <span class="keyword">if</span> (nodelist.get(i).count &gt; nodelist.get(j).count) &#123;</span><br><span class="line">                    temp = nodelist.get(i);</span><br><span class="line">                    nodelist.set(i, nodelist.get(j));</span><br><span class="line">                    nodelist.set(j, temp);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 设置结点的哈夫曼编码</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> root</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">setCode</span><span class="params">(HNode root)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (root.lChild != <span class="keyword">null</span>) &#123;</span><br><span class="line">            root.lChild.code = root.code + <span class="string">"0"</span>;</span><br><span class="line">            setCode(root.lChild);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (root.rChild != <span class="keyword">null</span>) &#123;</span><br><span class="line">            root.rChild.code = root.code + <span class="string">"1"</span>;</span><br><span class="line">            setCode(root.rChild);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 遍历</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> node</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">output</span><span class="params">(HNode node)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (node.lChild == <span class="keyword">null</span> &amp;&amp; node.rChild == <span class="keyword">null</span>) &#123;</span><br><span class="line">            System.out.println(node.data + <span class="string">": "</span> + node.code);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (node.lChild != <span class="keyword">null</span>) &#123;</span><br><span class="line">            output(node.lChild);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (node.rChild != <span class="keyword">null</span>) &#123;</span><br><span class="line">            output(node.rChild);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 输出结果字符的哈夫曼编码</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">output</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        output(root);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">/***********************以下是编解码的实现*************************/</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> String hfmCodeStr = <span class="string">""</span>;<span class="comment">// 哈夫曼编码连接成的字符串</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 编码</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">toHufmCode</span><span class="params">(String str)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; str.length(); i++) &#123;</span><br><span class="line">            String c = str.charAt(i) + <span class="string">""</span>;</span><br><span class="line">            search(root, c);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> hfmCodeStr;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 在哈夫曼树里查找字符对应的结点（递归）</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> root 哈夫曼树根节点</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> c 需要生成编码的字符</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">search</span><span class="params">(HNode root, String c)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (root.lChild == <span class="keyword">null</span> &amp;&amp; root.rChild == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (c.equals(root.data)) &#123;</span><br><span class="line">                hfmCodeStr += root.code; <span class="comment">// 找到字符，将其哈夫曼编码拼接到最终返回二进制字符串的后面</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (root.lChild != <span class="keyword">null</span>) &#123;</span><br><span class="line">            search(root.lChild, c);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (root.rChild != <span class="keyword">null</span>) &#123;</span><br><span class="line">            search(root.rChild, c);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 保存解码的字符串</span></span><br><span class="line">    String result=<span class="string">""</span>; <span class="comment">// 初始为空串</span></span><br><span class="line">    <span class="keyword">boolean</span> target = <span class="keyword">false</span>; <span class="comment">// 解码标记</span></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 解码</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> codeStr</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">CodeToString</span><span class="params">(String codeStr)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> start = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span> end = <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">while</span>(end &lt;= codeStr.length())&#123;</span><br><span class="line">            target = <span class="keyword">false</span>;</span><br><span class="line">            String s = codeStr.substring(start, end);</span><br><span class="line">            matchCode(root, s); <span class="comment">// 解码</span></span><br><span class="line">            <span class="comment">// 每解码一个字符，start向后移</span></span><br><span class="line">            <span class="keyword">if</span>(target)&#123;</span><br><span class="line">                start = end;</span><br><span class="line">            &#125;</span><br><span class="line">            end++;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 匹配字符哈夫曼编码，找到对应的字符</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> root 哈夫曼树根节点</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> code 需要解码的二进制字符串</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">matchCode</span><span class="params">(HNode root, String code)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (root.lChild == <span class="keyword">null</span> &amp;&amp; root.rChild == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (code.equals(root.code)) &#123;</span><br><span class="line">                result += root.data; <span class="comment">// 找到对应的字符，拼接到解码字符穿后</span></span><br><span class="line">                target = <span class="keyword">true</span>; <span class="comment">// 标志置为true</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (root.lChild != <span class="keyword">null</span>) &#123;</span><br><span class="line">            matchCode(root.lChild, code);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (root.rChild != <span class="keyword">null</span>) &#123;</span><br><span class="line">            matchCode(root.rChild, code);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        HuffmanTree huff = <span class="keyword">new</span> HuffmanTree();<span class="comment">// 创建哈弗曼对象</span></span><br><span class="line">        String data = <span class="string">"我喜欢用 java 实现哈夫曼编码"</span>;</span><br><span class="line">        </span><br><span class="line">        huff.creatHfmTree(data);<span class="comment">// 构造树</span></span><br><span class="line"></span><br><span class="line">        huff.output(); <span class="comment">// 显示各个字符的哈夫曼编码</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 将目标字符串利用生成好的哈夫曼编码生成对应的二进制编码</span></span><br><span class="line">        String hufmCode = huff.toHufmCode(data);</span><br><span class="line">        System.out.println(<span class="string">"编码:"</span> + hufmCode);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 将上述二进制编码再翻译成字符串</span></span><br><span class="line">        System.out.println(<span class="string">"解码："</span> + huff.CodeToString(hufmCode));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+</details>
+
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><ul>
+<li>《数据结构（c语言版）》—-严蔚敏、吴伟民 编著</li>
+<li>『<a href="https://www.jianshu.com/p/4716b2f49e8e" target="_blank" rel="noopener">数据结构：二叉树的原理及java实现</a>』</li>
+<li>『<a href="https://blog.csdn.net/xin917480852/article/details/50503501" target="_blank" rel="noopener">树、森林与二叉树的转换总结</a>』</li>
+<li>『<a href="https://blog.csdn.net/qq_34975710/article/details/78563461" target="_blank" rel="noopener">Java 实现哈夫曼树及简易编码解码</a>』</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/07/09/DataStructure-Algorithm/DataStructure-Tree/" title="java 数据结构之树">http://www.thebetterkong.cn/2020/07/09/DataStructure-Algorithm/DataStructure-Tree/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/DataStructure/" rel="tag"><i class="fa fa-tag"></i> DataStructure</a>
+              <a href="/tags/java/" rel="tag"><i class="fa fa-tag"></i> java</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/07/02/DataStructure-Algorithm/DataStructure-String/" rel="prev" title="java 数据结构之字符串">
+      <i class="fa fa-chevron-left"></i> java 数据结构之字符串
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#树"><span class="nav-number">1.</span> <span class="nav-text">树</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Why-tree？"><span class="nav-number">1.1.</span> <span class="nav-text">Why tree？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#相关概念"><span class="nav-number">1.2.</span> <span class="nav-text">相关概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#树的分类"><span class="nav-number">1.3.</span> <span class="nav-text">树的分类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#树的表示方法"><span class="nav-number">1.4.</span> <span class="nav-text">树的表示方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#树的遍历"><span class="nav-number">1.5.</span> <span class="nav-text">树的遍历</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#树的抽象（ADT）及实现"><span class="nav-number">1.6.</span> <span class="nav-text">树的抽象（ADT）及实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#基于数组实现"><span class="nav-number">1.6.1.</span> <span class="nav-text">基于数组实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基于链表实现"><span class="nav-number">1.6.2.</span> <span class="nav-text">基于链表实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#双亲表示法"><span class="nav-number">1.6.2.1.</span> <span class="nav-text">双亲表示法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#孩子表示法"><span class="nav-number">1.6.2.2.</span> <span class="nav-text">孩子表示法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#孩子兄弟表示法"><span class="nav-number">1.6.2.3.</span> <span class="nav-text">孩子兄弟表示法</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#二叉树"><span class="nav-number">2.</span> <span class="nav-text">二叉树</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#定义"><span class="nav-number">2.1.</span> <span class="nav-text">定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二叉树的性质"><span class="nav-number">2.2.</span> <span class="nav-text">二叉树的性质</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二叉树的遍历"><span class="nav-number">2.3.</span> <span class="nav-text">二叉树的遍历</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#树与二叉树的转换"><span class="nav-number">2.4.</span> <span class="nav-text">树与二叉树的转换</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#java-实现"><span class="nav-number">2.5.</span> <span class="nav-text">java 实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#线索二叉树"><span class="nav-number">2.6.</span> <span class="nav-text">线索二叉树</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#森林"><span class="nav-number">3.</span> <span class="nav-text">森林</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#哈夫曼（Huffman）树"><span class="nav-number">4.</span> <span class="nav-text">哈夫曼（Huffman）树</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#基本概念"><span class="nav-number">4.1.</span> <span class="nav-text">基本概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#哈夫曼算法"><span class="nav-number">4.2.</span> <span class="nav-text">哈夫曼算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#应用：哈夫曼编码"><span class="nav-number">4.3.</span> <span class="nav-text">应用：哈夫曼编码</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#实现"><span class="nav-number">4.3.1.</span> <span class="nav-text">实现</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考"><span class="nav-number">5.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

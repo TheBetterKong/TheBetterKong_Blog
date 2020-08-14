@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本章会介绍一个基本的流水线，并在此流水线的基础上，不断改进，引入一些相关、冲突、例外处理技术等；">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Computer Architecture：静态流水线">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-StaticPipeline/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="本章会介绍一个基本的流水线，并在此流水线的基础上，不断改进，引入一些相关、冲突、例外处理技术等；">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/MIPSInstructFormat.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/BasicInstructions.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/DataChannel.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/RegisterFileCircuit.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/TruthTable.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/DataChannelControlLogic.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/DataChannelSequence.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/Sequence1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/Sequence2.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/Sequence3.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/DataChannelSequenceImprove.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/InstructDelaySlot.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/DataChannelDelaySlot.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/StandardInstruction.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/StandardInstructionPipeline.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/PossibleInstructRelated.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/HavardStructure.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/DataRelated.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/DataChannelDataRelated.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/PCRelated.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/TransferConditionsRelated.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/DataChannelControlRalated.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/ForwardingExample.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/ForwardingDataRalated.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/DataChannelForward.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/StaticSchedulRelatedSolution.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/DataChannelException.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/Multifunctional.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/MultifunctionalStructRelated.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/MultifunctionalWAWRelated.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/MultifunctionalRAWRelated.png">
+<meta property="article:published_time" content="2020-02-21T07:10:08.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:26:46.450Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="Computer Architecture">
+<meta property="article:tag" content="国科大研究生课程笔记">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/CA-StaticPipeline/MIPSInstructFormat.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-StaticPipeline/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Computer Architecture：静态流水线 | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-StaticPipeline/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Computer Architecture：静态流水线
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-02-21 15:10:08" itemprop="dateCreated datePublished" datetime="2020-02-21T15:10:08+08:00">2020-02-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:26:46" itemprop="dateModified" datetime="2020-08-14T17:26:46+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">计算机体系结构</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/02/21/Computer-Architecture/CA-StaticPipeline/" class="post-meta-item leancloud_visitors" data-flag-title="Computer Architecture：静态流水线" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/02/21/Computer-Architecture/CA-StaticPipeline/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/02/21/Computer-Architecture/CA-StaticPipeline/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本章会介绍一个基本的流水线，并在此流水线的基础上，不断改进，引入一些相关、冲突、例外处理技术等；</p>
+<a id="more"></a> 
+<h1 id="一个简单的-MIPS-CPU"><a href="#一个简单的-MIPS-CPU" class="headerlink" title="一个简单的 MIPS CPU"></a>一个简单的 MIPS CPU</h1><p>从 MIPS 指令集拣选部分代表性的指令，基本特征包括：</p>
+<ul>
+<li>RISC 结构；</li>
+<li>32 位指令及数据；</li>
+<li>32 个通用寄存器，0 号 GPR 恒为 0；</li>
+<li>指令格式：<br><img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/MIPSInstructFormat.png" alt="MIPSInstructFormat"></li>
+</ul>
+<h2 id="基本指令"><a href="#基本指令" class="headerlink" title="基本指令"></a>基本指令</h2><p><img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/BasicInstructions.png" alt="BasicInstructions"></p>
+<h2 id="主要数据通路"><a href="#主要数据通路" class="headerlink" title="主要数据通路"></a>主要数据通路</h2><p><img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/DataChannel.png" alt="DataChannel"></p>
+<ul>
+<li>其中，<strong>“两读一写”寄存器堆电路结构</strong>：<br>  <img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/RegisterFileCircuit.png" alt="RegisterFileCircuit"></li>
+</ul>
+<h2 id="主要控制逻辑"><a href="#主要控制逻辑" class="headerlink" title="主要控制逻辑"></a>主要控制逻辑</h2><ol>
+<li><p>控制信号：</p>
+<ul>
+<li>C1 ：PC 计算源操作数 2 的二选一</li>
+<li>C2 ：ALU 源操作数 2 的二选一</li>
+<li>C3 ：寄存器写回结果的二选一</li>
+<li>C4 ：目的寄存器号的二选一</li>
+<li>C5 ：寄存器堆的写使能</li>
+<li>C6 ：数据存储器的写使能</li>
+<li>ALUOp：ALU 控制</li>
+</ul>
+</li>
+<li><p>真值表：<br> <img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/TruthTable.png" alt="TruthTable"></p>
+</li>
+<li><p>控制信号的 Verilog 描述：</p>
+ <figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">wire</span> [<span class="number">5</span>:<span class="number">0</span>] op = inst[<span class="number">31</span>:<span class="number">26</span>];</span><br><span class="line"><span class="keyword">wire</span> [<span class="number">5</span>:<span class="number">0</span>] func = inst[<span class="number">5</span>:<span class="number">0</span>];</span><br><span class="line"><span class="keyword">wire</span> inst_addu = (op==<span class="number">6'b0</span>) &amp;&amp; (func==<span class="number">6</span>’b100001);</span><br><span class="line"><span class="keyword">wire</span> inst_subu = (op==<span class="number">6'b0</span>) &amp;&amp; (func==<span class="number">6</span>’b100010);</span><br><span class="line"><span class="keyword">wire</span> inst_slt = (op==<span class="number">6'b0</span>) &amp;&amp; (func==<span class="number">6</span>’b101010);</span><br><span class="line"><span class="keyword">wire</span> inst_sltu = (op==<span class="number">6'b0</span>) &amp;&amp; (func==<span class="number">6</span>’b101011);</span><br><span class="line"><span class="keyword">wire</span> inst_and = (op==<span class="number">6'b0</span>) &amp;&amp; (func==<span class="number">6</span>’b100100);</span><br><span class="line"><span class="keyword">wire</span> inst_or = (op==<span class="number">6'b0</span>) &amp;&amp; (func==<span class="number">6</span>’b100101);</span><br><span class="line"><span class="keyword">wire</span> inst_xor = (op==<span class="number">6'b0</span>) &amp;&amp; (func==<span class="number">6</span>’b100110);</span><br><span class="line"><span class="keyword">wire</span> inst_nor = (op==<span class="number">6'b0</span>) &amp;&amp; (func==<span class="number">6</span>’b100111);</span><br><span class="line"><span class="keyword">wire</span> inst_sllv = (op==<span class="number">6'b0</span>) &amp;&amp; (func==<span class="number">6'b000100</span>);</span><br><span class="line"><span class="keyword">wire</span> inst_srlv = (op==<span class="number">6'b0</span>) &amp;&amp; (func==<span class="number">6'b000110</span>);</span><br><span class="line"><span class="keyword">wire</span> inst_srav = (op==<span class="number">6'b0</span>) &amp;&amp; (func==<span class="number">6</span>’b000111);</span><br><span class="line"><span class="keyword">wire</span> inst_addiu = op==<span class="number">6</span>’b001001;</span><br><span class="line"><span class="keyword">wire</span> inst_lw = op==<span class="number">6</span>’b100011;</span><br><span class="line"><span class="keyword">wire</span> inst_sw = op==<span class="number">6</span>’b101011;</span><br><span class="line"><span class="keyword">wire</span> inst_beq = op==<span class="number">6</span>’b000100;</span><br><span class="line"><span class="keyword">wire</span> inst_bne = op==<span class="number">6</span>’b000101;</span><br><span class="line"><span class="keyword">wire</span> inst_blez = op==<span class="number">6</span>’b000110;</span><br><span class="line"><span class="keyword">wire</span> inst_bgtz = op==<span class="number">6</span>’b000111;</span><br><span class="line"><span class="keyword">wire</span> c1 = inst_beq | inst_bne</span><br><span class="line">		| inst_blez | inst_bgtz;</span><br><span class="line"><span class="keyword">wire</span> c2 = inst_addiu | inst_lw | inst_sw;</span><br><span class="line"><span class="keyword">wire</span> c3 = inst_addiu | inst_lw;</span><br><span class="line"><span class="keyword">wire</span> c4 = inst_lw;</span><br><span class="line"><span class="keyword">wire</span> c5 = ~(inst_sw | c1);</span><br><span class="line"><span class="keyword">wire</span> c6 = inst_sw;</span><br><span class="line"><span class="keyword">wire</span> [<span class="number">3</span>:<span class="number">0</span>] aluop;</span><br><span class="line"><span class="keyword">assign</span> aluop[<span class="number">0</span>] = inst_subu | inst_sltu | inst_or</span><br><span class="line">		| inst_nor | inst_srav;</span><br><span class="line"><span class="keyword">assign</span> aluop[<span class="number">1</span>] = inst_slt | inst_sltu | inst_xor</span><br><span class="line">		| inst_nor | inst_srlv | inst_srav;</span><br><span class="line"><span class="keyword">assign</span> aluop[<span class="number">2</span>] = inst_and | inst_or | inst_xor | inst_nor;</span><br><span class="line"><span class="keyword">assign</span> aluop[<span class="number">3</span>] = inst_sllv | inst_srlv | inst_srav;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h2 id="加入控制逻辑的数据通路"><a href="#加入控制逻辑的数据通路" class="headerlink" title="加入控制逻辑的数据通路"></a>加入控制逻辑的数据通路</h2><p><img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/DataChannelControlLogic.png" alt="DataChannelControlLogic"></p>
+<h2 id="加入时序：指令内、指令间"><a href="#加入时序：指令内、指令间" class="headerlink" title="加入时序：指令内、指令间"></a>加入时序：指令内、指令间</h2><p><img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/DataChannelSequence.png" alt="DataChannelSequence"></p>
+<h1 id="指令流水线"><a href="#指令流水线" class="headerlink" title="指令流水线"></a>指令流水线</h1><h2 id="时序改进"><a href="#时序改进" class="headerlink" title="时序改进"></a>时序改进</h2><ol>
+<li><p>原来时序的三个步骤：</p>
+<ul>
+<li>指令地址送到 PC、取指到 IR、计算结果到 GPR<br><img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/Sequence1.png" alt="Sequence1"></li>
+</ul>
+</li>
+<li><p>合并后的时序：</p>
+<ul>
+<li>计算下一条指令的 PC 和指令执行重叠；<br><img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/Sequence2.png" alt="Sequence2"></li>
+<li>可以把计算下一拍 PC 值作为指令执行的一部分（转移指令的运算结果是 PC 的值）<br><img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/Sequence3.png" alt="Sequence3"></li>
+</ul>
+</li>
+<li><p>改进后的时序：<br> <img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/DataChannelSequenceImprove.png" alt="DataChannelSequenceImprove"></p>
+</li>
+</ol>
+<h2 id="进一步并行：取指与运算"><a href="#进一步并行：取指与运算" class="headerlink" title="进一步并行：取指与运算"></a>进一步并行：取指与运算</h2><ol>
+<li><p>通常情况下：</p>
+<ul>
+<li>第 n+1 条指令执行时，第 n 条指令已经执行完，因此第 n+1 条指令可以用到第 n 条指令的结果。</li>
+</ul>
+</li>
+<li><p>例外：</p>
+<ul>
+<li>如果第 n+1 条指令的取指也要用到第 n 条指令的结果，则第 n+1 条指令的取指必须等到第 n 条指令结束后才能执行。（转移指令常出现）</li>
+</ul>
+</li>
+<li><p>“延迟槽”解决：</p>
+<ul>
+<li>紧挨着转移指令后面的一条指令不依赖转移条件执行，则可以：<ul>
+<li>从转移指令前面放一条指令到后面去</li>
+<li>也可以放一条 nop</li>
+</ul>
+</li>
+<li>例：把内存中 100 个整数的值分别加 1（左边的程序段 R1 初始值为 400，右边的程序段 R1 初始值为 396）<br><img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/InstructDelaySlot.png" alt="InstructDelaySlot"></li>
+</ul>
+</li>
+<li><p>进一步改进后的时序—-转移指令需要延迟槽<br> <img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/DataChannelDelaySlot.png" alt="DataChannelDelaySlot"></p>
+</li>
+</ol>
+<h2 id="进一步改进：划分执行阶段"><a href="#进一步改进：划分执行阶段" class="headerlink" title="进一步改进：划分执行阶段"></a>进一步改进：划分执行阶段</h2><p>上述两级流水线：</p>
+<ul>
+<li>取指和执行</li>
+<li>执行阶段做的事情较多：<ul>
+<li>译码（包括读取寄存器的值）</li>
+<li>运算（ALU操作）</li>
+<li>访存（取数或存数）</li>
+<li>写回到寄存器</li>
+</ul>
+</li>
+<li>时钟周期较长，一拍内必须做完上述四件事情</li>
+<li>于是，将执行阶段再细分：分成译码、运算、访存、写回</li>
+</ul>
+<p><strong><mark>标准指令流水线</mark></strong>：</p>
+<ul>
+<li><strong>五级流水线：IF, ID, EX, MEM, WB</strong>（计算 PC 在 ID 阶段）</li>
+<li>标准指令流水：<br>  <img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/StandardInstruction.png" alt="StandardInstruction"></li>
+<li>指令流水线控制及时序：<br>  <img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/StandardInstructionPipeline.png" alt="StandardInstructionPipeline"></li>
+</ul>
+<h1 id="指令相关和流水线冲突"><a href="#指令相关和流水线冲突" class="headerlink" title="指令相关和流水线冲突"></a>指令相关和流水线冲突</h1><h2 id="指令相关"><a href="#指令相关" class="headerlink" title="指令相关"></a>指令相关</h2><ul>
+<li>流水线变深了，相关问题更为突出；</li>
+<li>在流水线中，如果某指令的某个阶段必须等到它前面另一条指令的某个阶段后才能开始，则这两条指令存在相关；</li>
+<li>相关的指令要隔开足够远，否则后面的指令就必须等待；</li>
+</ul>
+<h2 id="之前流水线可能存在的相关"><a href="#之前流水线可能存在的相关" class="headerlink" title="之前流水线可能存在的相关"></a>之前流水线可能存在的相关</h2><p><img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/PossibleInstructRelated.png" alt="PossibleInstructRelated"></p>
+<h2 id="指令流水线的相关"><a href="#指令流水线的相关" class="headerlink" title="指令流水线的相关"></a>指令流水线的相关</h2><p>相关引起流水线阻塞;     </p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>相关种类</th>
+<th>说明</th>
+<th>举例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>数据相关</td>
+<td>使用同一个寄存器引起的相关</td>
+<td>如后面的指令用到前面指令的结果</td>
+</tr>
+<tr>
+<td>控制相关</td>
+<td>与 PC 有关的相关</td>
+<td>每条指令取指用到 PC，转移指令修改 PC</td>
+</tr>
+<tr>
+<td>结构相关</td>
+<td>资源冲突</td>
+<td>多条指令同时使用一个功能部件</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 id="结构相关"><a href="#结构相关" class="headerlink" title="结构相关"></a>结构相关</h3><p>访存引起：</p>
+<ul>
+<li>访存和取指都需要存储器端口；</li>
+</ul>
+<p>例如：Havard 结构<br><img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/HavardStructure.png" alt="HavardStructure"></p>
+<h3 id="数据相关"><a href="#数据相关" class="headerlink" title="数据相关"></a>数据相关</h3><p>数据相关的类型：</p>
+<ul>
+<li>在动态流水线中会有 WAR 和 WAW 相关</li>
+</ul>
+<ol>
+<li>RAW(Read After Write)：<ul>
+<li>后面指令用到前面指令所写的数据</li>
+</ul>
+</li>
+<li>WAW(Write After Write)：<ul>
+<li>两条指令写同一个单元</li>
+<li>在简单流水线中没有此类相关，因为不会乱序执行</li>
+</ul>
+</li>
+<li>WAR(Write After Read)：<ul>
+<li>后面指令覆盖前面指令所读的单元</li>
+<li>在简单流水线中没有此类相关</li>
+</ul>
+</li>
+</ol>
+<p>例子：<br><img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/DataRelated.png" alt="DataRelated"></p>
+<p>相关控制：<br><img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/DataChannelDataRelated.png" alt="DataChannelDataRelated"></p>
+<h3 id="控制相关"><a href="#控制相关" class="headerlink" title="控制相关"></a>控制相关</h3><p>PC 相关：</p>
+<ul>
+<li>转移指令计算的下一条指令地址在 EX 阶段计算，下一条指令等 2 拍 ；</li>
+<li>使用专门的地址运算部件把地址计算提前到译码阶段可以少等一拍；</li>
+<li>使用一个转移指令延迟槽（delay slot）可以不用等待；<br>  <img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/PCRelated.png" alt="PCRelated"></li>
+</ul>
+<p>转移条件相关：</p>
+<ul>
+<li>如果在ID阶段执行转移指令时转移指令的源操作数没有准备好还是要等待<br>  <img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/TransferConditionsRelated.png" alt="TransferConditionsRelated"></li>
+</ul>
+<p>转移控制相关的流水线：<br><img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/DataChannelControlRalated.png" alt="DataChannelControlRalated"></p>
+<h1 id="流水线的前递技术"><a href="#流水线的前递技术" class="headerlink" title="流水线的前递技术"></a>流水线的前递技术</h1><h2 id="前递-Forwarding-技术"><a href="#前递-Forwarding-技术" class="headerlink" title="前递 Forwarding 技术"></a>前递 Forwarding 技术</h2><p>解决 RAW 相关；</p>
+<ul>
+<li>在执行（EX）阶段的运算结果出来后直接送到后续指令的 EX 阶段</li>
+<li>例子：<br>  <img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/ForwardingExample.png" alt="ForwardingExample"></li>
+</ul>
+<h2 id="前递情况下的数据相关"><a href="#前递情况下的数据相关" class="headerlink" title="前递情况下的数据相关"></a>前递情况下的数据相关</h2><ul>
+<li>取数指令的结果在 MEM 阶段才有效，后续相关指令需要阻塞一拍</li>
+<li>例子：<br>  <img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/ForwardingDataRalated.png" alt="ForwardingDataRalated"></li>
+</ul>
+<h2 id="ALU-Forward-控制"><a href="#ALU-Forward-控制" class="headerlink" title="ALU Forward 控制"></a>ALU Forward 控制</h2><p>（只考虑ALU前递，不包括访存和转移前递）   </p>
+<p><img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/DataChannelForward.png" alt="DataChannelForward">   </p>
+<p><strong>Forwarding的相关处理逻辑（前递技术的三选一选择器的控制）：</strong></p>
+<ul>
+<li>把指令的两个源寄存器号：src1D 和 src2D 传递到 EX 流水级</li>
+<li>以 ALU 左端的输入即 src1D 为例（优先级由高到低）：<ul>
+<li>当 src1D=destE 且执行级操作是 LW 时，后面流水线暂停，往前面流水线送空操作；</li>
+<li>当 src1D=destE 且执行级操作不是 LW 时，选择左边通路；</li>
+<li>当 src1D=destM 时，选择右边通路；</li>
+<li>当 src1D 和前面两级的目标寄存器域 destE 和 destM 都不相等时，选择中间通路；</li>
+</ul>
+</li>
+</ul>
+<h2 id="通过静态调度解决相关"><a href="#通过静态调度解决相关" class="headerlink" title="通过静态调度解决相关"></a>通过静态调度解决相关</h2><p>例子：如下程序段的优化和非优化代码：a = b + c; d = e -f;   </p>
+<p><img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/StaticSchedulRelatedSolution.png" alt="StaticSchedulRelatedSolution"></p>
+<h1 id="流水线和例外"><a href="#流水线和例外" class="headerlink" title="流水线和例外"></a>流水线和例外</h1><h2 id="例外-Exception"><a href="#例外-Exception" class="headerlink" title="例外(Exception)"></a>例外(Exception)</h2><p>例外原因：</p>
+<ul>
+<li>I/O请求：外部中断</li>
+<li>指令例外：用户请求例外（系统调用、断点、跟踪调试指令）</li>
+<li>运算部件：（整数运算溢出、浮点异常）</li>
+<li>存储管理部件：（访存地址不对齐、用户访问系统空间、TLB 失效、缺页、存储保护错（写只读页））</li>
+<li>保留指令错：未实现指令</li>
+<li>硬件错</li>
+<li>……………</li>
+</ul>
+<p>例外发生的流水阶段：</p>
+<ul>
+<li>取指：访存例外</li>
+<li>译码：保留指令、中断指令如 Trap、Syscall</li>
+<li>执行：整数溢出、浮点异常（如除零）等</li>
+<li>访存：访存例外</li>
+<li>其它：外部中断，可能在任何时候发生</li>
+</ul>
+<p>例外特征：</p>
+<ul>
+<li>同步与异步</li>
+<li>用户请求与系统强制</li>
+<li>可屏蔽与不可屏蔽</li>
+<li>指令内与指令间</li>
+<li>可恢复与结束</li>
+</ul>
+<p>综述：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>同步/异步</th>
+<th>用户/强制</th>
+<th>可/不可屏蔽</th>
+<th>指令内/间</th>
+<th>可恢复/结束</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>I/O 请求</td>
+<td>异步</td>
+<td>强制</td>
+<td>不可屏蔽</td>
+<td>指令间</td>
+<td>可恢复</td>
+</tr>
+<tr>
+<td>系统调用</td>
+<td>同步</td>
+<td>用户</td>
+<td>不可屏蔽</td>
+<td>指令间</td>
+<td>可恢复</td>
+</tr>
+<tr>
+<td>跟踪调试</td>
+<td>同步</td>
+<td>用户</td>
+<td>可屏蔽</td>
+<td>指令间</td>
+<td>可恢复</td>
+</tr>
+<tr>
+<td>断点</td>
+<td>同步</td>
+<td>用户</td>
+<td>可屏蔽</td>
+<td>指令间</td>
+<td>可恢复</td>
+</tr>
+<tr>
+<td>整数溢出</td>
+<td>同步</td>
+<td>强制</td>
+<td>可屏蔽</td>
+<td>指令内</td>
+<td>可恢复</td>
+</tr>
+<tr>
+<td>浮点异常</td>
+<td>同步</td>
+<td>强制</td>
+<td>可屏蔽</td>
+<td>指令内</td>
+<td>可恢复</td>
+</tr>
+<tr>
+<td>缺页</td>
+<td>同步</td>
+<td>强制</td>
+<td>不可屏蔽</td>
+<td>指令内</td>
+<td>可恢复</td>
+</tr>
+<tr>
+<td>访存地址不齐</td>
+<td>同步</td>
+<td>强制</td>
+<td>可屏蔽</td>
+<td>指令内</td>
+<td>可恢复</td>
+</tr>
+<tr>
+<td>存储保护错</td>
+<td>同步</td>
+<td>强制</td>
+<td>不可屏蔽</td>
+<td>指令内</td>
+<td>可恢复</td>
+</tr>
+<tr>
+<td>非法指令</td>
+<td>同步</td>
+<td>强制</td>
+<td>不可屏蔽</td>
+<td>指令内</td>
+<td>结束</td>
+</tr>
+<tr>
+<td>硬件错</td>
+<td>异步</td>
+<td>强制</td>
+<td>不可屏蔽</td>
+<td>指令内</td>
+<td>结束</td>
+</tr>
+<tr>
+<td>电源错</td>
+<td>异步</td>
+<td>强制</td>
+<td>不可屏蔽</td>
+<td>指令内</td>
+<td>结束</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>指令内可恢复</strong>例外的处理比较困难，条件转移指令的 delay slot 又增加了例外处理的难度；   </p>
+<p><strong>精确例外</strong></p>
+<ul>
+<li>存储管理和IEEE运算规范的要求；</li>
+</ul>
+<ol>
+<li>定义：<ul>
+<li>在处理例外时，发生例外指令前面的所有指令都执行完，例外指令后面的所有指令还未执行。</li>
+</ul>
+</li>
+<li>做法：<ul>
+<li>发生例外指令前面的指令继续执行完</li>
+<li>后面的指令不能修改机器状态，对运算状态字的修改可能在 EX 阶段进行</li>
+<li>多条指令发生例外</li>
+<li>可以把每条指令的例外延迟到 WB 时再处理<ul>
+<li>对机器状态的修改也在 WB 阶段进行</li>
+<li>对状态寄存器的修改从 EX 阶段延迟到 WB 阶段</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="流水线例外处理"><a href="#流水线例外处理" class="headerlink" title="流水线例外处理"></a>流水线例外处理</h2><p>简单流水线的例外处理：</p>
+<ul>
+<li>任何一级流水发生例外时，在流水线中记录下发生例外的事件，直到 WB 阶段再处理</li>
+<li>如果在 EX 阶段要修改机器状态（如状态寄存器），保存下来直到 WB 阶段再修改。</li>
+<li>指令的 PC 值随指令流水前进到 WB 阶段例外处理专用</li>
+<li>外部中断作为 IF 的例外处理</li>
+<li>指定一个通用寄存器中（如最后一个）为例外处理时保存 PC 值专用。</li>
+<li>当发生例外的指令在 WB 阶段时：<ul>
+<li>保存该指令的 PC（也在 WB 阶段），有些机器还保存其它状态</li>
+<li>置PC值为例外处理程序入口地址</li>
+</ul>
+</li>
+</ul>
+<p><strong>例外处理通路：</strong><br><img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/DataChannelException.png" alt="DataChannelException"></p>
+<h1 id="多功能部件与多拍操作"><a href="#多功能部件与多拍操作" class="headerlink" title="多功能部件与多拍操作"></a>多功能部件与多拍操作</h1><h2 id="多功能部件"><a href="#多功能部件" class="headerlink" title="多功能部件"></a>多功能部件</h2><p>定点 ALU、定点乘法、浮点 ALU、浮点乘法、访存</p>
+<h2 id="不同功能部件有不同延迟"><a href="#不同功能部件有不同延迟" class="headerlink" title="不同功能部件有不同延迟"></a>不同功能部件有不同延迟</h2><ul>
+<li>定点 ALU 1 拍，定点乘法 2 拍，浮点 ALU 4 拍，浮点乘法 7 拍</li>
+<li>访存部件延迟不确定（CACHE 不命中、访存总线竞争、动态存储器刷新等原因），每次只能一个操作（内部不流水）</li>
+</ul>
+<h2 id="多功能部件主要数据通路"><a href="#多功能部件主要数据通路" class="headerlink" title="多功能部件主要数据通路"></a>多功能部件主要数据通路</h2><p><img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/Multifunctional.png" alt="Multifunctional"></p>
+<h2 id="多功能部件及多拍操作引起的问题"><a href="#多功能部件及多拍操作引起的问题" class="headerlink" title="多功能部件及多拍操作引起的问题"></a>多功能部件及多拍操作引起的问题</h2><ol>
+<li><p>结构相关：</p>
+<ul>
+<li>访存部件不流水引起多个访存操作的等待</li>
+<li>结果总线相关：不同功能部件延迟不一致<ul>
+<li>定点 ALU 操作的 MEM 周期就是为了避免结果总线冲突的 stall 操作<br><img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/MultifunctionalStructRelated.png" alt="MultifunctionalStructRelated"></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>WAW 相关：</p>
+<ul>
+<li>即使有多个写端口也会阻塞<br><img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/MultifunctionalWAWRelated.png" alt="MultifunctionalWAWRelated"></li>
+</ul>
+</li>
+<li><p>WAR 相关：</p>
+<ul>
+<li>没有，因为读数总是在较早的 ID 阶段</li>
+</ul>
+</li>
+<li><p>RAW 相关：（最多）</p>
+<ul>
+<li>有些操作需要多拍产生结果</li>
+<li>Forwarding 技术的作用也很有限<br><img src="http://img.thebetterkong.cn/blog/CA-StaticPipeline/MultifunctionalRAWRelated.png" alt="MultifunctionalRAWRelated"></li>
+</ul>
+</li>
+<li><p>指令乱序结束：</p>
+<ul>
+<li>例外处理更加困难，例外的发生难以预料</li>
+<li>在下面的例子中，没有任何相关，因此，ADD.D 和SUB.D 指令可以比 DIV.D 先结束。如果在 ADD.D 结束后 DIV.D 发生例外，此时无法恢复例外现场。<figure class="highlight mips"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">DIV.D </span>f0, f2, f4</span><br><span class="line"><span class="keyword">ADD.D </span>f10,f10,f8</span><br><span class="line"><span class="keyword">SUB.D </span>f12,f12,f14</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="通过流水线堵塞来保证避免数据冲突"><a href="#通过流水线堵塞来保证避免数据冲突" class="headerlink" title="通过流水线堵塞来保证避免数据冲突"></a>通过流水线堵塞来保证避免数据冲突</h2><ul>
+<li>把<strong>所有流水线执行阶段指令的目标寄存器号</strong>和<strong>译码阶段的源寄存器号</strong>以及<strong>目标寄存器号</strong>进行比较：<ul>
+<li>如果发现有寄存器号相等的情况就阻塞译码阶段的指令，这样就可以避免由于数据相关引起冲突</li>
+</ul>
+</li>
+<li>要把<strong>译码阶段指令的目标寄存器号</strong>也跟<strong>前面指令的目标寄存器号</strong>进行比较以避免 WAW 相关导致冲突</li>
+</ul>
+<h2 id="结构相关-1"><a href="#结构相关-1" class="headerlink" title="结构相关"></a>结构相关</h2><p>通过请求和仲裁允许流水线前进。</p>
+<h2 id="例外处理"><a href="#例外处理" class="headerlink" title="例外处理"></a>例外处理</h2><ul>
+<li>不管指令要执行多少拍，都可以要求所有指令顺序写回，而且所有例外在写回阶段进行统一处理。</li>
+<li>有的早期机器不保证精确例外。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-StaticPipeline/" title="Computer Architecture：静态流水线">http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-StaticPipeline/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Computer-Architecture/" rel="tag"><i class="fa fa-tag"></i> Computer Architecture</a>
+              <a href="/tags/%E5%9B%BD%E7%A7%91%E5%A4%A7%E7%A0%94%E7%A9%B6%E7%94%9F%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 国科大研究生课程笔记</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/02/21/Computer-Architecture/CA-ISA/" rel="prev" title="Computer Architecture：指令系统结构ISA">
+      <i class="fa fa-chevron-left"></i> Computer Architecture：指令系统结构ISA
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/02/21/Computer-Architecture/CA-DynamicScheduling/" rel="next" title="Computer Architecture：动态调度">
+      Computer Architecture：动态调度 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#一个简单的-MIPS-CPU"><span class="nav-number">1.</span> <span class="nav-text">一个简单的 MIPS CPU</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#基本指令"><span class="nav-number">1.1.</span> <span class="nav-text">基本指令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#主要数据通路"><span class="nav-number">1.2.</span> <span class="nav-text">主要数据通路</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#主要控制逻辑"><span class="nav-number">1.3.</span> <span class="nav-text">主要控制逻辑</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#加入控制逻辑的数据通路"><span class="nav-number">1.4.</span> <span class="nav-text">加入控制逻辑的数据通路</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#加入时序：指令内、指令间"><span class="nav-number">1.5.</span> <span class="nav-text">加入时序：指令内、指令间</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#指令流水线"><span class="nav-number">2.</span> <span class="nav-text">指令流水线</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#时序改进"><span class="nav-number">2.1.</span> <span class="nav-text">时序改进</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#进一步并行：取指与运算"><span class="nav-number">2.2.</span> <span class="nav-text">进一步并行：取指与运算</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#进一步改进：划分执行阶段"><span class="nav-number">2.3.</span> <span class="nav-text">进一步改进：划分执行阶段</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#指令相关和流水线冲突"><span class="nav-number">3.</span> <span class="nav-text">指令相关和流水线冲突</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#指令相关"><span class="nav-number">3.1.</span> <span class="nav-text">指令相关</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#之前流水线可能存在的相关"><span class="nav-number">3.2.</span> <span class="nav-text">之前流水线可能存在的相关</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#指令流水线的相关"><span class="nav-number">3.3.</span> <span class="nav-text">指令流水线的相关</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#结构相关"><span class="nav-number">3.3.1.</span> <span class="nav-text">结构相关</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#数据相关"><span class="nav-number">3.3.2.</span> <span class="nav-text">数据相关</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#控制相关"><span class="nav-number">3.3.3.</span> <span class="nav-text">控制相关</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#流水线的前递技术"><span class="nav-number">4.</span> <span class="nav-text">流水线的前递技术</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#前递-Forwarding-技术"><span class="nav-number">4.1.</span> <span class="nav-text">前递 Forwarding 技术</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#前递情况下的数据相关"><span class="nav-number">4.2.</span> <span class="nav-text">前递情况下的数据相关</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ALU-Forward-控制"><span class="nav-number">4.3.</span> <span class="nav-text">ALU Forward 控制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#通过静态调度解决相关"><span class="nav-number">4.4.</span> <span class="nav-text">通过静态调度解决相关</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#流水线和例外"><span class="nav-number">5.</span> <span class="nav-text">流水线和例外</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#例外-Exception"><span class="nav-number">5.1.</span> <span class="nav-text">例外(Exception)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#流水线例外处理"><span class="nav-number">5.2.</span> <span class="nav-text">流水线例外处理</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#多功能部件与多拍操作"><span class="nav-number">6.</span> <span class="nav-text">多功能部件与多拍操作</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#多功能部件"><span class="nav-number">6.1.</span> <span class="nav-text">多功能部件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#不同功能部件有不同延迟"><span class="nav-number">6.2.</span> <span class="nav-text">不同功能部件有不同延迟</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#多功能部件主要数据通路"><span class="nav-number">6.3.</span> <span class="nav-text">多功能部件主要数据通路</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#多功能部件及多拍操作引起的问题"><span class="nav-number">6.4.</span> <span class="nav-text">多功能部件及多拍操作引起的问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#通过流水线堵塞来保证避免数据冲突"><span class="nav-number">6.5.</span> <span class="nav-text">通过流水线堵塞来保证避免数据冲突</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#结构相关-1"><span class="nav-number">6.6.</span> <span class="nav-text">结构相关</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#例外处理"><span class="nav-number">6.7.</span> <span class="nav-text">例外处理</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

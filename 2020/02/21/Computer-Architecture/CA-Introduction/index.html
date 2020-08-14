@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="从整体上对计算机体系结构的认识，介绍其相关概念、发展状况、以及一些评价指标等；">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Computer Architecture：绪论">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-Introduction/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="从整体上对计算机体系结构的认识，介绍其相关概念、发展状况、以及一些评价指标等；">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Introduction/ResearchStatus.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Introduction/VonNeumannStructure.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Introduction/Chip.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Introduction/Power.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Introduction/DynamicPower.png">
+<meta property="article:published_time" content="2020-02-21T07:07:08.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:26:22.000Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="Computer Architecture">
+<meta property="article:tag" content="国科大研究生课程笔记">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/CA-Introduction/ResearchStatus.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-Introduction/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Computer Architecture：绪论 | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-Introduction/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Computer Architecture：绪论
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-02-21 15:07:08" itemprop="dateCreated datePublished" datetime="2020-02-21T15:07:08+08:00">2020-02-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:26:22" itemprop="dateModified" datetime="2020-08-14T17:26:22+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">计算机体系结构</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/02/21/Computer-Architecture/CA-Introduction/" class="post-meta-item leancloud_visitors" data-flag-title="Computer Architecture：绪论" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/02/21/Computer-Architecture/CA-Introduction/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/02/21/Computer-Architecture/CA-Introduction/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>从整体上对计算机体系结构的认识，介绍其相关概念、发展状况、以及一些评价指标等；</p>
+<a id="more"></a> 
+<h1 id="现状"><a href="#现状" class="headerlink" title="现状"></a>现状</h1><p><img src="http://img.thebetterkong.cn/blog/CA-Introduction/ResearchStatus.png" alt="现状"></p>
+<h1 id="应用举例：PPT翻页过程"><a href="#应用举例：PPT翻页过程" class="headerlink" title="应用举例：PPT翻页过程"></a>应用举例：PPT翻页过程</h1><p>以龙芯处理器为例:</p>
+<ul>
+<li>键盘产生一个信号送到桥片（南桥、北桥）;</li>
+<li>桥片通过 HT 总线向处理器发出外部中断信号;</li>
+<li>外部中断信号传到控制寄存器模块与 Cause 的屏蔽位相与;</li>
+<li>如果没有被屏蔽，再传到寄存器重命名模块并附在四条指令的第一条中送到 ROB 模块；由于该指令发生了例外，不会送到功能部件执行;</li>
+<li>当该指令成为 ROB 的第一条指令被提交时向所有模块发出取消信号，取消该指令后面的所有指令，在 EPC 等寄存器中保存例外现场，同时在控制寄存器 Status 中把系统状态置为核心态;</li>
+<li>向取指模块发出中断信号，取指模块根据中断类型到 0x80000180 取指;</li>
+</ul>
+<p>以龙芯处理器+Linux操作系统为例:</p>
+<ul>
+<li>0x80000180 为操作系统例外处理代码;</li>
+<li>操作系统保留现场（把通用寄存器保存到堆栈区）;</li>
+<li>操作系统通过读 Cause 寄存器分析例外原因是外部中断;</li>
+<li>操作系统向桥片中的中断控制器读中断原因，读的同时清中断;</li>
+<li>操作系统根据中断原因调用驱动程序，读取键盘数据;</li>
+<li>操作系统唤醒正在由于等待数据而阻塞的进程（Powerpoint）;</li>
+<li>Powerpoint 根据读到的键盘数据决定翻一页，调用显示驱动程序;</li>
+<li>驱动程序把要显示的内容送到显存，并通知 GPU；</li>
+<li>GPU通过访问显存空间刷新屏幕</li>
+</ul>
+<p>其中，如果觉得ppt翻页卡顿：</p>
+<ul>
+<li>看系统中有没有其他任务在运行，因为任务会占用CPU、内存带宽、IO 带宽等资源； </li>
+<li>影响因素： <ol>
+<li>「GPU」：下一页 PPT 可能图比较多，GPU 忙不过来； </li>
+<li>「内存带宽」：显示内容数据量大，把数据从 PowerPoint 的应用程序空间传给 GPU 使用的显存，内存带宽不足；（独显时：数据采用类似 DMA 的方式，从内存传输到显存） </li>
+</ol>
+</li>
+</ul>
+<h1 id="计算机体系结构"><a href="#计算机体系结构" class="headerlink" title="计算机体系结构"></a>计算机体系结构</h1><h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>「计算机体系结构 (Computer Architecture) 」是描述<strong>计算机各组成部分</strong>及其<strong>相互关系</strong>的一组规则和方法，是程序员所看到的计算机属性；</p>
+<h2 id="主要研究内容"><a href="#主要研究内容" class="headerlink" title="主要研究内容"></a>主要研究内容</h2><p>计算机体系结构主要研究内容包括<strong>指令系统结构</strong>(ISA)和<strong>计算机组织结构</strong>；</p>
+<h2 id="现代体系结构基础"><a href="#现代体系结构基础" class="headerlink" title="现代体系结构基础"></a>现代体系结构基础</h2><p><strong>二进制</strong>、<strong>冯诺依曼结构的存储程序</strong>和<strong>指令驱动执行原理</strong>；</p>
+<h2 id="表现方式"><a href="#表现方式" class="headerlink" title="表现方式"></a>表现方式</h2><ol>
+<li><strong>指令系统手册和结构框图</strong>：结构框图中的方块表示计算机的功能模块，线条和箭头表示指令和数据在功能模块中的流动，结构框图可以不断分解一直到门级或晶体管级； </li>
+<li><strong>高级语言</strong>：（如:C语言来表示）形成结构模拟器，用于性能评估和分析； </li>
+<li><strong>硬件描述语言</strong>：（如:Verilog）可通过电子设计自动化 EDA 工具，进行功能验证和性能分析，转化成门级及晶体管网表，并通过布局布线最终转换成版图，用于芯片制造。 </li>
+</ol>
+<h1 id="造CPU必须知道"><a href="#造CPU必须知道" class="headerlink" title="造CPU必须知道"></a>造CPU必须知道</h1><ol>
+<li>指令是是应用的 “算子”；<ul>
+<li>要知道哪些是硬件实现？哪些是软件实现？</li>
+</ul>
+</li>
+<li>结构设计要结合应用行为，例如： <ul>
+<li>Cache利用应用访存局部性；</li>
+<li>转移猜测利用转移相关性和重复性</li>
+</ul>
+</li>
+<li>ISA和微结构要考虑 OS 需求；<ul>
+<li>页表和 TLB，多线程支持，虚拟机支持</li>
+</ul>
+</li>
+<li>结构设计要考虑晶体管属性，例如：<ul>
+<li>cache 容量影响主频；</li>
+<li>多发射结构发射电路影响主频；</li>
+</ul>
+</li>
+</ol>
+<h1 id="冯诺依曼结构"><a href="#冯诺依曼结构" class="headerlink" title="冯诺依曼结构"></a>冯诺依曼结构</h1><h2 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h2><p><strong><mark>存储程序和指令驱动执行:</mark></strong></p>
+<p><img src="http://img.thebetterkong.cn/blog/CA-Introduction/VonNeumannStructure.png" alt="冯诺依曼结构"> </p>
+<ol>
+<li>计算机由<strong>存储器、运算器、控制器、输入设备、输出设备</strong>五部分组成，其中运算器和控制器合称称 CPU；</li>
+<li>存储器是按地址访问的线性编址的一维结构，每个单元的位数固定。指令和数据不加区别混合存储在同一个存储器中。</li>
+<li>控制器从存储器中取出指令并依指令要求发出控制信号控制计算机的操作。控制器中的程序计数器指明要执行的指令所在的存储单元地址。程序计数器一般按顺序递增，但可按指令要求而改变。</li>
+<li>以运算器为中心，输入输出（IO）设备与存储器之间的数据传送都经过运算器。</li>
+</ol>
+<h2 id="演进"><a href="#演进" class="headerlink" title="演进"></a>演进</h2><ol>
+<li>中心：运算器 —&gt; 存储器<ul>
+<li>数据流向更加合理，使运算器、存储器和 IO 设备能并行工作。  </li>
+</ul>
+</li>
+<li>控制：单一集中 —&gt; 分散<ul>
+<li>早期计算机工作速度低，运算器、存储器、控制器和 IO 设备可在同一个时钟信号控制下同步工作。</li>
+<li>现在运算器、存储器与 IO 设备的速度差异很大，需要异步分散控制。   </li>
+</ul>
+</li>
+<li>串行算法 —&gt; 适应并行算法<ul>
+<li>出现了流水线处理器、超标量处理器、向量处理器、多核处理器、对称多处理机（SMP）、大规模并行处理机（MPP）和机群系统等。   </li>
+</ul>
+</li>
+<li>出现为适应特殊需要的专用计算机<ul>
+<li>如图形处理器（GPU）、数字信号处理器（DSP）等  </li>
+</ul>
+</li>
+</ol>
+<p>目前的计算机没有能突破该特征的，都是对冯诺依曼结构的变种（哈佛结构、并行结构等） </p>
+<ul>
+<li><strong>「哈佛结构」</strong>:将冯诺依曼结构里的指令和数据分开存储。</li>
+</ul>
+<h2 id="优缺点"><a href="#优缺点" class="headerlink" title="优缺点"></a>优缺点</h2><ul>
+<li>优：自动快速执行</li>
+<li>缺：指令驱动的顺序执行；CPU 和存储器分开且越来越远。</li>
+</ul>
+<h1 id="衡量计算机的指标"><a href="#衡量计算机的指标" class="headerlink" title="衡量计算机的指标"></a>衡量计算机的指标</h1><h2 id="性能"><a href="#性能" class="headerlink" title="性能"></a>性能</h2><h3 id="性能的本质定义"><a href="#性能的本质定义" class="headerlink" title="性能的本质定义"></a>性能的本质定义</h3><p>以指令为基本单位，完成一个任务所需的时间；   </p>
+<ul>
+<li>$CPUTime = \frac{Seconds}{Program} = \frac{Instructions}{Program} \times \frac{Cycles}{Instrustion} \times \frac{Seconds}{Cycle}$</li>
+<li>$程序的CPU时间=程序指令数 \times 每条指令时钟周期数 \times 时钟周期$</li>
+</ul>
+<h3 id="影响性能的因素"><a href="#影响性能的因素" class="headerlink" title="影响性能的因素"></a>影响性能的因素</h3><ul>
+<li>算法（影响最大）：<ul>
+<li>如冒泡排序复杂度为 $O(N*N)$，快速排序复杂度为 $O(NlogN)$</li>
+</ul>
+</li>
+<li>编译器影响：<ul>
+<li>一般有几倍的差距</li>
+</ul>
+</li>
+<li>指令系统：<ul>
+<li>复杂指令,如三角函数、FFT、AES 等是否硬件实现</li>
+</ul>
+</li>
+<li>微结构：<ul>
+<li>IPC（Instructions per cycle）：通过乱序执行、多发射、存储层次等提高 IPC</li>
+</ul>
+</li>
+<li>主频：受工艺和微结构（流水线）的影响。<ul>
+<li>主频降低，单核性能大幅提高；</li>
+<li>性能的提高少量来自于自动并行化，主要是浮点；</li>
+<li>主要通过结构优化提高性能：骨架做大（如：多访存部件等）、细节做精（结合应用具体优化）</li>
+</ul>
+</li>
+</ul>
+<h3 id="评价原则"><a href="#评价原则" class="headerlink" title="评价原则"></a>评价原则</h3><p><strong>拿基准测试程序来测，而不是看个别技术指标</strong>（如：主频等）；    </p>
+<p>注意点：</p>
+<ol>
+<li>对于不同的计算机，侧重点不同需要采用不同的测试程序；<ul>
+<li>例如：个人 PC 在乎单任务关注响应时间，计算中心多任务更关注吞吐量</li>
+</ul>
+</li>
+<li>测试程序要有代表性，要足够大，而不是拿个别程序测，要能全面综合评价计算机性能；</li>
+<li>多个程序测试时，最后应该采用「几何平均」，这样反映的结果更加公平；<ul>
+<li>算术平均值的权重与特定程序在特定机器上的执行时间成正比，所以权重不仅与该程序的执行频度有关，也与运行该程序的机器特性和输入数据相关。可能导致测试者把自己机器上运行最快的程序的输入量增到最大，以提高计算该程序平均值时的权重，干扰了真实结果。</li>
+<li>几何平均：<ul>
+<li>优点：小于算术平均值、与参考机无关、强调性能平衡</li>
+<li>缺点：可能导致硬件和软件设计者集中精力提高最易提高速度的软件的性能，而不是提高速度最慢的软件的性能</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>当负载中各程序的执行百分比不同时，常用方法：计算加权执行时间、归一化（将执行时间对一台参考机器进行归一化，然后取其归一化执行时间的平均值）</li>
+<li>测试报告要足够详细，要公开，要可以检查；</li>
+</ol>
+<p>常见的基准测试程序套件：</p>
+<ul>
+<li>SPEC CPU：基准测试程序</li>
+<li>TPC：事务处理测试程序</li>
+<li>EEMBC：嵌入式基准测试程序</li>
+<li>LMBench：比较不同的 unix 系统性能</li>
+</ul>
+<h3 id="CPI-和-IPC"><a href="#CPI-和-IPC" class="headerlink" title="CPI 和 IPC"></a>CPI 和 IPC</h3><p>在指令系统确定后，系统结构设计者的主要目标就是降低 CPI 或提高 IPC；   </p>
+<p>CPI = (CPU时间 * CLOCK Rate频率)  / 指令数 = 时钟周期数 / 指令数</p>
+<ul>
+<li><p>$CPU \ time = Cycle \ Time \times (\sum_{j=1}^n CPI_j \times I_j) = Cycle \ Time \times CPI \times Instruction  \ Count$</p>
+</li>
+<li><p>$CPI = \sum_{j=1}^n CPI_j \times F_j ,\  \ where \ F_j = \frac{I_j}{Instruction  \ Count} $</p>
+</li>
+</ul>
+<h2 id="成本"><a href="#成本" class="headerlink" title="成本"></a>成本</h2><h3 id="成本和性能的关系"><a href="#成本和性能的关系" class="headerlink" title="成本和性能的关系"></a>成本和性能的关系</h3><ul>
+<li>超级计算机：不计成本，只追求性能</li>
+<li>嵌入式应用：为降低功耗和成本，可以牺牲一部分性能</li>
+<li>介于两者之间：比如 PC 机，工作站，服务器等，追求性能价格比的最优设计</li>
+</ul>
+<h3 id="影响成本的因素"><a href="#影响成本的因素" class="headerlink" title="影响成本的因素"></a>影响成本的因素</h3><ul>
+<li>生产成本降低，加速学习降低一次性成本，商品竞争量的增加。</li>
+</ul>
+<h3 id="芯片成本"><a href="#芯片成本" class="headerlink" title="芯片成本"></a>芯片成本</h3><p><img src="http://img.thebetterkong.cn/blog/CA-Introduction/Chip.png" alt="晶片"></p>
+<ul>
+<li>$芯片成本 = \frac{晶片成本+测试成本+封装成本}{最终成品率}$</li>
+<li>$晶片成本 = \frac{晶圆成本}{每片晶圆的晶片数 \times 晶片成品率}$</li>
+<li>$每个晶圆的晶片数 = \frac{\pi(\frac{晶圆直径}{2})^2}{晶片面积} - \frac{\pi \times 晶圆直径}{\sqrt{2 \times 晶片面积}}$</li>
+<li>$晶片成品率 = 晶圆成品率 \times (1 + \frac{单位面积内缺陷数 \times 晶片面积}{\alpha})^{- \alpha}$</li>
+</ul>
+<blockquote>
+<p>封装成本跟功耗、引脚数目、材料相关；<br>90nm 工艺下每个 12 英寸晶圆的成本在 3000-6000 美元之间；<br>$\alpha$ 是衡量工艺复杂程度的参数，在目前工艺下约为 4；<br>单位面积的缺陷数目与工艺相关，在目前的工艺下约为：$(0.4-0.8)/{cm}^2$   </p>
+</blockquote>
+<h3 id="成本控制"><a href="#成本控制" class="headerlink" title="成本控制"></a>成本控制</h3><p>基于以下特点：</p>
+<ol>
+<li>生产流程决定晶圆的成本、成品率以及单位面积的残次品数目；</li>
+<li>设计者唯一能够控制的是晶片的面积，而晶片成本增长的速度和晶片面积增长速度的 4 次方成正比关系；</li>
+</ol>
+<p>所以做法：</p>
+<ol>
+<li>控制晶片大小：通过晶片所包含的功能和 I/O 管脚数目来控制晶片的大小</li>
+<li>提高成品率：“冗余”设计，如片内 RAM 的冗余设计</li>
+<li>控制封装、测试的成本</li>
+<li>掩模成本：主要针对低产量（少于 100 万）的产品，采用可配置逻辑或选取一些门阵列来降低掩模成本</li>
+</ol>
+<h2 id="功耗"><a href="#功耗" class="headerlink" title="功耗"></a>功耗</h2><p><img src="http://img.thebetterkong.cn/blog/CA-Introduction/Power.png" alt="Power"></p>
+<h3 id="动态功耗"><a href="#动态功耗" class="headerlink" title="动态功耗"></a>动态功耗</h3><p><img src="http://img.thebetterkong.cn/blog/CA-Introduction/DynamicPower.png" alt="动态功耗">    </p>
+<p>翻转功耗：</p>
+<ul>
+<li>$P_{switch}=\frac{C_{out}{V_{dd}}^2f_{clk}}{2}$</li>
+</ul>
+<p>短路功耗：</p>
+<ul>
+<li>输入信号 transition 时间不为 0：P 管和 N 管同时打开造成电源的短路；</li>
+<li>输入 transition 比输出 transition 快：短路功耗小，反之则大；</li>
+</ul>
+<h3 id="CMOS静态功耗"><a href="#CMOS静态功耗" class="headerlink" title="CMOS静态功耗"></a>CMOS静态功耗</h3><p>在 90nm 以后漏电功耗比较突出：</p>
+<ul>
+<li>栅氧太薄、沟道太短、域值电压太低</li>
+</ul>
+<p>三种漏电：</p>
+<ul>
+<li>亚阈值漏电（sub-threshold leakage）：<ul>
+<li>源 &lt;—&gt; 漏</li>
+</ul>
+</li>
+<li>栅漏电（gate leakage）：<ul>
+<li>栅 &lt;—&gt; 源</li>
+<li>栅 &lt;—&gt; 漏</li>
+</ul>
+</li>
+<li>反相 PN 结漏电（junction leakage）：<ul>
+<li>源 &lt;—&gt; 衬底</li>
+<li>漏 &lt;—&gt; 衬底</li>
+</ul>
+</li>
+</ul>
+<h3 id="降低功耗的方法"><a href="#降低功耗的方法" class="headerlink" title="降低功耗的方法"></a>降低功耗的方法</h3><p>优化对象：</p>
+<ul>
+<li>动态功耗优化</li>
+<li>静态功耗优化</li>
+</ul>
+<p>优化层次：</p>
+<ul>
+<li>结构级：多发射 vs. 单发射；关闭不用的模块</li>
+<li>逻辑级：串行进位 vs. 并行进位加法器</li>
+<li>电路级：动态 vs. 静态电路</li>
+<li>工艺级：使用高性能 vs. 低功耗晶体管</li>
+</ul>
+<h1 id="计算机体系结构发展趋势"><a href="#计算机体系结构发展趋势" class="headerlink" title="计算机体系结构发展趋势"></a>计算机体系结构发展趋势</h1><h2 id="动力"><a href="#动力" class="headerlink" title="动力"></a>动力</h2><ul>
+<li>半导体工艺技术和计算机体系结构技术互为动力；</li>
+<li>应用需求是计算机体系结构发展的持久动力；</li>
+<li>主要动力：2010年代前工艺技术，2010年代后应用需求；</li>
+</ul>
+<h2 id="摩尔定律"><a href="#摩尔定律" class="headerlink" title="摩尔定律"></a>摩尔定律</h2><ul>
+<li>非客观规律，是人们努力的结果；  </li>
+<li>晶体管数目每18-24个月翻一番；   </li>
+<li>同样晶体管数量的芯片价格下降一倍，现在买一颗大米的钱可以买 100-1000 只晶体管；</li>
+</ul>
+<ol>
+<li>第一代到第四代：摩尔定律与结构进步</li>
+</ol>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>发展</th>
+<th>执行速率</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>电子管计算机</td>
+<td>每秒几千到几万次</td>
+<td>冯诺依曼结构</td>
+</tr>
+<tr>
+<td>晶体管计算机</td>
+<td>每秒几十万次</td>
+<td>高级程序语言出现（FORTRAN等），IBM7094…</td>
+</tr>
+<tr>
+<td>中小规模IC计算机</td>
+<td>每秒几百万次</td>
+<td>操作系统逐步成熟，小型机出现，IBM360等</td>
+</tr>
+<tr>
+<td>大规模IC计算机</td>
+<td>每秒亿次以上</td>
+<td>微处理器出现：Intel，AMD，形成wintel体系</td>
+</tr>
+</tbody>
+</table>
+</div>
+<ol>
+<li>摩尔定律与系统结构：</li>
+</ol>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>特点</th>
+<th>发展</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>第一阶段</td>
+<td>晶体管不够用</td>
+<td>计算机由很多独立芯片构成；<br>计算机结构受限于晶体管数目不够；</td>
+</tr>
+<tr>
+<td>第二阶段</td>
+<td>存储器速度太慢</td>
+<td>集成度提高，微处理器蓬勃发展；<br>存储容量指数增加，但访存速度增加缓慢 ；<br>Cache 占多达 80% 的晶体管；</td>
+</tr>
+<tr>
+<td>第三阶段</td>
+<td>晶体管越来越多而“难”用</td>
+<td>设计验证能力提高与晶体管增加形成剪刀差；<br>功耗问题突出、连线成为主要矛盾；<br>不得已向多核发展</td>
+</tr>
+</tbody>
+</table>
+</div>
+<ol>
+<li>CMOS工艺正面临物理极限：难以进一步缩小已经达成共识，所以会不会有新材料及新器件技术取代CMOS？<ul>
+<li>硅的平台不可能被取代，但硅平台上生长的器件会不断改进：如碳纳米管</li>
+</ul>
+</li>
+</ol>
+<h2 id="计算机应用与体系结构"><a href="#计算机应用与体系结构" class="headerlink" title="计算机应用与体系结构"></a>计算机应用与体系结构</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>设备</th>
+<th>性能</th>
+<th>特征</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>高性能机</td>
+<td>Performance per second</td>
+<td>人类对科学和工程计算的追求是永无止境的；<br>从 PFLOPS 到 EFLOPS，从通用回归专用；</td>
+</tr>
+<tr>
+<td>个人计算机</td>
+<td>Performance per dollar</td>
+<td>小鱼吃大鱼（大中小型机），催生了CPU；<br>技术驱动：微结构和工艺技术相得益彰，Wintel“发明”应用</td>
+</tr>
+<tr>
+<td>移动智能终端</td>
+<td>Performance per watt</td>
+<td>没有取代PC和服务器，而是互为补充；<br>应用驱动：基础软硬件技术趋于成熟，主要的创新来自应用模式；<br>服务器端，通过在片内集成更多的处理器核来提高性能；终端集成在CPU上的功能越来越多，形成片上系统（SOC）</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>发展趋势：</p>
+<ul>
+<li>基础硬件趋于成熟：<ul>
+<li>摩尔定律发展速度放缓，并将在2020年前后遭遇物理极限</li>
+<li>CPU 在主频、功耗、核数等方面遇到了障碍，更新速度变慢；Intel CPU 单核性能在2010-2012年间逼近“天花板” </li>
+<li>新材料不会替代晶体管，而是对晶体管的补充</li>
+</ul>
+</li>
+<li>应用创新方兴未艾：<ul>
+<li>云计算和新型移动终端的兴起改变了传统信息化平台的应用模式</li>
+<li>IT 产业的商业模式在经历了从 IBM 时代的纵向整合模式到 Intel 时代的横向整合模式后，正重新经历从横向到纵向的螺旋式上升过程</li>
+</ul>
+</li>
+<li><strong>硅平台成为应用创新的重要平台</strong>：<ul>
+<li>通用 CPU 片内将集成专用处理单元（GPU/众核、智能/安全处理器<br>等），在晶体管层面与应用结合（原来主要在软件层面与应用结合）</li>
+</ul>
+</li>
+</ul>
+<h2 id="计算机体系结构发展中碰到的“墙”"><a href="#计算机体系结构发展中碰到的“墙”" class="headerlink" title="计算机体系结构发展中碰到的“墙”"></a>计算机体系结构发展中碰到的“墙”</h2><p>1980’s：存储墙</p>
+<ul>
+<li>CPU变快，内存只变大不变快</li>
+<li><strong>80% 的晶体管用于片内高速缓存等</strong></li>
+</ul>
+<p>2000’s：功耗墙</p>
+<ul>
+<li>以 Intel 放弃 4GHz 的 Pentium IV 为标志，终止复杂的高主频设计</li>
+<li><strong>多核设计成为主流</strong></li>
+</ul>
+<p>未来还有可能碰到的“墙” ：</p>
+<ul>
+<li>带宽墙：“茶壶里倒饺子”（性能和带宽 1-2FLOPS : 1BPS 的关系）</li>
+<li>成本墙：太贵了做不起（目前只剩 Intel、IBM、TSMC 三家）或用不起<br>（10nm 以后单片成本反而增加）</li>
+<li>应用墙：16 核以上的 CPU 卖给谁？量大面广的应用需要多少核？</li>
+</ul>
+<h2 id="未来可能会流行的CPU结构"><a href="#未来可能会流行的CPU结构" class="headerlink" title="未来可能会流行的CPU结构"></a>未来可能会流行的CPU结构</h2><p>「多核 + 向量处理」 ：商业主流结构</p>
+<ul>
+<li>典型：Sandy Bridge, Bulldozer, Power7, BG/Q……..</li>
+<li>向量的位宽：64 / 128 / 256 / ……</li>
+</ul>
+<p>「众核」：同构的基于分片的多核（tile based）</p>
+<ul>
+<li>典型：GPU, Tile64</li>
+<li>处理器核的个数：64 / 128 / 512 / 1024 </li>
+</ul>
+<p>「带有协处理器的异构多核」</p>
+<ul>
+<li>典型：CELL</li>
+<li>通用处理器＋专用的协处理器</li>
+<li>多核+向量处理+专用处理器可能是未来主流结构</li>
+</ul>
+<h1 id="计算机体系结构设计的基本原则"><a href="#计算机体系结构设计的基本原则" class="headerlink" title="计算机体系结构设计的基本原则"></a>计算机体系结构设计的基本原则</h1><ul>
+<li>平衡性：结构设计要统筹兼顾</li>
+<li>局部性：结构设计要重点突出</li>
+<li>并行性：人多力量大，开发各个层次的并行性</li>
+<li>虚拟化：自己麻烦点，让用户好用点</li>
+</ul>
+<h2 id="平衡性"><a href="#平衡性" class="headerlink" title="平衡性"></a>平衡性</h2><ol>
+<li>木桶原理：<ul>
+<li>短板决定总体性能；</li>
+</ul>
+</li>
+<li>访存和计算机的平衡：<ul>
+<li>经验定律使然，为保持通用性，峰值浮点运算速度（MFLOPS）和峰值访存带宽（MB/s）为 1:1 左右；</li>
+</ul>
+</li>
+<li>Amdahl定律（关注短板）：<ul>
+<li>通过使用某种较快的执行方式所获得的性能的提高，受可使用这种较快执行方式的时间所占的百分比例的限制；</li>
+</ul>
+</li>
+</ol>
+<h2 id="开发局部性"><a href="#开发局部性" class="headerlink" title="开发局部性"></a>开发局部性</h2><ol>
+<li>计算机中的局部性事件：<ul>
+<li>指令局部性：指令顺序执行，循环体中的指令</li>
+<li>访存局部性：时间局部性和 空间局部性</li>
+<li>转移局部性：同一条转移指令经常往同一个方向跳转（Cache、TLB、预取、转移猜测）</li>
+</ul>
+</li>
+<li>当结构设计基于平衡后，优化性能要抓住主要矛盾，重点改进最频繁发生事件的执行效率；</li>
+</ol>
+<h2 id="开发并行性"><a href="#开发并行性" class="headerlink" title="开发并行性"></a>开发并行性</h2><ol>
+<li>指令级并行：<ul>
+<li>是过去的20年里体系结构设计者提升性能的主要途径</li>
+<li>时间并行性：指令流水线</li>
+<li>空间并行性：SuperScalar（Out-of-Order）和 EPIC（编译器优化） </li>
+<li>进一步挖掘指令级并行的空间不大</li>
+</ul>
+</li>
+<li>数据级并行：SIMD<ul>
+<li>向量机、SSE 多媒体指令</li>
+<li>作为指令级并行的有效补充，在高性能计算及流媒体等领域发挥重要作用，在专用处理器中应用较多</li>
+</ul>
+</li>
+<li>线程级并行：<ul>
+<li>线程级并行大量存在于 Internet 应用</li>
+<li>多核处理器及多线程处理器</li>
+</ul>
+</li>
+</ol>
+<h2 id="虚拟化"><a href="#虚拟化" class="headerlink" title="虚拟化"></a>虚拟化</h2><ol>
+<li>虚拟化：应用和实现的“桥梁” <ul>
+<li>用起来是这样的，实际上是那样的</li>
+<li>逻辑上是这样的，物理上是那样的</li>
+<li>宁愿自己多费点事，也要用尽量为用户提供一个好用的接口</li>
+</ul>
+</li>
+<li>计算机中的“桥梁” <ul>
+<li>操作系统对虚拟地址空间的支持（CPU 中实现 TLB）（特优） </li>
+<li>多发射在维持串行编程模型的情况下提高了速度（优） </li>
+<li>多线程和虚拟机技术在单一硬件上虚拟出多个 CPU（优） </li>
+<li>Cache 在维持一维的地址空间的情况下提高了速度（良） </li>
+<li>Cache 一致性协议在分布存储的情况下提供统一编程空间（一般）</li>
+</ul>
+</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-Introduction/" title="Computer Architecture：绪论">http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-Introduction/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Computer-Architecture/" rel="tag"><i class="fa fa-tag"></i> Computer Architecture</a>
+              <a href="/tags/%E5%9B%BD%E7%A7%91%E5%A4%A7%E7%A0%94%E7%A9%B6%E7%94%9F%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 国科大研究生课程笔记</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/02/14/Literature-reading-notes/SGX-Technology-Analysis-and-Research/" rel="prev" title="《SGX技术的分析和研究》阅读笔记">
+      <i class="fa fa-chevron-left"></i> 《SGX技术的分析和研究》阅读笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/02/21/Computer-Architecture/CA-BinaryAndLogicCircuits/" rel="next" title="Computer Architecture：二进制与逻辑电路">
+      Computer Architecture：二进制与逻辑电路 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#现状"><span class="nav-number">1.</span> <span class="nav-text">现状</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#应用举例：PPT翻页过程"><span class="nav-number">2.</span> <span class="nav-text">应用举例：PPT翻页过程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#计算机体系结构"><span class="nav-number">3.</span> <span class="nav-text">计算机体系结构</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#定义"><span class="nav-number">3.1.</span> <span class="nav-text">定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#主要研究内容"><span class="nav-number">3.2.</span> <span class="nav-text">主要研究内容</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#现代体系结构基础"><span class="nav-number">3.3.</span> <span class="nav-text">现代体系结构基础</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#表现方式"><span class="nav-number">3.4.</span> <span class="nav-text">表现方式</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#造CPU必须知道"><span class="nav-number">4.</span> <span class="nav-text">造CPU必须知道</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#冯诺依曼结构"><span class="nav-number">5.</span> <span class="nav-text">冯诺依曼结构</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#基本原理"><span class="nav-number">5.1.</span> <span class="nav-text">基本原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#演进"><span class="nav-number">5.2.</span> <span class="nav-text">演进</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#优缺点"><span class="nav-number">5.3.</span> <span class="nav-text">优缺点</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#衡量计算机的指标"><span class="nav-number">6.</span> <span class="nav-text">衡量计算机的指标</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#性能"><span class="nav-number">6.1.</span> <span class="nav-text">性能</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#性能的本质定义"><span class="nav-number">6.1.1.</span> <span class="nav-text">性能的本质定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#影响性能的因素"><span class="nav-number">6.1.2.</span> <span class="nav-text">影响性能的因素</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#评价原则"><span class="nav-number">6.1.3.</span> <span class="nav-text">评价原则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CPI-和-IPC"><span class="nav-number">6.1.4.</span> <span class="nav-text">CPI 和 IPC</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#成本"><span class="nav-number">6.2.</span> <span class="nav-text">成本</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#成本和性能的关系"><span class="nav-number">6.2.1.</span> <span class="nav-text">成本和性能的关系</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#影响成本的因素"><span class="nav-number">6.2.2.</span> <span class="nav-text">影响成本的因素</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#芯片成本"><span class="nav-number">6.2.3.</span> <span class="nav-text">芯片成本</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#成本控制"><span class="nav-number">6.2.4.</span> <span class="nav-text">成本控制</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#功耗"><span class="nav-number">6.3.</span> <span class="nav-text">功耗</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#动态功耗"><span class="nav-number">6.3.1.</span> <span class="nav-text">动态功耗</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CMOS静态功耗"><span class="nav-number">6.3.2.</span> <span class="nav-text">CMOS静态功耗</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#降低功耗的方法"><span class="nav-number">6.3.3.</span> <span class="nav-text">降低功耗的方法</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#计算机体系结构发展趋势"><span class="nav-number">7.</span> <span class="nav-text">计算机体系结构发展趋势</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#动力"><span class="nav-number">7.1.</span> <span class="nav-text">动力</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#摩尔定律"><span class="nav-number">7.2.</span> <span class="nav-text">摩尔定律</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#计算机应用与体系结构"><span class="nav-number">7.3.</span> <span class="nav-text">计算机应用与体系结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#计算机体系结构发展中碰到的“墙”"><span class="nav-number">7.4.</span> <span class="nav-text">计算机体系结构发展中碰到的“墙”</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#未来可能会流行的CPU结构"><span class="nav-number">7.5.</span> <span class="nav-text">未来可能会流行的CPU结构</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#计算机体系结构设计的基本原则"><span class="nav-number">8.</span> <span class="nav-text">计算机体系结构设计的基本原则</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#平衡性"><span class="nav-number">8.1.</span> <span class="nav-text">平衡性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#开发局部性"><span class="nav-number">8.2.</span> <span class="nav-text">开发局部性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#开发并行性"><span class="nav-number">8.3.</span> <span class="nav-text">开发并行性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#虚拟化"><span class="nav-number">8.4.</span> <span class="nav-text">虚拟化</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="一个程序片段：  array &#x3D; (int*)malloc(0x1000); for (i&#x3D;0;i&lt;1024;i++) array[i] &#x3D; 0;  软件功能：  分配一个 1024 项的一维整数数组 array，并初始化为 0；   硬件过程？  数组地址分配在什么地址？ 数组存在什么地方（内存&#x2F;硬盘）？ 什么时候分配？什么时候存？ 虚地址和物理地址如何转换？">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Computer Architecture：存储管理">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-MemManage/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="一个程序片段：  array &#x3D; (int*)malloc(0x1000); for (i&#x3D;0;i&lt;1024;i++) array[i] &#x3D; 0;  软件功能：  分配一个 1024 项的一维整数数组 array，并初始化为 0；   硬件过程？  数组地址分配在什么地址？ 数组存在什么地方（内存&#x2F;硬盘）？ 什么时候分配？什么时候存？ 虚地址和物理地址如何转换？">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/VirtualRealAddressPagetable.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/MultilevelPagetable.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/CacheVirtualStorage.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/MIPSStorageSegmentation.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/MIPSTLBFormate.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/MIPSTLBRegister.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/TLBException1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/TLBException2.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/TLBException3.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/TLBException4.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/TLBRefill.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/TLBRefillProcess.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/TLBRefillCode1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/TLBRefillCode2.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/LinuxMIPSVirtualAddressSpace.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/LinuxMIPSTwoLevelPagetable.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/LinuxTLBRefill.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/ExampleLinuxTLBRefill1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/ExampleLinuxTLBRefill2.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/Why2Exception.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/LinuxMIPSTLBException.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/ExampleLinuxMIPSTLBException.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/PreventBufferOverflowAttacks.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/MIPSLinuxMultilevelPagetableFind.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/DescribePagetableStructure.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/MIPSLinuxTLBOptimization.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/SoftTLBFlowChart.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/SoftTLBHitRate.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/BufferSoftTLBHitRate.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/SoftTLBSPEC.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/ProcessorStructuralParameters1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/ProcessorStructuralParameters2.png">
+<meta property="article:published_time" content="2020-02-21T07:16:08.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:26:31.088Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="Computer Architecture">
+<meta property="article:tag" content="国科大研究生课程笔记">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/CA-MemManage/VirtualRealAddressPagetable.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-MemManage/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Computer Architecture：存储管理 | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-MemManage/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Computer Architecture：存储管理
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-02-21 15:16:08" itemprop="dateCreated datePublished" datetime="2020-02-21T15:16:08+08:00">2020-02-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:26:31" itemprop="dateModified" datetime="2020-08-14T17:26:31+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">计算机体系结构</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/02/21/Computer-Architecture/CA-MemManage/" class="post-meta-item leancloud_visitors" data-flag-title="Computer Architecture：存储管理" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/02/21/Computer-Architecture/CA-MemManage/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/02/21/Computer-Architecture/CA-MemManage/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>一个程序片段：</p>
+<ul>
+<li><code>array = (int*)malloc(0x1000);</code></li>
+<li><code>for (i=0;i&lt;1024;i++) array[i] = 0;</code></li>
+</ul>
+<p>软件功能：</p>
+<ul>
+<li>分配一个 1024 项的一维整数数组 array，并初始化为 0； </li>
+</ul>
+<p>硬件过程？</p>
+<ul>
+<li>数组地址分配在什么地址？</li>
+<li>数组存在什么地方（内存/硬盘）？</li>
+<li>什么时候分配？什么时候存？</li>
+<li>虚地址和物理地址如何转换？</li>
+</ul>
+<a id="more"></a> 
+<h1 id="虚拟存储的基本原理"><a href="#虚拟存储的基本原理" class="headerlink" title="虚拟存储的基本原理"></a>虚拟存储的基本原理</h1><h2 id="虚拟存储的作用"><a href="#虚拟存储的作用" class="headerlink" title="虚拟存储的作用"></a>虚拟存储的作用</h2><ol>
+<li>隔离进程编程地址空间；</li>
+<li>虚拟地址空间可大于实际物理地址空间；（swap 交换区：内存和硬件交换）</li>
+<li>支持多进程环境下的内存的共享和保护；</li>
+</ol>
+<h2 id="虚拟存储原理"><a href="#虚拟存储原理" class="headerlink" title="虚拟存储原理"></a>虚拟存储原理</h2><ul>
+<li>由操作系统和 CPU 紧密配合才能完成</li>
+<li>虚拟存储是计算机系统发展过程中有里程碑作用的事件：<ul>
+<li>多进程环境下统一的编程空间</li>
+<li>多进程环境下的共享与保护</li>
+<li>支持大于实际物理内存的编程空间</li>
+</ul>
+</li>
+<li>虚实地址分开，建立一种从虚地址空间映射到物理内存的机制：<ul>
+<li>把两个层次的存储转换为一个层次的存储</li>
+<li>物理内存实际上是磁盘的一个 Cache</li>
+</ul>
+</li>
+</ul>
+<h2 id="虚实地址转换与页表"><a href="#虚实地址转换与页表" class="headerlink" title="虚实地址转换与页表"></a>虚实地址转换与页表</h2><p><img src="http://img.thebetterkong.cn/blog/CA-MemManage/VirtualRealAddressPagetable.png" alt="VirtualRealAddressPagetable"></p>
+<ul>
+<li>在页的范围内，虚实地址相等；</li>
+<li>TLB 是页表的 cache；</li>
+</ul>
+<h2 id="多级页表"><a href="#多级页表" class="headerlink" title="多级页表"></a>多级页表</h2><p><img src="http://img.thebetterkong.cn/blog/CA-MemManage/MultilevelPagetable.png" alt="MultilevelPagetable"></p>
+<h2 id="TLB"><a href="#TLB" class="headerlink" title="TLB"></a>TLB</h2><p><strong>TLB 实际上是操作系统中页表的 Cache：</strong></p>
+<ul>
+<li>TLB 主要负责完成用户空间到物理空间的转化</li>
+<li>一般与 Cache 访问同时进行</li>
+<li>TLB 内容：虚地址（Cache的Tag）,物理地址（Cache的Data）,保护位（Cache的状态）//判断访问是否合法</li>
+</ul>
+<p><strong>TLB 失效处理：</strong></p>
+<ul>
+<li>TLB 失效时需要把相应页表内容从内存取到 TLB</li>
+<li>TLB 失效时硬件（如X86的page walker）和软件（如MIPS的特殊例外）来填充 TLB</li>
+</ul>
+<h2 id="Cache-和虚拟存储"><a href="#Cache-和虚拟存储" class="headerlink" title="Cache 和虚拟存储"></a>Cache 和虚拟存储</h2><p><img src="http://img.thebetterkong.cn/blog/CA-MemManage/CacheVirtualStorage.png" alt="CacheVirtualStorage"></p>
+<h2 id="分清两种映射关系"><a href="#分清两种映射关系" class="headerlink" title="分清两种映射关系"></a>分清两种映射关系</h2><ul>
+<li>TLB 是页表的 Cache：<ul>
+<li>负责地址转换，一页管 4KB 以上数据</li>
+<li>页表由操作系统管理，存在系统空间</li>
+</ul>
+</li>
+<li>内存是硬盘的 Cache：<ul>
+<li>负责数据缓存，一字节就是一字节</li>
+<li>用户程序的数据在用户空间</li>
+</ul>
+</li>
+</ul>
+<h1 id="MIPS-处理器对虚存系统的支持"><a href="#MIPS-处理器对虚存系统的支持" class="headerlink" title="MIPS 处理器对虚存系统的支持"></a>MIPS 处理器对虚存系统的支持</h1><h2 id="总技术支持"><a href="#总技术支持" class="headerlink" title="总技术支持"></a>总技术支持</h2><ul>
+<li>分段（控制访问权限），段内分页</li>
+<li>TLB</li>
+<li>特殊的控制寄存器</li>
+<li>特殊指令</li>
+<li>专用的例外入口</li>
+</ul>
+<h2 id="MIPS-的访问权限"><a href="#MIPS-的访问权限" class="headerlink" title="MIPS 的访问权限"></a>MIPS 的访问权限</h2><ul>
+<li><strong>User mode 用户态：</strong><ul>
+<li>EXL=0 and ERL=0 and KSU=10</li>
+</ul>
+</li>
+<li><strong>Supervisor mode 管理态：</strong><ul>
+<li>EXL=0 and ERL=0 and KSU=01</li>
+</ul>
+</li>
+<li><strong>Kernel mode 核心态：</strong><ul>
+<li>EXL=1 or ERL=1 or KSU=00</li>
+</ul>
+</li>
+</ul>
+<h2 id="MIPS-存储空间分段情况"><a href="#MIPS-存储空间分段情况" class="headerlink" title="MIPS 存储空间分段情况"></a>MIPS 存储空间分段情况</h2><p>32位模式：<br><img src="http://img.thebetterkong.cn/blog/CA-MemManage/MIPSStorageSegmentation.png" alt="MIPSStorageSegmentation"></p>
+<ul>
+<li><strong>问题一</strong>：为什么在内核地址空间中要有一段空间不能用 TLB 转换以及不能进 cache，而且两个虚地址不同的段（kseg0 和 kseg1）要映射到相同的物理地址呢？<ol>
+<li>是系统初始化的需要；</li>
+<li>因为在 MIPS 中各自 I/O 设备都被映射到 0~512MB 的空间中。在启动计算机的时候，CPU 刚开始上电运行，硬件复位信号只对非常必要的一些寄存器进行了初始化，而 CPU 中的 cache、TLB 以及各自寄存器都需要由软件进行初始化。（即：CPU 刚启动时用于初始化的指令不能存在 cache 中，其地址也不能用 TLB 进行转换，否则就会出现先有鸡还是先有蛋的问题：</li>
+</ol>
+</li>
+<li><strong>CPU 加电、初始化和启动操作系统的整个过程，其中最关键的约定是CPU 第一条指令必须有一个固定的入口，并且这个入口的地址不能使用 TLB 转换，也不能用 cache：</strong><ul>
+<li>在 MIPS 系统中，CPU 初始化时，复位信号 reset 把程序计数器PC 置为 0xbfc00000，这个地址属于 kseg1 段，地址映射方式是直接减去 0xa0000000，所以物理地址就是 0x1fc00000；</li>
+<li>上述地址是一个非缓存地址，一旦 CPU 发生 reset，访存总线第一次送出来一个地址肯定是 0x1fc00000，这个地址对应主板的 BIOS，CPU 从 BIOS 取指令对 cache 和控制寄存器等进行初始化后，由于没有使用 cache，每条指令的取址和执行都需要上百拍。对 cache 等初始化后，BIOS 程序跳转到另一段地址空间 kseg0。</li>
+<li>这一段是可以使用 cache 的，指令和数据都可以进入 cache，比非缓存的 kseg1 快很多。在对内存以及 I/O 接口进行必要的初始化后，把操作系统代码从硬盘复制到内存中，开始引导操作系统（跳转到操作系统在内存的地址），操作系统就把所有的资源都管理起来了。</li>
+</ul>
+</li>
+</ul>
+<h2 id="MIPS-的-TLB-及相关控制寄存器"><a href="#MIPS-的-TLB-及相关控制寄存器" class="headerlink" title="MIPS 的 TLB 及相关控制寄存器"></a>MIPS 的 TLB 及相关控制寄存器</h2><p>32 位模式、全相联、32-64 项</p>
+<ul>
+<li><p><strong>MIPS 的 TLB 格式：</strong><br>  <img src="http://img.thebetterkong.cn/blog/CA-MemManage/MIPSTLBFormate.png" alt="MIPSTLBFormate"></p>
+<ul>
+<li><strong>MASK</strong>：12位，用于TLB查找时，控制VPN2的低12位是否参与地址比较（其某位为1：在查找TLB时该为不参与比较），则MIPS的页在4KB-16MB之间可变；</li>
+<li><strong>VPN2</strong>：虚拟页号：每项把两个连续的虚拟页映射为两个物理页；</li>
+<li><strong>G</strong>：全局域：当G等于1时，关闭ASID匹配使得该TLB项适用于所有的地址空间；</li>
+<li><strong>ASID</strong>：地址空间标识符，标记该项地址属于哪个地址空间（只有CPU当前ASID号和该域匹配时，地址查找才命中），ASID域可以理解为：用于区分不同进程表项的编号；</li>
+<li><strong>PFN</strong>：物理页帧号，有效宽度依赖于该CPU支持的物理内存空间的大小；</li>
+<li><strong>C</strong>：表示相应物理页的cache算法；</li>
+<li><strong>D</strong>：dirty脏位，D=1：该页允许写入；OS可利用该位了解该页上是否有写操作发生过；</li>
+<li><strong>V</strong>：有效位，表示相应物理页是否在内存中；</li>
+</ul>
+</li>
+<li><p><strong>MIPS，TLB 相关控制寄存器：</strong><br>  <img src="http://img.thebetterkong.cn/blog/CA-MemManage/MIPSTLBRegister.png" alt="MIPSTLBRegister">    </p>
+<ul>
+<li><strong>PageMask</strong>：Mask ⾥⾯值为 1 的位，书上说的在执⾏ TLB 表项匹配时被忽略（也就相当于 PageMask 寄存器值为 1 的位被看作了⻚内偏移位），⻚内偏移多⼀位，就相当于⻚⼤⼩ *2。初始⻚内偏移（12 位 = 4K）⼤⼩，当 MASK 12 位全位 1 的时候，⻚内偏移成了 24 位也就是 16MB（这也就是 FPN 为啥要是 24位 的原因）（页大小四倍递增）</li>
+<li><strong>PageMask、EntryHi、EntryLo0、EntryLo1</strong>，这四个寄存器内容与 TLB 一样，主要用于读写 TLB：<ul>
+<li>写 TLB 时，把寄存器的内容写到其中某一项去（其中 G 位处理方法：把 EntyrLo0 和 EntyrLo1 的 G 位相与后写到 TLB）；</li>
+<li>读 TLB 时，把 TLB 某一项的内容读到这些寄存器中（其中 G 位处理方法：把 TLB 的 G 位同时写入到 EntyrLo0 和 EntyrLo1 的 G 位）；</li>
+</ul>
+</li>
+<li><strong>Index、Random（值随机更新）、Wired</strong>，这三个寄存器决定读写 TLB 的哪个表项；<ul>
+<li>wired：锁定某些 TLB 项的作用，即指定 Random 寄存器的值只能在 Wired 和（TLB 最大表项值-1）之间变换；</li>
+<li>当软件用 Rondom 作索引写 TLB 进行随机替换的时候，0 到 wired 之间的 TLB 项就不可能被替换（则 OS 常把一些常用的页表项放到 0 到 wired 之间）；</li>
+</ul>
+</li>
+<li><strong>EPC</strong>：例外时的当前 PC，便于例外处理完后返回该位置重新执行；（MIPS 中存在分支延迟槽，如果发生例外的指令在分支延迟槽中，EPC 保存的是发生例外的前一条指令，这样可以返回到分支指令）；</li>
+<li><strong>BadVAddr</strong>：引起例外的虚地址；</li>
+<li><strong>Context</strong>：环境上下文，其内容与 BadVAddr 的内容有些重复，主要是为了加速快 TLB 异常回填过程中的页表查找速度，其中页表的基地址存储在 PTEBase 域中，而 BadVPN2 指向页表内的表项；</li>
+</ul>
+</li>
+<li><p><strong>虚拟地址转换为物理地址过程为：</strong>   </p>
+<ul>
+<li>虚拟地址的⾼位 (VPN) 和当前程序的 ASID 送给 TLB，与 TLB 中的所有 entry 表项同时进⾏匹配，匹配过程中如果有如下都满⾜的 TLB 表项，从中读取 PFN,V,D 域：<ol>
+<li>当前程序(进程)的 ASID 等于 TLB 表项中的 ASID(EntryHi 的 Gbit 置位的话，不⽐较 ASID)；</li>
+<li>虚拟地址的 bit63~62 与 TLB 表项的 R 字段相同；</li>
+<li>虚拟地址的相应位域和 TLB 的 VPN2 相同，相应位域取决于 PageMask 寄存器设置的⻚表⼤⼩；   </li>
+</ol>
+</li>
+<li>注意：最终转换是否成功取决于 V,D 域。如果 V ⽆效，该 entry ⽆效，产⽣ TLB ⽆效异常；如果 D 指示不可写，⽽有写操作会产⽣ TLB 修改异常。如果没有上述异常，即是 TLB 命中，命中 entry 的 PFN 和虚拟地址低位(1KBpage 的话是低 10bit，4KBpage 的话低 12bit)构成最终的物理地址。</li>
+</ul>
+</li>
+</ul>
+<h2 id="与-TLB-管理有关的指令（核心态下才能执行）"><a href="#与-TLB-管理有关的指令（核心态下才能执行）" class="headerlink" title="与 TLB 管理有关的指令（核心态下才能执行）"></a>与 TLB 管理有关的指令（核心态下才能执行）</h2><ul>
+<li><strong>MFC0, MTC0</strong>：在通用寄存器和控制寄存器之间搬运数据</li>
+<li><strong>TLBR</strong>：以 Index 寄存器为索引把 TLB 内容读到 PageMask、EntryHi 和 EntryLo0/1 等寄存器</li>
+<li><strong>TLBP</strong>：检查 EntryHi 中指定的虚页是否在 TLB 中 </li>
+<li><strong>TLBWR, TLBWI</strong>：分别以 Random 和 Index 寄存器为索引把 Pagemask、EntryHi 和 EntryLo0/1 寄存器的内容写入 TLB</li>
+</ul>
+<h2 id="处理器访问-TLB"><a href="#处理器访问-TLB" class="headerlink" title="处理器访问 TLB"></a>处理器访问 TLB</h2><p>处理器访问 TLB 时，将访存地址和 EntryHi 中的 ASID 与 TLB 的每一项进行匹配：</p>
+<ul>
+<li>如果命中，则读出相应的 PFN、C、D、V等内容；</li>
+<li>如果不命中则发 TLB 重填（TLB Refill）例外；</li>
+<li>如果TLB命中但读出的 V 位为 0，则发出 TLB 无效（TLB Invalid）例外；</li>
+<li>如果是存数操作且 TLB 命中、有效但读出的 D 位为 0，则发出 TLB 修改（TLB Modify）例外；</li>
+</ul>
+<p>发生 TLB 例外时，硬件除了把当前 PC 保存在 EPC 中用于例外返回，把 PC 置为例外入口地址，在 Cause 控制寄存器中记录例外原因，把系统转态置为核心态（置 status 控制寄存器的 EXL 位为 1）以外，还需要在 BadVAddr 和 Context 控制寄存器中保存于 TLB 例外相关的信息；</p>
+<h2 id="TLB-例外"><a href="#TLB-例外" class="headerlink" title="TLB 例外"></a>TLB 例外</h2><h3 id="发生-TLB-例外时硬件处理过程"><a href="#发生-TLB-例外时硬件处理过程" class="headerlink" title="发生 TLB 例外时硬件处理过程"></a>发生 TLB 例外时硬件处理过程</h3><ul>
+<li>置 BadVaddr, Context, EntryHi：<ul>
+<li>把发生例外的虚地址放到 BadVaddr，和 Context 的 PTEBase 和 BadVPN2 域，以及 EntryHi 的 VPN2 域中</li>
+</ul>
+</li>
+<li>PC=例外入口地址，当前 PC 保存在 EPC 中用于例外返回<ul>
+<li>TLB Refill 入口=0x80000000</li>
+<li>其它入口=0x80000180 </li>
+</ul>
+</li>
+<li>置 Status（置 EXL 位进入核心态）, Cause（向其 ExCode 域中记录例外原因）；<br>  <img src="http://img.thebetterkong.cn/blog/CA-MemManage/TLBException1.png" alt="TLBException1"><br>  <img src="http://img.thebetterkong.cn/blog/CA-MemManage/TLBException2.png" alt="TLBException2"><br>  <img src="http://img.thebetterkong.cn/blog/CA-MemManage/TLBException3.png" alt="TLBException3"><br>  <img src="http://img.thebetterkong.cn/blog/CA-MemManage/TLBException4.png" alt="TLBException4">    </li>
+</ul>
+<h3 id="TLB-例外类型"><a href="#TLB-例外类型" class="headerlink" title="TLB 例外类型"></a>TLB 例外类型</h3><ol>
+<li><p>Refill：TLB 中没有对应的项   </p>
+<ul>
+<li>如果查找 TLB 没有找到一个虚地址匹配（VPN2+ASID/G） </li>
+<li>例外入口：80000000 （除非 exl=1）<br><img src="http://img.thebetterkong.cn/blog/CA-MemManage/TLBRefill.png" alt="TLBRefill"></li>
+</ul>
+</li>
+<li><p>TLB invalid：相应物理页不再内存</p>
+<ul>
+<li>如果找到一个虚地址匹配项，但其 v=0</li>
+<li>例外入口：80000180</li>
+<li>细分为两种：TLBL for loads, TLBS for stores</li>
+</ul>
+</li>
+<li><p>TLB modify：非法写只读页</p>
+<ul>
+<li>如果找到一个虚地址匹配项，其 v=1，但 D=0 且访问为 store</li>
+<li>例外入口 80000180</li>
+</ul>
+</li>
+</ol>
+<h3 id="例外返回"><a href="#例外返回" class="headerlink" title="例外返回"></a>例外返回</h3><ol>
+<li><p>例外处理器在核心态下进行：（用户只能通过（系统调用）进入核心态）</p>
+<ul>
+<li>不允许在核心态下执行一条用户指令</li>
+<li>不允许在用户态下执行指令核心指令</li>
+</ul>
+</li>
+<li><p>例外返回的两种方式：</p>
+<ul>
+<li>jr+mtc0: mtc0 必须在 jr 的延迟槽中：<ul>
+<li>用 MTC0 指令清除 status 中的 EXL 位（权限切换：内核-&gt;用户）</li>
+<li>用跳转指令（如：jr）转移到EPC指定的地方</li>
+</ul>
+</li>
+<li>eret: eret 没有延迟槽：<ul>
+<li>自动将 status 寄存器中的转态位改为用户态；</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="一种虚拟存储实现方式"><a href="#一种虚拟存储实现方式" class="headerlink" title="一种虚拟存储实现方式"></a>一种虚拟存储实现方式</h2><ol>
+<li><p>使得发生例外时，context 寄存器指向页表中相应项：</p>
+<ul>
+<li>一维线性页表</li>
+<li>内存页表每项 8 个字节，每对页面占用 16 字节页表（VPN2）</li>
+<li>进程切换时操作系统更改 context 寄存器中 pte_base 域，使其指向该进程的页表基地址</li>
+<li>（pte_base 是进程上下文的一部分）</li>
+</ul>
+</li>
+<li><p>一维线性页表需要很大的空间，不能全部分配物理内存：</p>
+<ul>
+<li>放在 kernel mapped的kseg2/kseg3 段 </li>
+<li>需要解决 TLB refill 重入问题</li>
+</ul>
+</li>
+<li><p>TLB refill 过程：<br><img src="http://img.thebetterkong.cn/blog/CA-MemManage/TLBRefillProcess.png" alt="TLBRefillProcess"></p>
+<ul>
+<li>Pagemask 在操作系统初始化时由 OS 设置（固定页操作系统）</li>
+<li>Pte_base 在进程切换时由 OS 设置</li>
+<li>Vpn2 和 EntryHi 在缺页时由 CPU 设置</li>
+</ul>
+</li>
+<li><p>TLB refill 代码：<br> <img src="http://img.thebetterkong.cn/blog/CA-MemManage/TLBRefillCode1.png" alt="TLBRefillCode1"><br> <img src="http://img.thebetterkong.cn/blog/CA-MemManage/TLBRefillCode2.png" alt="TLBRefillCode2"></p>
+</li>
+</ol>
+<h1 id="LINUX-操作系统的存储管理"><a href="#LINUX-操作系统的存储管理" class="headerlink" title="LINUX 操作系统的存储管理"></a>LINUX 操作系统的存储管理</h1><h2 id="Linux-MIPS-虚拟地址空间安排"><a href="#Linux-MIPS-虚拟地址空间安排" class="headerlink" title="Linux/MIPS 虚拟地址空间安排"></a>Linux/MIPS 虚拟地址空间安排</h2><p><img src="http://img.thebetterkong.cn/blog/CA-MemManage/LinuxMIPSVirtualAddressSpace.png" alt="LinuxMIPSVirtualAddressSpace"></p>
+<h2 id="内存中的页表组织（32-位情况）"><a href="#内存中的页表组织（32-位情况）" class="headerlink" title="内存中的页表组织（32 位情况）"></a>内存中的页表组织（32 位情况）</h2><ol>
+<li><p>两级页表，每项 4 个字节：</p>
+<ul>
+<li>PFN：物理帧号</li>
+<li>Flags：V、C、D </li>
+<li>Exts：软件扩展位，用于维护一些硬件没有实现的功能，例如 ref 位，modified 位 </li>
+</ul>
+</li>
+<li><p>页表存放在 kseg0：</p>
+<ul>
+<li>页表访问不引起 TLB 例外（该段不用通过TLB映射的地址空间查询）</li>
+<li>页表存储空间在使用到的时候分配</li>
+</ul>
+</li>
+<li><p>每个进程的页表基地址（PGD 表基地址）存放在进程上下文中：</p>
+<ul>
+<li>进程切换时，把 PGD 表的基地址写到 context 的 PTEBase中</li>
+</ul>
+</li>
+</ol>
+<h2 id="Linux-MIPS-的两层页表"><a href="#Linux-MIPS-的两层页表" class="headerlink" title="Linux/MIPS 的两层页表"></a>Linux/MIPS 的两层页表</h2><p><img src="http://img.thebetterkong.cn/blog/CA-MemManage/LinuxMIPSTwoLevelPagetable.png" alt="LinuxMIPSTwoLevelPagetable"></p>
+<h2 id="Linux-的-tlb-重填代码（共-18-条指令）"><a href="#Linux-的-tlb-重填代码（共-18-条指令）" class="headerlink" title="Linux 的 tlb 重填代码（共 18 条指令）"></a>Linux 的 tlb 重填代码（共 18 条指令）</h2><p><img src="http://img.thebetterkong.cn/blog/CA-MemManage/LinuxTLBRefill.png" alt="LinuxTLBRefill"></p>
+<ul>
+<li>例子：<br>  <img src="http://img.thebetterkong.cn/blog/CA-MemManage/ExampleLinuxTLBRefill1.png" alt="ExampleLinuxTLBRefill1"><br>  <img src="http://img.thebetterkong.cn/blog/CA-MemManage/ExampleLinuxTLBRefill2.png" alt="ExampleLinuxTLBRefill2"></li>
+</ul>
+<ul>
+<li>问题：为什么要分两次例外？<br>  <img src="http://img.thebetterkong.cn/blog/CA-MemManage/Why2Exception.png" alt="Why2Exception"></li>
+</ul>
+<h2 id="Linux-MIPS-中-TLB-例外的处理"><a href="#Linux-MIPS-中-TLB-例外的处理" class="headerlink" title="Linux/MIPS 中 TLB 例外的处理"></a>Linux/MIPS 中 TLB 例外的处理</h2><p><img src="http://img.thebetterkong.cn/blog/CA-MemManage/LinuxMIPSTLBException.png" alt="LinuxMIPSTLBException"></p>
+<ul>
+<li>例题：<br>  <img src="http://img.thebetterkong.cn/blog/CA-MemManage/ExampleLinuxMIPSTLBException.png" alt="ExampleLinuxMIPSTLBException"></li>
+</ul>
+<h2 id="展望-不忘初心"><a href="#展望-不忘初心" class="headerlink" title="展望-不忘初心"></a>展望-不忘初心</h2><ol>
+<li><p>为什么访存指令的执行这么复杂？</p>
+<ul>
+<li>虚拟化：结构设计复杂一些，用户用起来简单一些；</li>
+<li>结构设计：虚实地址转换，支持比实际内存容量更大的访问空间；</li>
+<li>用户程序：每个进程都感到整个 CPU 和内存都是“我的”；</li>
+</ul>
+</li>
+<li><p>进一步虚拟化：</p>
+<ul>
+<li>运行多个 OS，让每个 OS 都感到整个 CPU 和内存都是”我的“；</li>
+<li>两次地址转换：guest VA=&gt;guest PA（host VA）=&gt;host PA，两个不同的 TLB 以及一个“影子TLB”（guest VA =&gt;host PA）；</li>
+<li>地址例外时 guest OS 和 host OS 切换；</li>
+</ul>
+</li>
+<li><p>OS 的摩尔定律终结：2020 年 OS 的复杂度也到头了</p>
+<ul>
+<li>把 CPU 最后一点“家当”（核心态功能）也虚拟化掉了</li>
+</ul>
+</li>
+</ol>
+<h1 id="TLB-的优化"><a href="#TLB-的优化" class="headerlink" title="TLB 的优化"></a>TLB 的优化</h1><ul>
+<li>防缓冲区溢出攻击优化</li>
+<li>硬件性能优化</li>
+<li>软件性能优化</li>
+</ul>
+<h2 id="利用-TLB-的保护机制防范攻击"><a href="#利用-TLB-的保护机制防范攻击" class="headerlink" title="利用 TLB 的保护机制防范攻击"></a>利用 TLB 的保护机制防范攻击</h2><ul>
+<li>利用缓冲区溢出进行攻击的例子</li>
+<li>龙芯处理器通过可执行保护防止缓冲区溢出攻击：TLB 增加可执行位<br><img src="http://img.thebetterkong.cn/blog/CA-MemManage/PreventBufferOverflowAttacks.png" alt="PreventBufferOverflowAttacks"></li>
+</ul>
+<h2 id="TLB-相关性能数据"><a href="#TLB-相关性能数据" class="headerlink" title="TLB 相关性能数据"></a>TLB 相关性能数据</h2><ul>
+<li>TLB miss 处理的时间可以占到高达 40% 的运行时间，占 40~90% 的内核运行时间；</li>
+<li>SPEC CPU2000 大约 1/4 的程序有比较显著的 TLB miss；<ul>
+<li>早期多数 CPU 的 TLB 是全相连的 32-128 项，如果每项 4KB，能映射的空间只有几百 KB，越来越难满足现代程序的需求</li>
+</ul>
+</li>
+<li>性能优化方法：<ul>
+<li>增加 TLB 覆盖空间大小，降低 TLB 失效概率</li>
+<li>降低 TLB 失效开销</li>
+</ul>
+</li>
+</ul>
+<h2 id="增加页大小后性能显著提高"><a href="#增加页大小后性能显著提高" class="headerlink" title="增加页大小后性能显著提高"></a>增加页大小后性能显著提高</h2><ul>
+<li>增加页大小后，TLB 失效明显减少</li>
+<li>16KB 页时 128 页有 2MB</li>
+<li>通过软件配置 pagemask 可以增加/减少页大小</li>
+</ul>
+<h2 id="MIPS-Linux-多级页表"><a href="#MIPS-Linux-多级页表" class="headerlink" title="MIPS-Linux 多级页表"></a>MIPS-Linux 多级页表</h2><h3 id="查找过程示意图"><a href="#查找过程示意图" class="headerlink" title="查找过程示意图"></a>查找过程示意图</h3><p><img src="http://img.thebetterkong.cn/blog/CA-MemManage/MIPSLinuxMultilevelPagetableFind.png" alt="MIPSLinuxMultilevelPagetableFind"></p>
+<p>MIPS 原 Context 寄存器设计不再适合多级页表的快速查找（原设计针对一级页表）；</p>
+<h3 id="加速-MIPS-Linux-多级页表查找"><a href="#加速-MIPS-Linux-多级页表查找" class="headerlink" title="加速 MIPS-Linux 多级页表查找"></a>加速 MIPS-Linux 多级页表查找</h3><ol>
+<li><p>首先通过软件可配置寄存器来描述具体的页表结构：</p>
+<ul>
+<li>PGBase：页表基址寄存器（进程上下文一部分，其余寄存器操作系统启动时配置）</li>
+<li>PGSize：描述各级页表的大小</li>
+<li>PGIndex：描述各级页表索引值在待查询地址中的起始位置</li>
+<li>PGEntry：描述奇偶页表项之间位置关系，以及页表中软件用的位的宽度<br><img src="http://img.thebetterkong.cn/blog/CA-MemManage/DescribePagetableStructure.png" alt="DescribePagetableStructure"></li>
+</ul>
+</li>
+<li><p>定义专门的页表访存指令：</p>
+<ul>
+<li><code>LDDIR dest, src, #N</code>：将 src 寄存器中的值作为第 N 级目录页表的基址，同时根据 CP0.BadVaddr 中存放的待查询地址以及新增的 PGSize、PGINdex 配置寄存器信息，访存得到第 N+1 级页表的基址，写入到 dest 寄存器中。</li>
+<li><code>LDPTE src, #0/#1</code>：将 src 寄存器中的值作为页表项页表的基址，同时根据 CP0.BadVaddr 中存放的待查询地址以及新增的 PGSize、PGINdex、PGEntry 配置寄存器信息，访存得到偶数号/奇数号页表项的内容，将页表中纯粹软件用的位移除后，写入到 CP0.EntryLo0/CP0.EntryLo1中。</li>
+</ul>
+</li>
+</ol>
+<h3 id="MIPS-Linux-TLB-重填代码优化"><a href="#MIPS-Linux-TLB-重填代码优化" class="headerlink" title="MIPS-Linux TLB 重填代码优化"></a>MIPS-Linux TLB 重填代码优化</h3><p><img src="http://img.thebetterkong.cn/blog/CA-MemManage/MIPSLinuxTLBOptimization.png" alt="MIPSLinuxTLBOptimization"></p>
+<h2 id="软-TLB-方案"><a href="#软-TLB-方案" class="headerlink" title="软 TLB 方案"></a>软 TLB 方案</h2><ol>
+<li><p>目的：主要减少 TLB 重载入异常处理的时间，提高 TLB 重载入异常处理的效率。</p>
+</li>
+<li><p>原理：</p>
+<ul>
+<li>通过减少 TLB 重载入异常处理过程 Cache Miss 的次数来减少 TLB 重载入异常处理的时间。</li>
+</ul>
+</li>
+<li><p>具体流程图：<br><img src="http://img.thebetterkong.cn/blog/CA-MemManage/SoftTLBFlowChart.png" alt="SoftTLBFlowChart"></p>
+</li>
+<li><p>软 TLB 的命中率：<br><img src="http://img.thebetterkong.cn/blog/CA-MemManage/SoftTLBHitRate.png" alt="SoftTLBHitRate"></p>
+</li>
+<li><p>缓冲区大小对软 TLB 命中率的影响：<br><img src="http://img.thebetterkong.cn/blog/CA-MemManage/BufferSoftTLBHitRate.png" alt="BufferSoftTLBHitRate"></p>
+</li>
+<li><p>软 TLB 对 SPEC 性能的提高：<br><img src="http://img.thebetterkong.cn/blog/CA-MemManage/SoftTLBSPEC.png" alt="SoftTLBSPEC"></p>
+</li>
+</ol>
+<h1 id="常见处理器的结构参数"><a href="#常见处理器的结构参数" class="headerlink" title="常见处理器的结构参数"></a>常见处理器的结构参数</h1><p><img src="http://img.thebetterkong.cn/blog/CA-MemManage/ProcessorStructuralParameters1.png" alt="ProcessorStructuralParameters1"><br><img src="http://img.thebetterkong.cn/blog/CA-MemManage/ProcessorStructuralParameters2.png" alt="ProcessorStructuralParameters2"></p>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-MemManage/" title="Computer Architecture：存储管理">http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-MemManage/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Computer-Architecture/" rel="tag"><i class="fa fa-tag"></i> Computer Architecture</a>
+              <a href="/tags/%E5%9B%BD%E7%A7%91%E5%A4%A7%E7%A0%94%E7%A9%B6%E7%94%9F%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 国科大研究生课程笔记</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/02/21/Computer-Architecture/CA-Cache/" rel="prev" title="Computer Architecture：高速缓存">
+      <i class="fa fa-chevron-left"></i> Computer Architecture：高速缓存
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/02/21/Computer-Architecture/CA-MultiProcessor/" rel="next" title="Computer Architecture：多处理器">
+      Computer Architecture：多处理器 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#虚拟存储的基本原理"><span class="nav-number">1.</span> <span class="nav-text">虚拟存储的基本原理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#虚拟存储的作用"><span class="nav-number">1.1.</span> <span class="nav-text">虚拟存储的作用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#虚拟存储原理"><span class="nav-number">1.2.</span> <span class="nav-text">虚拟存储原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#虚实地址转换与页表"><span class="nav-number">1.3.</span> <span class="nav-text">虚实地址转换与页表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#多级页表"><span class="nav-number">1.4.</span> <span class="nav-text">多级页表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TLB"><span class="nav-number">1.5.</span> <span class="nav-text">TLB</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Cache-和虚拟存储"><span class="nav-number">1.6.</span> <span class="nav-text">Cache 和虚拟存储</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#分清两种映射关系"><span class="nav-number">1.7.</span> <span class="nav-text">分清两种映射关系</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#MIPS-处理器对虚存系统的支持"><span class="nav-number">2.</span> <span class="nav-text">MIPS 处理器对虚存系统的支持</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#总技术支持"><span class="nav-number">2.1.</span> <span class="nav-text">总技术支持</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MIPS-的访问权限"><span class="nav-number">2.2.</span> <span class="nav-text">MIPS 的访问权限</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MIPS-存储空间分段情况"><span class="nav-number">2.3.</span> <span class="nav-text">MIPS 存储空间分段情况</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MIPS-的-TLB-及相关控制寄存器"><span class="nav-number">2.4.</span> <span class="nav-text">MIPS 的 TLB 及相关控制寄存器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#与-TLB-管理有关的指令（核心态下才能执行）"><span class="nav-number">2.5.</span> <span class="nav-text">与 TLB 管理有关的指令（核心态下才能执行）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#处理器访问-TLB"><span class="nav-number">2.6.</span> <span class="nav-text">处理器访问 TLB</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TLB-例外"><span class="nav-number">2.7.</span> <span class="nav-text">TLB 例外</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#发生-TLB-例外时硬件处理过程"><span class="nav-number">2.7.1.</span> <span class="nav-text">发生 TLB 例外时硬件处理过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TLB-例外类型"><span class="nav-number">2.7.2.</span> <span class="nav-text">TLB 例外类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#例外返回"><span class="nav-number">2.7.3.</span> <span class="nav-text">例外返回</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#一种虚拟存储实现方式"><span class="nav-number">2.8.</span> <span class="nav-text">一种虚拟存储实现方式</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#LINUX-操作系统的存储管理"><span class="nav-number">3.</span> <span class="nav-text">LINUX 操作系统的存储管理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Linux-MIPS-虚拟地址空间安排"><span class="nav-number">3.1.</span> <span class="nav-text">Linux&#x2F;MIPS 虚拟地址空间安排</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#内存中的页表组织（32-位情况）"><span class="nav-number">3.2.</span> <span class="nav-text">内存中的页表组织（32 位情况）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Linux-MIPS-的两层页表"><span class="nav-number">3.3.</span> <span class="nav-text">Linux&#x2F;MIPS 的两层页表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Linux-的-tlb-重填代码（共-18-条指令）"><span class="nav-number">3.4.</span> <span class="nav-text">Linux 的 tlb 重填代码（共 18 条指令）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Linux-MIPS-中-TLB-例外的处理"><span class="nav-number">3.5.</span> <span class="nav-text">Linux&#x2F;MIPS 中 TLB 例外的处理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#展望-不忘初心"><span class="nav-number">3.6.</span> <span class="nav-text">展望-不忘初心</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#TLB-的优化"><span class="nav-number">4.</span> <span class="nav-text">TLB 的优化</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#利用-TLB-的保护机制防范攻击"><span class="nav-number">4.1.</span> <span class="nav-text">利用 TLB 的保护机制防范攻击</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TLB-相关性能数据"><span class="nav-number">4.2.</span> <span class="nav-text">TLB 相关性能数据</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#增加页大小后性能显著提高"><span class="nav-number">4.3.</span> <span class="nav-text">增加页大小后性能显著提高</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MIPS-Linux-多级页表"><span class="nav-number">4.4.</span> <span class="nav-text">MIPS-Linux 多级页表</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#查找过程示意图"><span class="nav-number">4.4.1.</span> <span class="nav-text">查找过程示意图</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#加速-MIPS-Linux-多级页表查找"><span class="nav-number">4.4.2.</span> <span class="nav-text">加速 MIPS-Linux 多级页表查找</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MIPS-Linux-TLB-重填代码优化"><span class="nav-number">4.4.3.</span> <span class="nav-text">MIPS-Linux TLB 重填代码优化</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#软-TLB-方案"><span class="nav-number">4.5.</span> <span class="nav-text">软 TLB 方案</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#常见处理器的结构参数"><span class="nav-number">5.</span> <span class="nav-text">常见处理器的结构参数</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

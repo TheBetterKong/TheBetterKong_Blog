@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="主要介绍 FPGA 技术里 Routing 部分；">
+<meta property="og:type" content="article">
+<meta property="og:title" content="FPGA-CAD Tools：Placement">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/05/31/FPGA-technology/FPGA-CADTools-Routing/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="主要介绍 FPGA 技术里 Routing 部分；">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/WhatRouting.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/RoutingArchitecture.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/RoutingResources.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/RoutingPath.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/Constraints.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/VTRForm.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/CircuitToGraph.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/LUTInput.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/XML.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/YAML.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/SoftwareTrans.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/Maze1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/Maze2.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/PathFinderOverview.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/BFSInRRG.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/Congestion.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/PathfinderPseudoCode.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/PenaltyExample.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/HistoryCostExample.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/NetOrderExample.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/SchemeOneExample.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/SchemeTwoExample.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/SchemeTwoExample2.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/SchemeThreeExample.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/SchemeFourExample.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/EquivalentCircuits.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/ComputingElmoreDelay.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/ByBuffers.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/ByPassTransistors.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/Upstream.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/SpeedEnhancement.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/DynamicBaseCostFunction.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/KTerminals.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/VTRPseudoCode.png">
+<meta property="article:published_time" content="2020-05-31T03:01:36.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:30:05.357Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="国科大研究生课程笔记">
+<meta property="article:tag" content="FPGA">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/WhatRouting.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/05/31/FPGA-technology/FPGA-CADTools-Routing/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>FPGA-CAD Tools：Placement | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/05/31/FPGA-technology/FPGA-CADTools-Routing/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          FPGA-CAD Tools：Placement
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-05-31 11:01:36" itemprop="dateCreated datePublished" datetime="2020-05-31T11:01:36+08:00">2020-05-31</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:30:05" itemprop="dateModified" datetime="2020-08-14T17:30:05+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%8F%AF%E7%BC%96%E7%A8%8B%E9%80%BB%E8%BE%91%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1%E4%B8%8E-FPGA-%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">可编程逻辑系统设计与 FPGA 技术</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/05/31/FPGA-technology/FPGA-CADTools-Routing/" class="post-meta-item leancloud_visitors" data-flag-title="FPGA-CAD Tools：Placement" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/05/31/FPGA-technology/FPGA-CADTools-Routing/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/05/31/FPGA-technology/FPGA-CADTools-Routing/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>主要介绍 FPGA 技术里 Routing 部分；</p>
+<a id="more"></a> 
+<h1 id="概述-FPGA-Routing"><a href="#概述-FPGA-Routing" class="headerlink" title="概述 FPGA Routing"></a>概述 FPGA Routing</h1><h2 id="认识"><a href="#认识" class="headerlink" title="认识"></a>认识</h2><p>一个过程，该过程确定应打开哪些可编程开关（Connections blocks 和 switch blocks），以连接电路所需的所有逻辑块输入和输出引脚。</p>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/WhatRouting.png" alt="whatrouting">    </p>
+<p>目的：</p>
+<ul>
+<li>必须用设备的互连资源，使 FPGA 中的逻辑集群良好连接，从而使电路正常工作</li>
+</ul>
+<p>方法:</p>
+<ul>
+<li>路由资源图（RRG）生成</li>
+<li>路由算法</li>
+</ul>
+<p>目标:</p>
+<ul>
+<li>减少接线（wirelength 驱动）</li>
+<li>最大化电路速度（timing 驱动）</li>
+</ul>
+<h2 id="意义"><a href="#意义" class="headerlink" title="意义"></a>意义</h2><p>良好的路由至关重要，路由不正确会导致：</p>
+<ul>
+<li>导致最大运行速度降低</li>
+<li>增加功耗</li>
+<li>实施时间慢，甚至无法路由所有信号</li>
+</ul>
+<p>寻找一个好的路线是具有挑战性的：</p>
+<ul>
+<li>布线资源（电线和连接点）相对稀缺</li>
+<li>信号将争夺相同的路由资源</li>
+</ul>
+<h2 id="Routing-结构"><a href="#Routing-结构" class="headerlink" title="Routing 结构"></a>Routing 结构</h2><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/RoutingArchitecture.png" alt="RoutingArchitecture"><br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/RoutingResources.png" alt="RoutingResources"><br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/RoutingPath.png" alt="RoutingPath">    </p>
+<h2 id="Routing-问题"><a href="#Routing-问题" class="headerlink" title="Routing 问题"></a>Routing 问题</h2><p>路由电路等效于在 RRG 中找到一组满足时序约束的不相交路径：</p>
+<ul>
+<li>路由资源图（RRG）G =（V，E）：是代表目标设备路由资源的主要数据结构</li>
+<li>NP-complete 问题：NP 完全问题是无法以任何已知方式在多项式时间内求解</li>
+</ul>
+<p>相关术语：</p>
+<ul>
+<li>Input：<ul>
+<li>电路里所有的 sources：$S=\{s_1,s_2,s_3,…,s_m\}$</li>
+<li>电路里所有的 sinks：$T=\{T_1,T_2,T_3,…,T_m\}$，其中，$T_i=\{t_i^1,t_i^2,t_i^3,…,t_i^n\}$，代表了： $s_i$ 所通向的所有 sinks</li>
+</ul>
+</li>
+<li>Solution：<ul>
+<li>查找从每个 source $s_i$ 到 $T_i$ 中所有 sinks 的路径；</li>
+<li>来自不同 source 的路径必须是不相交的（不能共享任何节点或边）；</li>
+</ul>
+</li>
+</ul>
+<p>约束关系：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/Constraints.png" alt="Constraints"></p>
+<h2 id="程序"><a href="#程序" class="headerlink" title="程序"></a>程序</h2><p>FPGA routing 一般经过三个步骤：RRG 生成、Global Routing、Detailed Routing  </p>
+<ul>
+<li>现代路由算法可以同时执行全局和详细路由；   </li>
+</ul>
+<p><strong>Routing Resource Graph (RRG) Generation</strong>：</p>
+<ul>
+<li>RRG 是表示 FPGA 全局路由架构的有向图；</li>
+<li>在此图中，每条导线和每个逻辑块引脚成为一个节点，潜在连接变为边；</li>
+</ul>
+<p><strong>Global Routing</strong>：消除 congestions（拥堵）</p>
+<ul>
+<li>全局路由器执行<strong>粗路由</strong>，以确定每个连接必须通过的最小路由路径；</li>
+<li>如果要路由的网络有两个以上的终端，则全局路由器会将网络分成一组两个终端的连接，并分别路由每个集合；</li>
+<li>全局路由器为每个连接考虑多种路由方法，并选择通过最少拥塞路由路径的路由；</li>
+<li>通过跟踪每个路由通道的使用情况，避免拥塞；并且实现了全局路由器的主要目标，即平衡路由通道的使用；</li>
+<li>一旦所有连接都经过粗路由，就可以通过撕裂每个连接并重新路由几次来优化该解决方案；</li>
+<li>之后，最终解决方案将传递到详细的路由器；</li>
+</ul>
+<p><strong>Detailed Routing</strong>：去分配 tracks/wires 和 switches</p>
+<ul>
+<li>细粒度</li>
+<li>详细路由器为每两点连接，确定在全局路由器分配的路由通道中<strong>使用的特定布线段</strong>；</li>
+<li>详细的路由算法将从路由资源中<strong>构造一个有向图</strong>，以表示 FPGA 中的 wires，C blocks，S blocks 和逻辑块之间的可用连接；</li>
+<li>在此有向图上执行的搜索通常基于 <strong>Dijkstra 算法</strong>来找到两个节点之间的最短路径；</li>
+<li>根据<strong>成本函数</strong>对路径进行标记，该成本函数考虑了每个线段的使用情况以及互连点的距离；</li>
+<li>通过使用<strong>曼哈顿度量标准</strong>计算互连点边界框中的导线长度来估算距离；</li>
+<li>大多数路由器<strong>放宽</strong>了对边界框的<strong>限制</strong>，并允许在边界框的周围路由通道中搜索可能的解决方案；<ul>
+<li>这是为了避免，如果解决方案位于边界框的外部附近，则会导致后续的重复撕裂和重新路由；</li>
+</ul>
+</li>
+</ul>
+<h2 id="Route-结果"><a href="#Route-结果" class="headerlink" title="Route 结果"></a>Route 结果</h2><p>VTR 形式（.Route）：易读但不直观<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/VTRForm.png" alt="VTRForm"></p>
+<h1 id="RRG（Routing-Resource-Graph）"><a href="#RRG（Routing-Resource-Graph）" class="headerlink" title="RRG（Routing Resource Graph）"></a>RRG（Routing Resource Graph）</h1><h2 id="Circuit-到-Graph"><a href="#Circuit-到-Graph" class="headerlink" title="Circuit 到 Graph"></a>Circuit 到 Graph</h2><p>与 DAG 的 FPGA 映射不同，但也作为有向图：</p>
+<ul>
+<li>Node：wire / logic block pin</li>
+<li>Edge：potential connection</li>
+<li>Node Capacity：可以在合法路由中使用此节点的不同网络的最大数量</li>
+</ul>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/CircuitToGraph.png" alt="CircuitToGraph"></p>
+<h2 id="LUT-的-inputs-等价"><a href="#LUT-的-inputs-等价" class="headerlink" title="LUT 的 inputs 等价"></a>LUT 的 inputs 等价</h2><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/LUTInput.png" alt="LUTInput"></p>
+<h2 id="软件表示"><a href="#软件表示" class="headerlink" title="软件表示"></a>软件表示</h2><h3 id="XML（eXtensible-Markup-Language）"><a href="#XML（eXtensible-Markup-Language）" class="headerlink" title="XML（eXtensible Markup Language）"></a>XML（eXtensible Markup Language）</h3><p>是在 VTR 里面使用的，一种具有可选属性的开始和结束标记的层次结构；</p>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/XML.png" alt="XML"></p>
+<h3 id="YAML"><a href="#YAML" class="headerlink" title="YAML"></a>YAML</h3><p>YAML 不是标记语言，是另一标记语言的递归形式，易于表示和阅读：   </p>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/YAML.png" alt="YAML"></p>
+<h3 id="表示过程"><a href="#表示过程" class="headerlink" title="表示过程"></a>表示过程</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/SoftwareTrans.png" alt="SoftwareTrans"></p>
+<p>注意：每个供应商都有自己的 FPGA 架构形式和数据结构建立方法，这些形式不会向客户透露（属于公司的专有技术）</p>
+<h1 id="路由算法"><a href="#路由算法" class="headerlink" title="路由算法"></a>路由算法</h1><h2 id="Maze（迷宫）路由"><a href="#Maze（迷宫）路由" class="headerlink" title="Maze（迷宫）路由"></a>Maze（迷宫）路由</h2><p>迷宫路由算法：</p>
+<ul>
+<li>基于波前扩展技术，该技术尝试在两点之间找到最短路径，同时避免使用任何路由资源；</li>
+<li>一个迭代过程，该过程会撕裂并重新路由某些路由，以消除拥塞的路由通道；</li>
+</ul>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/Maze1.png" alt="Maze1"></p>
+<p>主要缺点：它进行路由时不会考虑找到的路径会阻止后续网络的路由；</p>
+<ul>
+<li>这意味着算法的性能取决于网络排序，并且<strong>不同的顺序将产生不同的结果</strong>；</li>
+<li>如果颠倒了下面两个网的布线顺序，则会找到更好的解决方案；<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/Maze2.png" alt="Maze2"></li>
+</ul>
+<h2 id="A-搜索路由"><a href="#A-搜索路由" class="headerlink" title="$A^*$ 搜索路由"></a>$A^*$ 搜索路由</h2><ul>
+<li>迷宫路由是 $A^*$ 路由的特例；</li>
+<li>$A^*$ 路由允许将路径搜索从广度优先搜索算法（BFS）调整为较短的深度优先搜索算法（DFS）；<ul>
+<li>BFS 是一种详尽的搜索，它考虑了所有可能的路径，如果有任何路径，则会找到最佳路径，但缺点是速度可能很慢；</li>
+<li>同时，DFS 可能找不到最小的成本路径，但可能很快；</li>
+</ul>
+</li>
+</ul>
+<p>$A^*$ 路由利用 0 到 1 之间的比例因子 α 进行加权，从而将搜索从 BFS 调整为 DFS；  </p>
+<script type="math/tex; mode=display">f_i=(1-\alpha) \times (f_{i-1}+c_i)+\alpha \times d_i</script><ul>
+<li>cost 用于评估每个节点 i 的有向图的成本函数：<ul>
+<li>$c_i$ 是节点 cost，表示节点的当前使用情况，用于惩罚先前路由所占用的节点； </li>
+<li>$f_{i-1}$是前一条路径的总成本；（函数的前半部分相当于 DFS）</li>
+<li>$d_i$ 是从节点 i 到目的地的路径的估计成本；（函数的前半部分相当于 BFS）</li>
+</ul>
+</li>
+</ul>
+<h2 id="PathFinder-路由算法"><a href="#PathFinder-路由算法" class="headerlink" title="PathFinder 路由算法"></a>PathFinder 路由算法</h2><p>顾名思义，PathFinder 可在 RRG 中的两个节点之间找到路径：</p>
+<ul>
+<li>消除拥塞</li>
+<li>最小化关键路径的延迟</li>
+<li><strong>同时</strong>进行全局和详细路由</li>
+<li>使用广泛：对 VTR 中使用的学术路由工具，进行了深入研究</li>
+</ul>
+<h3 id="知识概述"><a href="#知识概述" class="headerlink" title="知识概述"></a>知识概述</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/PathFinderOverview.png" alt="PathFinderOverview">    </p>
+<p>RRG 里的 BFS：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/BFSInRRG.png" alt="BFSInRRG"></p>
+<ul>
+<li>每个正方形代表一个节点：S-source，T-sink，Number-cost</li>
+</ul>
+<p>逐一（source-sink）路由所有网络：</p>
+<ul>
+<li>为 RRG 中的每个边（可能的连接）分配取决于当前用法和历史用法的成本；</li>
+<li>每个网络都由 BFS 路由，目的是使成本最低；</li>
+<li>多个网络可能在 RRG 中使用相同的节点（导线/逻辑块）（标记为拥塞）；</li>
+<li>于是，为拥塞节点分配更高的成本；</li>
+<li>如果一条路由必须包含一个拥塞的节点，它将与其他路由“协商”，并使其绕过（翻录和重新路由）；</li>
+</ul>
+<p>重复固定时间：</p>
+<ul>
+<li>成功：为所有网络提供不相交的路由解决方案；</li>
+<li>失败：经过固定次数（30）的迭代后，没有找到不相交的路由解决方案；</li>
+</ul>
+<h3 id="Cost-Function"><a href="#Cost-Function" class="headerlink" title="Cost Function"></a>Cost Function</h3><p><strong>Routability Cost Function</strong>：</p>
+<ul>
+<li>对于节点 n：<script type="math/tex; mode=display">Cost(n) = p(n)\ast[\ b(n)+h(n)\ ]</script></li>
+<li>其中：<ul>
+<li>$b(n)$：通过节点 n 进行路由的 <strong>Base Cost</strong>（基本成本）</li>
+<li>$h(n)$：<strong>History Cost</strong>（历史成本），与通过节点 n 路由的历史成本有关（基于以前的路由器迭代）</li>
+<li>$p(n)$：<strong>Penalty of congestion</strong>（拥塞处罚），与在当前迭代中通过节点 n 路由的网（信号）的数量有关</li>
+</ul>
+</li>
+</ul>
+<p><strong>Timing-Routability Cost Function</strong>：</p>
+<ul>
+<li>对每个结点 n：<script type="math/tex; mode=display">Cost(n) = Crit(i,j) \ast delay(n) + [\ 1-Crit(i,j)\ ] \ast p(n) \ast [\ b(n) + h(n)\ ]</script></li>
+<li>其中：<ul>
+<li>$delay(n)$：通过节点 n 的网络的延迟</li>
+<li>$Crit(i,j) = 1- \frac{slack(i,j)}{D_{max}}$<ul>
+<li>$Crit(i,j)$：从 source i 到 sink j 的路径的估计临界度</li>
+<li>$D_{max}$：关键路径的延迟</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="Congestion"><a href="#Congestion" class="headerlink" title="Congestion"></a>Congestion</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/Congestion.png" alt="Congestion"></p>
+<h3 id="Pseudo-Code"><a href="#Pseudo-Code" class="headerlink" title="Pseudo Code"></a>Pseudo Code</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/PathfinderPseudoCode.png" alt="PathfinderPseudoCode"></p>
+<h1 id="路由算法：VTR-Router"><a href="#路由算法：VTR-Router" class="headerlink" title="路由算法：VTR Router"></a>路由算法：VTR Router</h1><h2 id="Routability-driven-Router"><a href="#Routability-driven-Router" class="headerlink" title="Routability-driven Router"></a>Routability-driven Router</h2><h3 id="Cost-Function-1"><a href="#Cost-Function-1" class="headerlink" title="Cost Function"></a>Cost Function</h3><script type="math/tex; mode=display">PathFinder: Cost(n) = [\ b(n) + h(n)\ ] \times p(n)</script><script type="math/tex; mode=display">VTR Router:\ Cost(n)=b(n) \times h(n) \times p(n) + BendCost(n,m)</script><ul>
+<li>$b(n)$，$h(n)$ 和 $p(n)$ 分别是节点 n 的基本成本，历史成本和拥塞惩罚（在PathFinder 算法中定义）；</li>
+<li>$BendCost(n，m)$ 会对弯曲的全局路线造成不利影响，因为这些路线不太可能使用长导线，从而使详细（局部）路线难以实施（更容易发生拥塞）；<ul>
+<li>如果建立从节点 m 到节点 n 的连接会产生弯曲，则 $BendCost(n，m)= 1$；</li>
+<li>如果执行了组合的全局详细路由，则 $BendCost(n，m)= 0$；</li>
+</ul>
+</li>
+<li>将 $b(n)$ 和 $h(n)$ 相乘可消除归一化；</li>
+</ul>
+<h3 id="Base-Cost"><a href="#Base-Cost" class="headerlink" title="Base Cost"></a>Base Cost</h3><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Routing Resource，n</th>
+<th>Base Cost，b(n)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Wire segment</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Logic block output pin</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Logic block input pin</td>
+<td>0.95</td>
+</tr>
+<tr>
+<td>Source</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Sink</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+</div>
+<ul>
+<li>五个 $b(n)$ 值中的四个约为 1，这鼓励路由器使用尽可能少的这些资源；</li>
+<li>将逻辑块输入引脚的成本设置为略小于 1，可以使搜索更早地到达 terminal（inputs 和 sinks）；</li>
+<li>将 sink 的成本设置为 0，因为在 sink 中不会发生拥塞；</li>
+<li>通过这种方式为逻辑块 inputs 和 sinks 使用较低的成本，可使路由器速度提高 1.5 到 2 倍；</li>
+<li>实验表明，将线段的 $b(n)$ 设置为 1 可获得最佳效果；</li>
+</ul>
+<h3 id="Penalty-of-Congestion"><a href="#Penalty-of-Congestion" class="headerlink" title="Penalty of Congestion"></a>Penalty of Congestion</h3><script type="math/tex; mode=display">p(n) = 1 + \max(0\ ,\ [\ occupancy(n) + 1 - capacity(n)\ ] \cdot p_{fac})</script><ul>
+<li>$occupancy(n)$：使用资源（节点）n 的网络数；</li>
+<li>$Capacity(n)$：可以使用资源（节点）n 的最大网络数；<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/PenaltyExample.png" alt="PenaltyExample"></li>
+<li>$p_{fac}$：routing schedule 之一；为了获得最高质量，第一次迭代时将其设置为 0.5，随后的每次迭代将其增加 1.5 倍至 2.0 倍；<ul>
+<li>快速增加 $p_{fac}$ 会导致质量下降（想象一下，收取过多的交通拥堵费会导致没有人想要在城市开车）；</li>
+</ul>
+</li>
+</ul>
+<h3 id="History-Cost"><a href="#History-Cost" class="headerlink" title="History Cost"></a>History Cost</h3><script type="math/tex; mode=display">
+{h(n)}^i=\begin{cases}
+1,\quad i=1 \\\\
+{h(n)}^{i-1}+\max(0,[occupancy(n)-capacity(n)]\cdot h_{fac}),\quad i>1
+\end{cases}</script><ul>
+<li>$occupancy(n)$：使用资源（节点）n 的网络数；</li>
+<li>$Capacity(n)$：可以使用资源（节点）n 的最大网络数；</li>
+<li>$h_{fac}$：routing schedule 之一；设置为常数，并且介于 0.2 到 1 之间的任何值都可以正常工作。</li>
+</ul>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/HistoryCostExample.png" alt="HistoryCostExample"></p>
+<h3 id="Net-布线顺序"><a href="#Net-布线顺序" class="headerlink" title="Net 布线顺序"></a>Net 布线顺序</h3><p>按 fan-out 的降序排列网络，因为：</p>
+<ol>
+<li>高 fan-out 网络倾向于覆盖整个 FPGA<ul>
+<li>在较早路由的其他网络拥塞较少的情况下，更易于路由</li>
+</ul>
+</li>
+<li>低 fan-out 网络往往更局部化<ul>
+<li>即使在某些拥挤的情况下，也相对容易布线</li>
+</ul>
+</li>
+</ol>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/NetOrderExample.png" alt="NetOrderExample"></p>
+<h3 id="算法加速：方案一"><a href="#算法加速：方案一" class="headerlink" title="算法加速：方案一"></a>算法加速：方案一</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/SchemeOneExample.png" alt="SchemeOneExample"></p>
+<ul>
+<li>在 source 和 sinks 周围定义一个边界框（<strong>bounding box</strong>）；</li>
+<li>将每个网络的路由限制在边界框外不超过 3 个 channels；<ul>
+<li>鼓励在 bounding box 里进行 routing；</li>
+</ul>
+</li>
+<li>大大减少了 BFS 搜索时间（由于使用较少的 channels）；</li>
+<li>对路由质量没有明显影响；</li>
+</ul>
+<h3 id="算法加速：方案二"><a href="#算法加速：方案二" class="headerlink" title="算法加速：方案二"></a>算法加速：方案二</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/SchemeTwoExample.png" alt="SchemeTwoExample"><br>对于高扇出网络，重用部分路由会更有效；</p>
+<ul>
+<li>从波前局部的推进路由</li>
+</ul>
+<p>例子：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/SchemeTwoExample2.png" alt="SchemeTwoExample2">   </p>
+<h3 id="算法加速：方案三"><a href="#算法加速：方案三" class="headerlink" title="算法加速：方案三"></a>算法加速：方案三</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/SchemeThreeExample.png" alt="SchemeThreeExample"></p>
+<h3 id="算法加速：方案四"><a href="#算法加速：方案四" class="headerlink" title="算法加速：方案四"></a>算法加速：方案四</h3><ul>
+<li>无方向的 BFS 非常耗时；</li>
+<li>引入了定向搜索（基于曼哈顿距离：source 到 sink 的距离）；</li>
+</ul>
+<p>但是，当障碍物是凹形的时：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/SchemeFourExample.png" alt="SchemeFourExample"></p>
+<ul>
+<li>BFS 找到最佳路线，但很费时间；</li>
+<li>Directed Search（贪婪）可节省时间，但可能找不到最佳路线；</li>
+</ul>
+<p>成本函数可适当平衡 BFS 和定向搜索（贪婪）:</p>
+<script type="math/tex; mode=display">TotalCost(n)=PathCost(n)+ \alpha \cdot ExpectedCost(n,j)</script><ul>
+<li>$PathCost(n)$：从当前部分路由树到节点 n 的路径总成本；</li>
+<li>$ExpectedCost(n，j)$：从当前节点 n 到目标sink j 的估计成本；</li>
+<li>$\alpha$：<ul>
+<li>1 导致 $A^*$ 搜索；</li>
+<li>1.2（经验值）可在不影响质量的情况下获得最佳的 CPU 时间；</li>
+</ul>
+</li>
+</ul>
+<h2 id="Timing-driven-Router"><a href="#Timing-driven-Router" class="headerlink" title="Timing-driven Router"></a>Timing-driven Router</h2><h3 id="特征"><a href="#特征" class="headerlink" title="特征"></a>特征</h3><p>相对于 “PathFinder” 的<strong>两个主要改进</strong>：</p>
+<ol>
+<li>在 <strong>Elmore 延迟估计</strong>下优化延迟，而不是线性延迟（在线性延迟中，每个路由资源都具有恒定的延迟）：<ul>
+<li>对于任何在其路由中包含 pass transistors 的 FPGA 而言，线性延迟模型都是非常不准确的；</li>
+</ul>
+</li>
+<li><strong>动态改变</strong>路由资源的基本成本：<ul>
+<li>根据要路由的<strong>网络的跨度</strong>更改<strong>长 wire segments 的成本</strong>，以使路由器偏向于使用正确的路由资源类型（buffer 或 pass transistors）；</li>
+</ul>
+</li>
+</ol>
+<h3 id="等效电路"><a href="#等效电路" class="headerlink" title="等效电路"></a>等效电路</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/EquivalentCircuits.png" alt="EquivalentCircuits"><br>便于计算延迟；</p>
+<h3 id="Elmore-延迟"><a href="#Elmore-延迟" class="headerlink" title="Elmore 延迟"></a>Elmore 延迟</h3><p>用于分布式 RC 效果；   </p>
+<script type="math/tex; mode=display">ElmoreDelay_{source-sink}=\sum_{i\in(source-sink\ path)} C_i\ R_{i,sink}+T_{d,i}</script><ul>
+<li>$T_{d,i}$：节点 i（缓冲区）的固有延迟；否则为 0；</li>
+<li>$C_i$：节点 i 处金属和寄生电容的等效电容；</li>
+<li>$R_{i,sink}$：<strong>source 到节点 i</strong> 和 <strong>source 到不带缓冲区的 sink</strong> 之间的共享路径上的等效电阻；<ul>
+<li>公式表示：$R_{i,sink}=\sum R_{shared}$，其中，$R_{shared}\in [\ path(source-i) \cap path(source-sink)]$</li>
+</ul>
+</li>
+</ul>
+<p>计算示例（注意：结点 2、4 也属于 source 到 sink 路径上的结点）：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/ComputingElmoreDelay.png" alt="ComputingElmoreDelay">    </p>
+<p><strong>Case1：M wire segments 通过 buffers 连接</strong>：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/ByBuffers.png" alt="ByBuffers"></p>
+<ul>
+<li>Buffer 的固有延迟：$T_{buf,intrinsic}=125ps$</li>
+<li>Wire 的电阻：$R_{buf}=500 \Omega$</li>
+<li>导线的金属电容和寄生电容：$C_{total}=250fF$</li>
+<li>则，$T_{d,buffered}=M \cdot [\ T_{buf,intrinsic}+R_{buf}\cdot C_{total}\ ]=M \cdot 250\ (ps)$</li>
+<li>在 buffer 这种情况下，Linear 和 Elmore 延迟模型相同；</li>
+</ul>
+<p><strong>Case2：M wire segments 通过 pass transistors 连接</strong>：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/ByPassTransistors.png" alt="ByPassTransistors"></p>
+<ul>
+<li>Pass transistor 的电阻：$R_{pass}=500 \Omega$</li>
+<li>结点的电容：$C_{total}=250fF$</li>
+<li>Linear：$T_{d,pass,linear}=M \cdot R_{pass} \cdot C_{total}=M \cdot 125(ps)$</li>
+<li>Quadratic：$\sum^M_{i=1}\ i\cdot R_{pass} \cdot C_{total}=\frac{M\cdot(M+1)}{2}\cdot R_{pass}\cdot C_{total}=\frac{M\cdot(M+1)}{2}\cdot 125 (ps)$</li>
+<li>在 pass transistor 的情况下，Linear 和 Elmore 延迟模型都有很大的不同；</li>
+</ul>
+<h3 id="具有-Elmore-延迟的-Cost-Function"><a href="#具有-Elmore-延迟的-Cost-Function" class="headerlink" title="具有 Elmore 延迟的 Cost Function"></a>具有 Elmore 延迟的 Cost Function</h3><p>考虑连接到 net i 的 sink j，包括节点 n 在内的 cost function 为：</p>
+<script type="math/tex; mode=display">Cost(n)=Crit(i,j) \cdot T_{Elmore}(n,topology)+[\ 1-Crit(i,j)\ ]\cdot b(n)\cdot h(n)\cdot p(n)</script><p>其中：</p>
+<ul>
+<li>criticality 相当于一个权重因子，$Crit(i,j) = \max(\ [MaxCrit-\frac{slack(i,j)}{D_{max}}]^\eta,0\ )$<ul>
+<li>$D_{max}$：电路关键路径的延迟</li>
+<li>$Slack(i，j)$：网络 i 的 source 和 sink j 之间的连接松弛</li>
+<li>$MaxCrit$ 和 $\eta$：控制松弛如何影响 拥塞-延迟 权衡的参数<ul>
+<li>$MaxCrit = 1$ 和 $\eta= 1$：转换为 PathFinder 的情况</li>
+<li>$\eta$ 是较大的：网络具有正松弛度，对延迟的关注较少，而对拥塞的关注更多</li>
+<li>$MaxCrit = 1$：允许松弛为 0 的连接完全忽略拥塞</li>
+<li>$MaxCrit = 0$：忽略延迟，使路由器完全由 routability 驱动</li>
+<li>因此，将 MaxCrit 设置为 1 是危险的，根据经验，通常设置：$MaxCrit = 0.99，\eta= 1$</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>$b(n)$：当前结点 n 的 base cost</li>
+<li>$h(n)$：当前结点 n 的 historical cost</li>
+<li>$p(n)$：当前结点 n 的 congestion penalty cost</li>
+<li>$T_{Elmore}(n，topology)$：Elmore 延迟，其中包含节点 n 以及信号向节点 n 传播的关联拓扑的函数；</li>
+</ul>
+<p>为了逐步计算将节点 n 添加到部分路由中而产生的 Elmore 延迟，我们需要知道上游电阻。则，定义：通过 routing switch 将其连接到节点 m 所达到的节点 n 的上游电阻为：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/Upstream.png" alt="Upstream"></p>
+<script type="math/tex; mode=display">
+R_{upstream}(n)=\begin{cases}
+R(switch)+R_{metal}(n),\quad if\ switch\ is\ a\ tri-state\ buffer \\\\
+R_{upstream}(m)+R(switch)+R_{metal}(n),\quad if\ a\ pass\ transistor
+\end{cases}</script><p>定义 Elmore 延迟作为包含的节点 n 和信号向节点 n 传播的相关拓扑的函数：   </p>
+<script type="math/tex; mode=display">T_{Elmore}(n,topology) = T_{d,intrinsic}(switch)+[\ R_{upstream}(n)-\frac{R_{metal}(n)}{2}\ ]\cdot C_{total}(n)</script><p>其中：</p>
+<ul>
+<li>$T_{d,intrinsic}(switch)$：通过 partial routing 到达节点 n 的 switch 的固有延迟；（对于 non-buffers，= 0）</li>
+<li>$R_{upstream}(n)$：partial routing 的上游电阻，是通过 pass transistor switches 链而不是通过  buffered switches 链积累的；</li>
+<li>$R_{metal}(n)$：路由资源节点 n 的金属电阻，对于所有非布线网段节点，金属电阻为 0；</li>
+<li>$C_{total}(n)$：节点 n 处的总电容（金属加寄生开关电容）；</li>
+<li>从 $R_{upstream}(n)$ 中减去 $R_{metal}(n)$ 的 1/2：表示金属电阻的分布</li>
+</ul>
+<h3 id="算法加速方案"><a href="#算法加速方案" class="headerlink" title="算法加速方案"></a>算法加速方案</h3><p>与 routability-driven router 相同：    </p>
+<script type="math/tex; mode=display">TotalCost(n)=PathCost(n) + \alpha \cdot ExpectedCost(n,j)</script><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/SpeedEnhancement.png" alt="SpeedEnhancement">    </p>
+<p>其中：</p>
+<ul>
+<li>$PathCost(n)$：从 source 到节点 n 的路径上每个节点的总成本，即：当 $Crit(i,j)=1$ 时，为 $T_{Elmore}(n,topology)$；</li>
+<li>$ExpectedCost(n,j)$：从当前节点 n 到目标 sink j 的估计成本；</li>
+<li>$\alpha$：为 1 导致 $A*$ 搜索；为 1.2（经验值）可在不影响质量的情况下获得最佳的 CPU 时间；</li>
+</ul>
+<h3 id="带有动态-Base-Cost-的-Cost-Function"><a href="#带有动态-Base-Cost-的-Cost-Function" class="headerlink" title="带有动态 Base Cost 的 Cost Function"></a>带有动态 Base Cost 的 Cost Function</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/DynamicBaseCostFunction.png" alt="DynamicBaseCostFunction"></p>
+<p>完全用 pass transistors 相连的路由树：</p>
+<ul>
+<li>switches 往往会变得 heavily loaded，导致较大的延迟；</li>
+</ul>
+<p>尽可能趋向于使用  buffered switches，以便：</p>
+<ul>
+<li>最大化在以后的连接中重新使用其中一些接线的可能性；</li>
+<li>最小化以后连接影响早期连接时间的可能性；</li>
+</ul>
+<script type="math/tex; mode=display">b_{pass\ transistor\ wires}(n)=AverageRoutingResourceDelay \cdot \sqrt{k-1}</script><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/KTerminals.png" alt="KTerminals"></p>
+<ul>
+<li>$k$：网络上的 terminals 数，$k\geq 2$； </li>
+<li>$b_{pass\ transistor\ wires}(n)$：通过 pass transistors 连接到其他节点（线）的节点（线）n 的基本成本；<ul>
+<li>通过 buffers：平均路由资源延迟</li>
+<li>通过 pass transistors：延迟增加</li>
+</ul>
+</li>
+</ul>
+<h3 id="伪代码"><a href="#伪代码" class="headerlink" title="伪代码"></a>伪代码</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Routing/VTRPseudoCode.png" alt="VTRPseudoCode"></p>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/05/31/FPGA-technology/FPGA-CADTools-Routing/" title="FPGA-CAD Tools：Placement">http://www.thebetterkong.cn/2020/05/31/FPGA-technology/FPGA-CADTools-Routing/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%9B%BD%E7%A7%91%E5%A4%A7%E7%A0%94%E7%A9%B6%E7%94%9F%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 国科大研究生课程笔记</a>
+              <a href="/tags/FPGA/" rel="tag"><i class="fa fa-tag"></i> FPGA</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/05/30/Skills/ResolveCopyProhibition/" rel="prev" title="干货分享 | 网页文档不让复制？带你一起破解网页限制">
+      <i class="fa fa-chevron-left"></i> 干货分享 | 网页文档不让复制？带你一起破解网页限制
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/06/04/DataStructure-Algorithm/SortingAlgorithm/" rel="next" title="排序算法（详解 + java 实现）">
+      排序算法（详解 + java 实现） <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#概述-FPGA-Routing"><span class="nav-number">1.</span> <span class="nav-text">概述 FPGA Routing</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#认识"><span class="nav-number">1.1.</span> <span class="nav-text">认识</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#意义"><span class="nav-number">1.2.</span> <span class="nav-text">意义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Routing-结构"><span class="nav-number">1.3.</span> <span class="nav-text">Routing 结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Routing-问题"><span class="nav-number">1.4.</span> <span class="nav-text">Routing 问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#程序"><span class="nav-number">1.5.</span> <span class="nav-text">程序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Route-结果"><span class="nav-number">1.6.</span> <span class="nav-text">Route 结果</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#RRG（Routing-Resource-Graph）"><span class="nav-number">2.</span> <span class="nav-text">RRG（Routing Resource Graph）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Circuit-到-Graph"><span class="nav-number">2.1.</span> <span class="nav-text">Circuit 到 Graph</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LUT-的-inputs-等价"><span class="nav-number">2.2.</span> <span class="nav-text">LUT 的 inputs 等价</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#软件表示"><span class="nav-number">2.3.</span> <span class="nav-text">软件表示</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#XML（eXtensible-Markup-Language）"><span class="nav-number">2.3.1.</span> <span class="nav-text">XML（eXtensible Markup Language）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#YAML"><span class="nav-number">2.3.2.</span> <span class="nav-text">YAML</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#表示过程"><span class="nav-number">2.3.3.</span> <span class="nav-text">表示过程</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#路由算法"><span class="nav-number">3.</span> <span class="nav-text">路由算法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Maze（迷宫）路由"><span class="nav-number">3.1.</span> <span class="nav-text">Maze（迷宫）路由</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#A-搜索路由"><span class="nav-number">3.2.</span> <span class="nav-text">$A^*$ 搜索路由</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PathFinder-路由算法"><span class="nav-number">3.3.</span> <span class="nav-text">PathFinder 路由算法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#知识概述"><span class="nav-number">3.3.1.</span> <span class="nav-text">知识概述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Cost-Function"><span class="nav-number">3.3.2.</span> <span class="nav-text">Cost Function</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Congestion"><span class="nav-number">3.3.3.</span> <span class="nav-text">Congestion</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Pseudo-Code"><span class="nav-number">3.3.4.</span> <span class="nav-text">Pseudo Code</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#路由算法：VTR-Router"><span class="nav-number">4.</span> <span class="nav-text">路由算法：VTR Router</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Routability-driven-Router"><span class="nav-number">4.1.</span> <span class="nav-text">Routability-driven Router</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Cost-Function-1"><span class="nav-number">4.1.1.</span> <span class="nav-text">Cost Function</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Base-Cost"><span class="nav-number">4.1.2.</span> <span class="nav-text">Base Cost</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Penalty-of-Congestion"><span class="nav-number">4.1.3.</span> <span class="nav-text">Penalty of Congestion</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#History-Cost"><span class="nav-number">4.1.4.</span> <span class="nav-text">History Cost</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Net-布线顺序"><span class="nav-number">4.1.5.</span> <span class="nav-text">Net 布线顺序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#算法加速：方案一"><span class="nav-number">4.1.6.</span> <span class="nav-text">算法加速：方案一</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#算法加速：方案二"><span class="nav-number">4.1.7.</span> <span class="nav-text">算法加速：方案二</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#算法加速：方案三"><span class="nav-number">4.1.8.</span> <span class="nav-text">算法加速：方案三</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#算法加速：方案四"><span class="nav-number">4.1.9.</span> <span class="nav-text">算法加速：方案四</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Timing-driven-Router"><span class="nav-number">4.2.</span> <span class="nav-text">Timing-driven Router</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#特征"><span class="nav-number">4.2.1.</span> <span class="nav-text">特征</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#等效电路"><span class="nav-number">4.2.2.</span> <span class="nav-text">等效电路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Elmore-延迟"><span class="nav-number">4.2.3.</span> <span class="nav-text">Elmore 延迟</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#具有-Elmore-延迟的-Cost-Function"><span class="nav-number">4.2.4.</span> <span class="nav-text">具有 Elmore 延迟的 Cost Function</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#算法加速方案"><span class="nav-number">4.2.5.</span> <span class="nav-text">算法加速方案</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#带有动态-Base-Cost-的-Cost-Function"><span class="nav-number">4.2.6.</span> <span class="nav-text">带有动态 Base Cost 的 Cost Function</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#伪代码"><span class="nav-number">4.2.7.</span> <span class="nav-text">伪代码</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

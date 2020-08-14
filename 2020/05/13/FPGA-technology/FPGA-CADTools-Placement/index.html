@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="主要介绍 FPGA 技术里 placement 部分；">
+<meta property="og:type" content="article">
+<meta property="og:title" content="FPGA-CAD Tools：Placement">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/05/13/FPGA-technology/FPGA-CADTools-Placement/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="主要介绍 FPGA 技术里 placement 部分；">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/WhatPlacement.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/GoodandBadPlacement.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/HillClimb.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/FPGASA.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/ExampleVplace.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/VPackPseudoCode.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/TemperatureUpdate.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/ExampleBoundingBox.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/ExampleLinearCongestion.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/LCVsBB.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/IncrementalBoundingBoxEvaluation.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/IBBEPsudoCode.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/TVPackPsudoCode.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/DelayModel.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/TrequiredTarrival.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/TuningTimingAnalysisInterval.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/TuningCriticalityExponent1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/TuningCriticalityExponent2.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/Tuninglambda.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/MultipleIOStandards.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/IOStandardVoltage.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/OrganizationVirtexEFPGA.png">
+<meta property="article:published_time" content="2020-05-13T08:24:36.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:29:55.388Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="国科大研究生课程笔记">
+<meta property="article:tag" content="FPGA">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/WhatPlacement.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/05/13/FPGA-technology/FPGA-CADTools-Placement/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>FPGA-CAD Tools：Placement | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/05/13/FPGA-technology/FPGA-CADTools-Placement/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          FPGA-CAD Tools：Placement
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-05-13 16:24:36" itemprop="dateCreated datePublished" datetime="2020-05-13T16:24:36+08:00">2020-05-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:29:55" itemprop="dateModified" datetime="2020-08-14T17:29:55+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%8F%AF%E7%BC%96%E7%A8%8B%E9%80%BB%E8%BE%91%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1%E4%B8%8E-FPGA-%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">可编程逻辑系统设计与 FPGA 技术</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/05/13/FPGA-technology/FPGA-CADTools-Placement/" class="post-meta-item leancloud_visitors" data-flag-title="FPGA-CAD Tools：Placement" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/05/13/FPGA-technology/FPGA-CADTools-Placement/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/05/13/FPGA-technology/FPGA-CADTools-Placement/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>主要介绍 FPGA 技术里 placement 部分；</p>
+<a id="more"></a> 
+<h1 id="概述：FPGA-Placement"><a href="#概述：FPGA-Placement" class="headerlink" title="概述：FPGA Placement"></a>概述：FPGA Placement</h1><h2 id="认识"><a href="#认识" class="headerlink" title="认识"></a>认识</h2><p>涉及电路块网表（就逻辑集群而言）的过程，该电路表要分配到 FPGA 上的某些物理位置：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/WhatPlacement.png" alt="WhatPlacement"></p>
+<ul>
+<li>在 routing 之前，任何 FPGA placement 的主要目标是产生一个可以使用 FPGA 提供的<strong>有限布线资源成功进行布线</strong>的布置；<ul>
+<li>利用 placement algorithms，对 CLB 进行 Placement，以便路由信号所需的互连最小化，这一步对 FPGA 的性能影响很大；</li>
+</ul>
+</li>
+<li>布局是 FPGA 设计流程中的关键部分，大约需要一半的 “编译” 时间；</li>
+</ul>
+<h2 id="意义"><a href="#意义" class="headerlink" title="意义"></a>意义</h2><p>好的 placement 非常重要：</p>
+<ul>
+<li>设置可路由性的条件；</li>
+<li>即使电路能布通，放置不良也会导致最大工作速度降低并增加功耗；</li>
+</ul>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/GoodandBadPlacement.png" alt="GoodandBadPlacement"></p>
+<p>寻找一个好的 placement 是一个挑战：</p>
+<ul>
+<li>大型商用 FPGA 包含超过 500,000 个功能块，这意味着它有 $500,000!$ 个可能的placements，因此不可能进行详尽的评估；</li>
+</ul>
+<h2 id="目标"><a href="#目标" class="headerlink" title="目标"></a>目标</h2><p>这三个目标互相影响，很难同时对三个目标都达到最优，所以往往会进行综合考虑，不同的目标导致不同的性能表现结果：</p>
+<ol>
+<li>减少所需的接线：Wirelength-driven 的放置<ul>
+<li>两个箱子之间有互连关系，就尽量把它们放在一起；</li>
+</ul>
+</li>
+<li>平衡布线密度：Routability-driven 的放置<ul>
+<li>有关电路 connection 的拥塞；</li>
+</ul>
+</li>
+<li>最大化电路速度：Timing-driven 的放置<ul>
+<li>延迟最小，即关键路径尽量短；</li>
+</ul>
+</li>
+</ol>
+<h2 id="约束"><a href="#约束" class="headerlink" title="约束"></a>约束</h2><ol>
+<li>Accommodation Limit（住宿限制）<ul>
+<li>RAM 块必须放置在 RAM 位置，CLB 必须放置在 CLB 位置，依此类推；</li>
+</ul>
+</li>
+<li>Specific Group（特定群体）<ul>
+<li>构成进位链的算术逻辑簇必须按照进位结构要求的顺序彼此相邻放置；</li>
+</ul>
+</li>
+<li>Routing Congestion（路由拥塞）<ul>
+<li>当互连超出了 FPGA 某些部分的装配布线能力时；</li>
+</ul>
+</li>
+</ol>
+<h2 id="算法"><a href="#算法" class="headerlink" title="算法"></a>算法</h2><ul>
+<li>在放置 placement 期间，placer 尝试寻找合法的解决方案，以便将所有块都分配给目标 FPGA 芯片上的有效位置；</li>
+<li>它针对<strong>多个设计目标进行了优化</strong>，例如：线长，电路延迟，布线拥塞和功耗；</li>
+<li>由于<strong>块的位置通常在放置 placement 阶段之后是固定的</strong>，并且 placement 对布线质量有很大的影响，因此，放置试探法能够产生高质量的解决方案非常重要。</li>
+<li>大多数 FPGA 布局算法可分为三种类型：<strong>Simulated Annealing(模拟退火)</strong>、<strong>Analytical(分析)</strong> 和 <strong>Partitioning-Based(基于分区)</strong>；<ul>
+<li>“模拟退火”可能是使用最广泛的。</li>
+</ul>
+</li>
+</ul>
+<h1 id="Simulated-Annealing-Algorithm"><a href="#Simulated-Annealing-Algorithm" class="headerlink" title="Simulated Annealing Algorithm"></a>Simulated Annealing Algorithm</h1><h2 id="Physical-Annealing"><a href="#Physical-Annealing" class="headerlink" title="Physical Annealing"></a>Physical Annealing</h2><p>Annealing：一种<strong>热处理</strong>，可改变材料的物理和化学性质，以<strong>增加其延展性</strong>并<strong>降低其硬度</strong>，从而使其更易加工：</p>
+<ul>
+<li>Annealing(退火)：冷却热分子以形成良好的晶体结构</li>
+<li>从高温开始，分子随机移动</li>
+<li>按照特定的冷却时间表进行冷却，要求留出足够的时间使分子形成晶格   </li>
+</ul>
+<p>属于<strong>热力学问题</strong>：由于原子在固体材料中的扩散而发生，因此材料向其平衡状态发展。   </p>
+<p>传统过程（例如金属）：</p>
+<ul>
+<li>加热：取一金属并将其加热到高温，给它一个初始温度，原子过渡到高能态；</li>
+<li>冷却：使其<strong>缓慢</strong>冷却，金属退火至低温。在温度下降期间，原子缓慢地移动到低能态；</li>
+<li><strong>初始温度越高，冷却越慢，金属变得越坚硬</strong>；</li>
+</ul>
+<h2 id="SA（Simulated-Annealing）"><a href="#SA（Simulated-Annealing）" class="headerlink" title="SA（Simulated Annealing）"></a>SA（Simulated Annealing）</h2><p>一种模拟物理退火过程的概率技术，用于逼近给定函数的全局最优值。具体来说，就是一种元启发式方法，在大型搜索空间中寻找接近全局优化的解；    </p>
+<p>SA 算法用于求解组合极问题和 NP 完全问题，其步骤如下：</p>
+<ul>
+<li>Step 1：以初始状态和温度开始（热力学类比）；</li>
+<li>Step 2：<strong>随机</strong>改变状态，创造新的状态；</li>
+<li>Step 3：比较新状态和当前状态的能量：<ul>
+<li><strong>「接受」</strong>：如果新状态的能量较小，或者概率函数 $e^{-\Delta C/T}$ 小于随机值（$\Delta C$表示能量变化，$T$ 表示当前温度）；<ul>
+<li>添加第二个条件的目的就是为了防止出现局部最小值而引入的 hill climb 方法：<br>  <img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/HillClimb.png" alt="HillClimb"></li>
+</ul>
+</li>
+<li><strong>「拒绝」</strong>：其它新状态</li>
+</ul>
+</li>
+<li>Step 4：启发式地迭代步骤 2〜3，最后达到平衡状态（为每个温度创建一个新状态）；</li>
+</ul>
+<p>运用到 FPGA 实际上就是一种迭代过程：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/FPGASA.png" alt="FPGASA"></p>
+<ul>
+<li>placer 程序提议在 SA 过程中随机移动；</li>
+<li>每个潜在的移动（可能是两个相同类型的块之间的位置交换，或者一个块向有效空白空间的移动）都将导致 placement 成本的变化；</li>
+<li>Annealer（退火炉）使用此更改或 “∆C” 来做出移动决策；<ul>
+<li>与金属退火过程相似，即使代价成本增高（即：“不良举动”），在较高的温度下也有较高的机会接受更高的代价；</li>
+<li>在 SA 期间必须执行 “爬山”，以减少陷入局部极小值的机会；</li>
+<li>总是接受降低整体成本的 “好举动”；</li>
+<li>随着温度下降，Annealer 将接受较少的 “不良动作”；</li>
+</ul>
+</li>
+<li>满足预定义的退出条件时，SA 过程最终将停止；</li>
+</ul>
+<h2 id="关键点"><a href="#关键点" class="headerlink" title="关键点"></a>关键点</h2><ul>
+<li><strong>温度（T）</strong>：<ul>
+<li>控制算法去接受那些使解决方案变得更糟的动作的可能性（$e^{-\Delta C/T}$）；</li>
+</ul>
+</li>
+<li><strong>成本函数（C）</strong>：<ul>
+<li>一定温度下的能量状态；</li>
+</ul>
+</li>
+<li><strong>退火时间表</strong>（时间表越好，算法就越好）：<ul>
+<li>温度降低的速率；</li>
+<li>终止退火的退出标准；</li>
+<li>在每个温度下尝试移动的次数；</li>
+<li>产生潜在移动的方法；</li>
+</ul>
+</li>
+</ul>
+<h2 id="局限性"><a href="#局限性" class="headerlink" title="局限性"></a>局限性</h2><ol>
+<li>对参数的敏感性：<ul>
+<li>状态空间，成本函数，候选生成器，接受概率函数以及退火进度温度和初始温度等等……</li>
+<li>他们之间的相互作用不被理解（过于复杂，只能凭借经验去尝试）；</li>
+</ul>
+</li>
+<li>冻结问题：<ul>
+<li>有时无法逃脱局部最小值；</li>
+<li>特别是在低温下，接受不良动作的可能性非常低；</li>
+</ul>
+</li>
+</ol>
+<h1 id="Place-Algorithm-VPlace"><a href="#Place-Algorithm-VPlace" class="headerlink" title="Place Algorithm: VPlace"></a>Place Algorithm: VPlace</h1><h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><ul>
+<li>基于模拟退火；</li>
+<li>新的自适应退火时间表；</li>
+<li>引入了边界框；</li>
+<li>具有 timing 驱动版本（增加了了面积驱动）；</li>
+<li>深入研究了 VTR 中使用的学术 placement 工具；</li>
+</ul>
+<h2 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h2><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/ExampleVplace.png" alt="ExampleVplace"></p>
+<h2 id="通用伪代码"><a href="#通用伪代码" class="headerlink" title="通用伪代码"></a>通用伪代码</h2><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/VPackPseudoCode.png" alt="VPackPseudoCode"></p>
+<h2 id="Adaptive-Annealing-Schedule"><a href="#Adaptive-Annealing-Schedule" class="headerlink" title="Adaptive Annealing Schedule"></a>Adaptive Annealing Schedule</h2><h3 id="Initial-Placement"><a href="#Initial-Placement" class="headerlink" title="Initial Placement"></a>Initial Placement</h3><ul>
+<li>S = InitialPlacement（），S 是当前放置状态；</li>
+<li>通过将逻辑块随机分配给 FPGA 中的可用位置来创建初始放置；</li>
+</ul>
+<h3 id="Initial-Temperature"><a href="#Initial-Temperature" class="headerlink" title="Initial Temperature"></a>Initial Temperature</h3><ul>
+<li>$N_{blocks}$ 是所需的<u>逻辑块/群集</u>的数量加上<u>所需的 IO 焊盘</u>的数量；</li>
+<li>使用预定义的概率执行 $N_{blocks}$ 的<strong>移动</strong>，并针对这些关于 $N_{blocks}$ 的不同 placement <strong>计算 cost 的标准偏差</strong>；</li>
+<li><strong>初始温度</strong>设置为该标准偏差的 <strong>20 倍</strong>；</li>
+<li>由于高温特性，一开始就接受所有动作；</li>
+</ul>
+<h3 id="Temperature-Update-Strategy"><a href="#Temperature-Update-Strategy" class="headerlink" title="Temperature Update Strategy"></a>Temperature Update Strategy</h3><ul>
+<li>$T_{new} = \gamma \cdot T_{old}$<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/TemperatureUpdate.png" alt="TemperatureUpdate"><ul>
+<li>$R_{accept}$ 是当前温度下接受的尝试移动的一部分；</li>
+<li>算法开始时，几乎接受了所有的移动，因此，可以将 $\gamma$ 设置比较小，使温度变化快一些，但是随着算法的进行，接受的移动策略越来越少，此时，应该将温度的变化幅度减小；</li>
+</ul>
+</li>
+</ul>
+<h3 id="Range-Limiter"><a href="#Range-Limiter" class="headerlink" title="Range Limiter"></a>Range Limiter</h3><ul>
+<li>$R_{limit}$ 是尝试交换块的范围跨度；</li>
+<li>$R_{limit}$ 最初设置为整个芯片的跨度，并在温度降低到一定水平以下时缩小($R_{accept} \leq 0.44$)；<script type="math/tex; mode=display">1(single\ block) \leq R_{limit} \leq  maximum\ FPGA\ dimension\ (R_{accept} \leq 0.44)</script></li>
+<li>更新方法：<script type="math/tex; mode=display">R_{limit\_new} = R_{limit\_old} \cdot \underbrace{(1-0.44+R_{accept})}_{\leq 1}(R_{accept} \leq 0.44)</script></li>
+</ul>
+<h3 id="Moves-per-Temperature"><a href="#Moves-per-Temperature" class="headerlink" title="Moves per Temperature"></a>Moves per Temperature</h3><script type="math/tex; mode=display">MovesPerTemperature = InnerNum \ast {N_{blocks}}^{\frac{3}{4}}</script><ul>
+<li>InnerNum 的默认值为 10，以允许使用不同的 CPU 时间 / placements 质量进行权衡；</li>
+<li>将 MovesPerTemperature 降低 10 倍，可将 placer 的速度提高 10 倍，并将最终 placement 质量降低不到 10％；</li>
+</ul>
+<h3 id="Terminate-Criterion"><a href="#Terminate-Criterion" class="headerlink" title="Terminate Criterion"></a>Terminate Criterion</h3><p>$T &lt; \epsilon \cdot Cost / N_{nets}$</p>
+<ul>
+<li>$N_{nets}$ 是电路中的网络数；</li>
+<li>$\epsilon$＝ 0.005（经验值）；<ul>
+<li>0.05 到 0.005 之间的任何值都是合理的；</li>
+<li>较小的值会以稍微增加的 CPU 时间为代价提供更高的 placement 质量；</li>
+</ul>
+</li>
+</ul>
+<h2 id="Cost-Function"><a href="#Cost-Function" class="headerlink" title="Cost Function"></a>Cost Function</h2><p>Cost Function 主要取决于 Bounding Box，但是实际计算过程中，并没有那么简单，我们还需要考虑通道的宽度等因素，于是引入了 Linear Congestion，将 Bounding Box 的计算进一步精确</p>
+<h3 id="Bounding-Box-Wirelength-Driven"><a href="#Bounding-Box-Wirelength-Driven" class="headerlink" title="Bounding Box (Wirelength-Driven)"></a>Bounding Box (Wirelength-Driven)</h3><ul>
+<li>Net 是在电路网表中共享相同源的一组节点和连接（可能有多个 sinks）；</li>
+<li>估算电线长度要求的模型：<script type="math/tex; mode=display">Wring_{Cost}=\sum^{N_{nets}}_{i=1}\ q(i) \cdot [\ bb_x(i)+bb_y(i)\ ]</script><ul>
+<li>$bb_x(i)$ 是Net i的水平跨度；</li>
+<li>$bb_y(i)$ 是Net i的垂直跨度；</li>
+<li>$q(i)$ 将在后面讨论，实际考虑更复杂，是采用下一小节的办法计算的；</li>
+</ul>
+</li>
+</ul>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/ExampleBoundingBox.png" alt="ExampleBoundingBox"></p>
+<h3 id="Linear-Congestion-Wirelength-Driven"><a href="#Linear-Congestion-Wirelength-Driven" class="headerlink" title="Linear Congestion (Wirelength-Driven)"></a>Linear Congestion (Wirelength-Driven)</h3><script type="math/tex; mode=display">Cost=\sum^{num\_nets}_{i=1}q(i)(\frac{bb_x[i]}{[C_{av,x}(i)]^\beta}+\frac{bb_y[i]}{[C_{av,y}(i)]^\beta})</script><ul>
+<li>$q(i)$ 是 Net i 的权重，对于具有 3 个或更少 terminals 的 Net i，$q(i)$ 设置为 1。超过 3 个 terminals 的，线性增加的速率为：<script type="math/tex; mode=display">q(i)=2.79+0.02616 \cdot (\ Num\_Terminals-50\ )</script></li>
+<li>$C_{av,x}(i)$ 和 $C_{av,y}(i)$ 分别是 Net i 边界框上 x 和 y 方向的平均信道容量（通道宽度）；</li>
+<li>$\beta$ 允许调整使用窄通道和宽通道的相对成本。设置为1（经验值）；<ul>
+<li>$\beta=0$，恢复为标准 bounding box cost function，上一小节的情形；</li>
+<li>$\beta$ 的值越大，相对于较宽通道的布线，较窄通道的布线受到的惩罚越多（布局时，尽量选用更宽的通道）；</li>
+</ul>
+</li>
+</ul>
+<p>运用举例：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/ExampleLinearCongestion.png" alt="ExampleLinearCongestion"></p>
+<ul>
+<li>问题：有一个映射的网表，它具有 3 个 nets，每个 nets 具有 3 个 terminals，在 x 和 y 方向上的平均信道容量为 4，计算 Cost；</li>
+<li>解决方案：<ul>
+<li>每个 nets 都有 3 个 terminals，$q(1)=q(2)=q(3)=1$；</li>
+<li>设置 $\beta=1$，并且 $bb_x[.]$ 和 $bb_y[.]$ 的值表都有给出；</li>
+<li>$Cost = 1\ast(2/4+4/4) + 1\ast(4/4+4/4) + 1\ast(6/4+4/4) = 1.5+2+2.5=6$</li>
+</ul>
+</li>
+</ul>
+<h3 id="Linear-Congestion-vs-Bounding-Box"><a href="#Linear-Congestion-vs-Bounding-Box" class="headerlink" title="Linear Congestion vs. Bounding Box"></a>Linear Congestion vs. Bounding Box</h3><ul>
+<li>$\beta = 0$: Bounding box</li>
+<li>$\beta &gt; 0$: Linear congestion</li>
+<li>logic-bound：仅 I/O placement</li>
+<li>I/O-bound：仅 logic cluster placement</li>
+</ul>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/LCVsBB.png" alt="LCVsBB"></p>
+<h3 id="Bounding-Box-re-calculation-问题"><a href="#Bounding-Box-re-calculation-问题" class="headerlink" title="Bounding Box re-calculation 问题"></a>Bounding Box re-calculation 问题</h3><ul>
+<li>即使制定了良好的 annealing schedule，在典型的 placement 过程中也将<strong>评估数百万个潜在的块交换</strong>，计算量太大；</li>
+<li>评估 swap 上最昂贵的计算部分是计算 swap 产生的 cost 变化 $\delta C$；尽快进行此计算至关重要；</li>
+<li>$\delta C$ 中唯一更改的 term 是与两个交换的块所连接的网络相对应的 term；即，计算公式里面的 $bb_x[i]$ 和 $bb_y[i]$；</li>
+<li>于是引入了一种，递增式的 Incremental Bounding Box Evaluation；</li>
+</ul>
+<h3 id="Incremental-Bounding-Box-Evaluation"><a href="#Incremental-Bounding-Box-Evaluation" class="headerlink" title="Incremental Bounding Box Evaluation"></a>Incremental Bounding Box Evaluation</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/IncrementalBoundingBoxEvaluation.png" alt="IncrementalBoundingBoxEvaluation"></p>
+<ul>
+<li>$X_{min}，X_{max}，Y_{min}，Y_{max}$：对于每个网络，我们存储其边界框的四个边的每一边的坐标；</li>
+<li>$N_{xmin}，N_{xmax}，N_{ymin}，N_{ymax}$：位于每侧的 net terminals 数；</li>
+<li>假设此网络的 terminal 通过交换从 $(x_{old},y_{old})$ 移至 $(x_{new},y_{new})$；</li>
+<li>可以仅通过查看移动的 terminal 而不是所有 k terminal 来确定新的边界框；</li>
+<li>如果移动的 terminal 是边界框一侧的唯一 terminal，并且现在已向内移动到边界框的中心，仅此情况需要完全重新计算；</li>
+<li>这样就减少了 CPU 时间；</li>
+</ul>
+<p>伪代码描述：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/IBBEPsudoCode.png" alt="IBBEPsudoCode"></p>
+<h1 id="Place-Algorithm：T-VPlace"><a href="#Place-Algorithm：T-VPlace" class="headerlink" title="Place Algorithm：T-VPlace"></a>Place Algorithm：T-VPlace</h1><h2 id="概述-1"><a href="#概述-1" class="headerlink" title="概述"></a>概述</h2><ul>
+<li>时序驱动的 VPlace 版本；</li>
+<li>新的成本函数可以在<strong>导线长度</strong>和<strong>关键路径延迟</strong>之间进行权衡；</li>
+<li>对于给定的恒定输入集，无论执行程序多少次，<strong>结果都是相同</strong>的；</li>
+<li><strong>良好的可重复性</strong>，可用于代码调试，错误重现/</li>
+<li>客户支持和回归测试；</li>
+<li>速度提高 42％，同时减少线长的 5％；</li>
+</ul>
+<h2 id="伪代码"><a href="#伪代码" class="headerlink" title="伪代码"></a>伪代码</h2><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/TVPackPsudoCode.png" alt="TVPackPsudoCode"></p>
+<h2 id="延迟模型"><a href="#延迟模型" class="headerlink" title="延迟模型"></a>延迟模型</h2><p>计算延迟矩阵：</p>
+<ul>
+<li>两个块之间的延迟仅作为距离 $(\Delta x,\Delta y)$ 的函数；</li>
+<li>使用 router 确定相距 $(\Delta x,\Delta y)$ 距离的两个块之间的延迟，并将其记录在位置索引 $(\Delta x,\Delta y)$ 的<strong>delay look up matrix</strong>（延迟查找矩阵）中；</li>
+<li>重复此过程，直到在 FPGA 中计算出所有可能的位置 $(\Delta x,\Delta y)$；</li>
+<li>由于 router 足够智能，因此只需要记录两个块之间的最小延迟，之后的按照简单的倍数相乘就能得到了；</li>
+</ul>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/DelayModel.png" alt="DelayModel"></p>
+<h2 id="Timing-Analysis"><a href="#Timing-Analysis" class="headerlink" title="Timing Analysis"></a>Timing Analysis</h2><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/TrequiredTarrival.png" alt="TrequiredTarrival"></p>
+<p><strong>Arrival Time</strong>：</p>
+<script type="math/tex; mode=display">T_{arrival}(i)=Max_{\forall j \in fanin(i)}\{T_{arrival}(j)+delay(j,i)\}</script><ul>
+<li>节点 i 是当前正在计算的节点；</li>
+<li>$delay(j,i)$ 是连接节点 j 到 i 的边缘的延迟值；</li>
+<li>电路延迟是所有节点的最大到达时间 $D_{max}$；</li>
+</ul>
+<p><strong>Required Time</strong>：</p>
+<script type="math/tex; mode=display">T_{required}(i)=Min_{\forall j \in fanout(i)}\{T_{required}(j)-delay(i,j)\}</script><ul>
+<li>将所有接收器的 $T_{required}$ 设置为 $D_{max}$ 并向后计算；</li>
+</ul>
+<p><strong>Slack of a connection (i,j)</strong>：</p>
+<script type="math/tex; mode=display">Slack(i,j)=T_{required}(j)-T_{arrival}(i)-delay(i,j)</script><h2 id="Cost-Function-1"><a href="#Cost-Function-1" class="headerlink" title="Cost Function"></a>Cost Function</h2><h3 id="Timing-Cost"><a href="#Timing-Cost" class="headerlink" title="Timing Cost"></a>Timing Cost</h3><p>基于每个连接的 Criticality，每个连接的 Delay 和用户定义的 Criticality_Exponent：    </p>
+<script type="math/tex; mode=display">Criticality(i,j)=1-\frac{Slack(i,j)}{Dmax}</script><p>Criticality_Exponen 可以对那些重要的连接进行加权，而对其他非关键连接的加权则较小:     </p>
+<script type="math/tex; mode=display">Timing\_Cost(i,j)=Delay(i,j)\ Criticality(i,j)^{Criticality\_Exponent}</script><p>总 timing cost 是所有连接的 timing cost 之和:     </p>
+<script type="math/tex; mode=display">Timing\_Cost=\sum_{\forall i,j \in cricuit}\ Timing\_Cost(i,j)</script><h3 id="Auto-normalizing-Cost"><a href="#Auto-normalizing-Cost" class="headerlink" title="Auto-normalizing Cost"></a>Auto-normalizing Cost</h3><script type="math/tex; mode=display">\Delta C=\lambda \cdot \frac{\Delta Timing\_Cost}{Previous\_Timing\_Cost}+(1-\lambda)\cdot \frac{\Delta Wiring\_Cost}{Previous\_Wiring\_Cost}</script><ul>
+<li>权衡变量 $\lambda$，以确定应赋予每个组件多少权重；<ul>
+<li>仅使用变量 $\lambda$ 来使函数两个分量的权重，而与它们的实际值无关；</li>
+</ul>
+</li>
+<li>Previous_Timing_Cost 和 Previous_Wiring_Cost，每个温度更新一次（规范化组件）；</li>
+<li>继承 VPlace 的 annealing schedule，因为它是 “自适应的”，并且在新的成本函数中表现良好；</li>
+</ul>
+<h2 id="实验结果分析"><a href="#实验结果分析" class="headerlink" title="实验结果分析"></a>实验结果分析</h2><h3 id="调整-Timing-Analysis-间隔"><a href="#调整-Timing-Analysis-间隔" class="headerlink" title="调整 Timing Analysis 间隔"></a>调整 Timing Analysis 间隔</h3><ul>
+<li>将 $\lambda$ 的值设置为 1（完全由时序驱动），Criticality_Exponent 设置为 1；</li>
+<li>然后，改变对电路进行时序分析的频率，并更新连接的 Criticality 和 slack；</li>
+<li>扫描从执行开始时一直执行一次，一直到 placement 算法内部循环内的时序分析：</li>
+</ul>
+<p>分析结果：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/TuningTimingAnalysisInterval.png" alt="TuningTimingAnalysisInterval">  </p>
+<ul>
+<li>每个温度执行一次时序分析足以获得最佳的放置结果；</li>
+<li>似乎此重新分析间隔不会影响 placement 的 bounding box (wirelength) cost；</li>
+</ul>
+<h3 id="调整-Criticality-Exponent"><a href="#调整-Criticality-Exponent" class="headerlink" title="调整  Criticality_Exponent"></a>调整  Criticality_Exponent</h3><p><strong>取 $\lambda = 0.5$ ：</strong><br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/TuningCriticalityExponent1.png" alt="TuningCriticalityExponent1"></p>
+<ul>
+<li>将 criticality exponent 提高到大约 8 或 9 会改善 placement 估算的关键路径，此时不再有明显的收益；</li>
+<li>大指数可改善 Wiring_Cost；</li>
+<li>分析：<ul>
+<li>大指数使得 connections 少的具有很大的 Timing_Cost，而其他连接具有无关紧要的Timing_Cost；</li>
+<li>高 Criticality_Exponent 导致关键电路中的连接数量减少，但对于这少数几个连接，Timing_Cost 占标准化 cost 的最大部分；</li>
+<li>对于其他非关键连接（随着 Criticality_Exponent 的增加，其他非关键连接会更多），Wiring_Cost 占标准化 cost 的最大部分；</li>
+</ul>
+</li>
+</ul>
+<p><strong>取 $\lambda = 1$ ：</strong><br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/TuningCriticalityExponent2.png" alt="TuningCriticalityExponent2"></p>
+<ul>
+<li>指数值最好为 2 或 3；</li>
+<li>$\lambda = 1$ 的延迟结果比 $\lambda = 0.5$ 差，Wiring_Cost 差很多。</li>
+<li>分析：<ul>
+<li>该算法很可能能够在外循环的一次迭代期间显着减少关键路径，但同时又无意中使其他路径变得非常关键；</li>
+<li>这种振荡效应使放置算法难以收敛到最佳放置解决方案；</li>
+<li>通过在成本方程中包含一个线长最小化项，我们可以减少放置的振荡；</li>
+<li>这是因为 wire-length 这一项将惩罚那些大大增加 wire-length 的移动，使它们不太可能被接受，即使它们会大大减少当前的关键路径；</li>
+<li>在我们的成本函数中，线长项作为延迟最小化项的阻尼器，并防止振荡；</li>
+</ul>
+</li>
+</ul>
+<h3 id="调整-lambda"><a href="#调整-lambda" class="headerlink" title="调整 $\lambda$"></a>调整 $\lambda$</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/Tuninglambda.png" alt="Tuninglambda"></p>
+<p>仅由 wire-length driven 的算法可产生最佳的 Wiring_Cost；</p>
+<ul>
+<li>$\lambda=0.9$ 的算法产生的电路具有最佳 placement 估计的关键路径延迟；</li>
+<li>$\lambda=1$ 时，对于关键路径，延迟和导线长度都不利；</li>
+<li>将 $\lambda$ 设置为 0.5 可在导线长度和关键路径最小化之间取得最佳折衷；</li>
+</ul>
+<h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><ul>
+<li>先前的结果表明，使用每个温度一次的时序分析间隔，Criticality_Exponent 值为 8，$\lambda$ 为 0.5 可以提供迄今为止最好的结果</li>
+<li>基于这些结果，我们将定时分析间隔设置为每个温度一次，Criticality_Exponent 设置为 8，设置不同的 $\lambda$；</li>
+</ul>
+<h1 id="Place-with-Multiple-I-O-Standards"><a href="#Place-with-Multiple-I-O-Standards" class="headerlink" title="Place with Multiple I/O Standards"></a>Place with Multiple I/O Standards</h1><p>以 Virtex 和 Virtex-E FPGAs 为例，设计的 I/O 对象和 core logic 的三个不同位置：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/MultipleIOStandards.png" alt="MultipleIOStandards">    </p>
+<p>具有不同阴影的 I/O 对象不兼容，不能一起放置在同一存储库中，假设每个芯片边缘只有一个 I/O 库：</p>
+<ul>
+<li>图（a）描述了在没有与 bank 的 I/O 组织相关的约束的情况下可以实现的放置；</li>
+<li>图（b）描绘了一个受约束的 I/O 布局，其中一组兼容的 I/O 对象分布在两个 banks 之间；</li>
+<li>图（c），如果我们使用幼稚的方法放置 I/O 对象，即将每组兼容的 I/O 对象放置在一个 bank 中；</li>
+</ul>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/IOStandardVoltage.png" alt="IOStandardVoltage"></p>
+<ul>
+<li>当前 FPGA 支持的 I/O 标准在几种方面彼此不同；</li>
+<li>一些 I/O 标准要求使用差分放大器输入：<ul>
+<li>使用此类标准时，用户必须向放大器提供外部参考电压 Vref；</li>
+<li>使用差分放大器可以减少 I/O 电压摆幅，从而加快开关速度；</li>
+</ul>
+</li>
+<li>第二个特征是某些标准要求特定的电源电压 Vcco 为 I/O 模块供电；</li>
+</ul>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/OrganizationVirtexEFPGA.png" alt="OrganizationVirtexEFPGA"></p>
+<ul>
+<li>Vref 和 Vccovoltages 由外部提供，并连接到为 I/O 模块组（称为存储体）提供服务的特殊引脚；</li>
+<li>组中的所有 I/O 块均由单个 Vref 电压和单个 Vcco 电源电压供电；</li>
+<li>Virtex-E FPGA 每个芯片边缘有两个 I / O bank，或者总共有八个 bank；</li>
+</ul>
+<p>总结来说：</p>
+<ul>
+<li>具有 Vref 和 Vcco 电压的 bank 在同一 bank 中进行组合的 I/O 标准的限制：<ul>
+<li>两个 I/O 对象，由于其 I/O 标准而需要不同的 Vref 或不同的 Vccovoltage，它们就不能合法的放在同一 bank；</li>
+</ul>
+</li>
+<li>我们看到，使用 GTL 标准的输入 I/O 对象不能与使用 HSTL_I 标准的输入 I/O 对象放在同一存储体中，因为这两个标准需要不同的 Vref 电压；</li>
+<li>bank 组织在 I/O 灵活性和用户可用的 I/O 块数量之间提供了合理的权衡；</li>
+</ul>
+<p>解决方式：</p>
+<ul>
+<li>采用的 annealing cost function 考虑了 wirelength，timing cost 以及 非法 I/O placement 导致的违反 banking 的行为：<script type="math/tex; mode=display">PlacementCost=\alpha \cdot WirelengthCost + \beta \cdot TimingCost + \gamma \cdot BankingViolationCost</script></li>
+<li>placement 期间，移动 core logic blocks 时，仅会影响wirelength cost 和 the timing cost，而 I/O 移动可能会影响所有三个项的值；</li>
+<li>违反 banking rule 的 cost 是通过将每个 bank 的违规相加得出的：<script type="math/tex; mode=display">BankingViolationCost=\sum_{i \in B}BankCost_i\ ,\ B\ is\ the\ set\ of\ all\ I/O\ banks</script></li>
+<li>Vref 冲突或 Vcco 冲突可能导致 bank 内部违规； </li>
+<li>当 bank 包含由于其使用的标准而需要将多个 Vref 电压施加到同一 bank 的 I/O 对象时，会发生 Vref 冲突。Vcco 冲突的定义与此类似。</li>
+<li>bank 的 cost i 是 Vref 冲突 cost 和 Vcco 冲突 cost 之和：<script type="math/tex; mode=display">bankCost_i=vrefConflictCost_i+vccoConflictCost_i</script></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/05/13/FPGA-technology/FPGA-CADTools-Placement/" title="FPGA-CAD Tools：Placement">http://www.thebetterkong.cn/2020/05/13/FPGA-technology/FPGA-CADTools-Placement/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%9B%BD%E7%A7%91%E5%A4%A7%E7%A0%94%E7%A9%B6%E7%94%9F%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 国科大研究生课程笔记</a>
+              <a href="/tags/FPGA/" rel="tag"><i class="fa fa-tag"></i> FPGA</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/05/09/Blog-Related/Hexo-Next-FileOrganization/" rel="prev" title="Hexo & Next 的配置，做自己的主人">
+      <i class="fa fa-chevron-left"></i> Hexo & Next 的配置，做自己的主人
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/05/20/Blog-Related/ImproveMathJax/" rel="next" title="改进 Hexo 中 MathJax 数学公式的渲染">
+      改进 Hexo 中 MathJax 数学公式的渲染 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#概述：FPGA-Placement"><span class="nav-number">1.</span> <span class="nav-text">概述：FPGA Placement</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#认识"><span class="nav-number">1.1.</span> <span class="nav-text">认识</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#意义"><span class="nav-number">1.2.</span> <span class="nav-text">意义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#目标"><span class="nav-number">1.3.</span> <span class="nav-text">目标</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#约束"><span class="nav-number">1.4.</span> <span class="nav-text">约束</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#算法"><span class="nav-number">1.5.</span> <span class="nav-text">算法</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Simulated-Annealing-Algorithm"><span class="nav-number">2.</span> <span class="nav-text">Simulated Annealing Algorithm</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Physical-Annealing"><span class="nav-number">2.1.</span> <span class="nav-text">Physical Annealing</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SA（Simulated-Annealing）"><span class="nav-number">2.2.</span> <span class="nav-text">SA（Simulated Annealing）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#关键点"><span class="nav-number">2.3.</span> <span class="nav-text">关键点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#局限性"><span class="nav-number">2.4.</span> <span class="nav-text">局限性</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Place-Algorithm-VPlace"><span class="nav-number">3.</span> <span class="nav-text">Place Algorithm: VPlace</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#概述"><span class="nav-number">3.1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#例子"><span class="nav-number">3.2.</span> <span class="nav-text">例子</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#通用伪代码"><span class="nav-number">3.3.</span> <span class="nav-text">通用伪代码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Adaptive-Annealing-Schedule"><span class="nav-number">3.4.</span> <span class="nav-text">Adaptive Annealing Schedule</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Initial-Placement"><span class="nav-number">3.4.1.</span> <span class="nav-text">Initial Placement</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Initial-Temperature"><span class="nav-number">3.4.2.</span> <span class="nav-text">Initial Temperature</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Temperature-Update-Strategy"><span class="nav-number">3.4.3.</span> <span class="nav-text">Temperature Update Strategy</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Range-Limiter"><span class="nav-number">3.4.4.</span> <span class="nav-text">Range Limiter</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Moves-per-Temperature"><span class="nav-number">3.4.5.</span> <span class="nav-text">Moves per Temperature</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Terminate-Criterion"><span class="nav-number">3.4.6.</span> <span class="nav-text">Terminate Criterion</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Cost-Function"><span class="nav-number">3.5.</span> <span class="nav-text">Cost Function</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Bounding-Box-Wirelength-Driven"><span class="nav-number">3.5.1.</span> <span class="nav-text">Bounding Box (Wirelength-Driven)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Linear-Congestion-Wirelength-Driven"><span class="nav-number">3.5.2.</span> <span class="nav-text">Linear Congestion (Wirelength-Driven)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Linear-Congestion-vs-Bounding-Box"><span class="nav-number">3.5.3.</span> <span class="nav-text">Linear Congestion vs. Bounding Box</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Bounding-Box-re-calculation-问题"><span class="nav-number">3.5.4.</span> <span class="nav-text">Bounding Box re-calculation 问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Incremental-Bounding-Box-Evaluation"><span class="nav-number">3.5.5.</span> <span class="nav-text">Incremental Bounding Box Evaluation</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Place-Algorithm：T-VPlace"><span class="nav-number">4.</span> <span class="nav-text">Place Algorithm：T-VPlace</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#概述-1"><span class="nav-number">4.1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#伪代码"><span class="nav-number">4.2.</span> <span class="nav-text">伪代码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#延迟模型"><span class="nav-number">4.3.</span> <span class="nav-text">延迟模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Timing-Analysis"><span class="nav-number">4.4.</span> <span class="nav-text">Timing Analysis</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Cost-Function-1"><span class="nav-number">4.5.</span> <span class="nav-text">Cost Function</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Timing-Cost"><span class="nav-number">4.5.1.</span> <span class="nav-text">Timing Cost</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Auto-normalizing-Cost"><span class="nav-number">4.5.2.</span> <span class="nav-text">Auto-normalizing Cost</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实验结果分析"><span class="nav-number">4.6.</span> <span class="nav-text">实验结果分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#调整-Timing-Analysis-间隔"><span class="nav-number">4.6.1.</span> <span class="nav-text">调整 Timing Analysis 间隔</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#调整-Criticality-Exponent"><span class="nav-number">4.6.2.</span> <span class="nav-text">调整  Criticality_Exponent</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#调整-lambda"><span class="nav-number">4.6.3.</span> <span class="nav-text">调整 $\lambda$</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#结论"><span class="nav-number">4.6.4.</span> <span class="nav-text">结论</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Place-with-Multiple-I-O-Standards"><span class="nav-number">5.</span> <span class="nav-text">Place with Multiple I&#x2F;O Standards</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

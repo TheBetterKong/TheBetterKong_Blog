@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在写作过程中，我们偶尔会忘了某个小知识点。在网上查阅相关资料，出现的文章良莠不齐，需要我们去筛选，查阅，不同的风格读起来也不那么顺心，会让我们在这些小事情上浪费时间。本文章的目标就是针对这种现象，打造一个最全的写作指南。从基础文案格式，到 Markdown 语法以及数学公式等等。并且会在以后的 Blog 的书写过程中，不断更新。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Markdown 写作指南">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/04/04/Blog-Related/Markdown-Writing/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="在写作过程中，我们偶尔会忘了某个小知识点。在网上查阅相关资料，出现的文章良莠不齐，需要我们去筛选，查阅，不同的风格读起来也不那么顺心，会让我们在这些小事情上浪费时间。本文章的目标就是针对这种现象，打造一个最全的写作指南。从基础文案格式，到 Markdown 语法以及数学公式等等。并且会在以后的 Blog 的书写过程中，不断更新。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/Markdown-Writing/Markdownl.png">
+<meta property="article:published_time" content="2020-04-04T05:13:14.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:25:37.533Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="Markdown">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/Markdown-Writing/Markdownl.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/04/04/Blog-Related/Markdown-Writing/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Markdown 写作指南 | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/04/04/Blog-Related/Markdown-Writing/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Markdown 写作指南
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-04-04 13:13:14" itemprop="dateCreated datePublished" datetime="2020-04-04T13:13:14+08:00">2020-04-04</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:25:37" itemprop="dateModified" datetime="2020-08-14T17:25:37+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Blog-%E7%9B%B8%E5%85%B3/" itemprop="url" rel="index"><span itemprop="name">Blog 相关</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/04/04/Blog-Related/Markdown-Writing/" class="post-meta-item leancloud_visitors" data-flag-title="Markdown 写作指南" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/04/04/Blog-Related/Markdown-Writing/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/04/04/Blog-Related/Markdown-Writing/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <div align="center"> <img src="http://img.thebetterkong.cn/blog/Markdown-Writing/Markdownl.png" width="100%" alt="header.png" /> </div>   
+
+<p>在写作过程中，我们偶尔会忘了某个小知识点。在网上查阅相关资料，出现的文章良莠不齐，需要我们去筛选，查阅，不同的风格读起来也不那么顺心，会让我们在这些小事情上浪费时间。本文章的目标就是针对这种现象，打造一个最全的写作指南。从基础文案格式，到 Markdown 语法以及数学公式等等。并且会在以后的 Blog 的书写过程中，不断更新。</p>
+<a id="more"></a> 
+<h1 id="文案书写规范"><a href="#文案书写规范" class="headerlink" title="文案书写规范"></a>文案书写规范</h1><p><a href="https://github.com/sparanoid/chinese-copywriting-guidelines" target="_blank" rel="noopener">原文链接：中文文案排版</a>      </p>
+<h2 id="空格"><a href="#空格" class="headerlink" title="空格"></a>空格</h2><ol>
+<li>中英文之间需要增加空格  </li>
+<li>中文与数字之间需要增加空格</li>
+<li>数字与单位之间需要增加空格</li>
+<li>全角标点与其他字符之间不加空格</li>
+</ol>
+<h2 id="全角和半角"><a href="#全角和半角" class="headerlink" title="全角和半角"></a>全角和半角</h2><p>通俗的说，就是：</p>
+<ul>
+<li>全角：中文里的，和汉字一样占两个字节；</li>
+<li>半角：英文里的，占一个字节，比全角小；</li>
+<li>详见：『<a href="https://zh.wikipedia.org/wiki/%E5%85%A8%E5%BD%A2%E5%92%8C%E5%8D%8A%E5%BD%A2" target="_blank" rel="noopener">全形和半形</a>』。</li>
+</ul>
+<ol>
+<li>使用全角中文标点</li>
+<li>数字使用半角字符</li>
+<li>遇到完整的英文整句、特殊名词，其内容使用半角标点</li>
+</ol>
+<h2 id="名词"><a href="#名词" class="headerlink" title="名词"></a>名词</h2><ol>
+<li>专有名词使用正确的大小写</li>
+<li>不要使用不地道的缩写</li>
+</ol>
+<h2 id="Else（非官方）"><a href="#Else（非官方）" class="headerlink" title="Else（非官方）"></a>Else（非官方）</h2><p>这一块是原作者的一些日常规范，本人觉得很不错，也 copy 过来了，借用一下。</p>
+<ol>
+<li>链接之间增加空格</li>
+<li>简体中文使用直角引号</li>
+</ol>
+<p><a id="test"></a></p>
+<h1 id="Markdown-语法格式"><a href="#Markdown-语法格式" class="headerlink" title="Markdown 语法格式"></a>Markdown 语法格式</h1><p>对于，Markdown的一些基础语法格式等，可以参考：</p>
+<ul>
+<li>『<a href="https://www.runoob.com/markdown/md-tutorial.html" target="_blank" rel="noopener">Markdown 教程</a>』</li>
+<li>『<a href="https://juejin.im/post/5d345c5de51d454d1d6285e5#heading-10" target="_blank" rel="noopener">Markdown 写作指南</a>』    </li>
+</ul>
+<p>下面，是我在日常使用过程中，做的一些补充：</p>
+<h2 id="GitHub-支持的表情符号"><a href="#GitHub-支持的表情符号" class="headerlink" title="GitHub 支持的表情符号"></a>GitHub 支持的表情符号</h2><ul>
+<li><a href="https://www.webfx.com/tools/emoji-cheat-sheet/" target="_blank" rel="noopener">GitHub 官方表情大全</a></li>
+</ul>
+<h2 id="实现按键效果"><a href="#实现按键效果" class="headerlink" title="实现按键效果"></a>实现按键效果</h2><ul>
+<li>效果： <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Del</kbd> 重启电脑</li>
+<li>格式：<code>&lt;kbd&gt;Ctrl&lt;/kbd&gt;+&lt;kbd&gt;Alt&lt;/kbd&gt;+&lt;kbd&gt;Del&lt;/kbd&gt; 重启电脑</code></li>
+</ul>
+<h2 id="区域高亮显示"><a href="#区域高亮显示" class="headerlink" title="区域高亮显示"></a>区域高亮显示</h2><ul>
+<li>效果：<mark>I Love Markdown</mark></li>
+<li>格式：<code>&lt;mark&gt;I Love Markdown&lt;/mark&gt;</code></li>
+</ul>
+<h2 id="表格单元格内换行"><a href="#表格单元格内换行" class="headerlink" title="表格单元格内换行"></a>表格单元格内换行</h2><ul>
+<li>效果：</li>
+</ul>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>姓名</th>
+<th>爱好</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>张三</td>
+<td>足球<br>篮球</td>
+</tr>
+<tr>
+<td>李四</td>
+<td>羽毛球<br>乒乓球</td>
+</tr>
+</tbody>
+</table>
+</div>
+<ul>
+<li>格式：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">|姓名|爱好|</span><br><span class="line">|---|---|</span><br><span class="line">|张三|足球&lt;br&gt;篮球|</span><br><span class="line">|李四|羽毛球&lt;br&gt;乒乓球|</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="制作代办事项"><a href="#制作代办事项" class="headerlink" title="制作代办事项"></a>制作代办事项</h2><ul>
+<li>效果：<ul>
+<li>[ ] 未完成</li>
+<li>[x] 已完成</li>
+</ul>
+</li>
+<li>格式：<code>- [ ] 表示未完成，- [x] 表示已完成</code>，注意：键入字符与字符之间都要保留一个字符的空格。</li>
+</ul>
+<h2 id="文字加下划线"><a href="#文字加下划线" class="headerlink" title="文字加下划线"></a>文字加下划线</h2><ul>
+<li>效果：<u>下划线</u></li>
+<li>格式：<code>&lt;u&gt;下划线&lt;/u&gt;</code></li>
+</ul>
+<h2 id="定义锚点实现跳转"><a href="#定义锚点实现跳转" class="headerlink" title="定义锚点实现跳转"></a>定义锚点实现跳转</h2><ul>
+<li>效果：<a href="#test">返回到前文</a></li>
+<li>格式：<ul>
+<li>需要跳转处：<code>&lt;a href=&quot;#mao&quot;&gt;返回到前文&lt;/a&gt;</code></li>
+<li>跳转目标处：<code>&lt;a id=&quot;mao&quot;&gt;&lt;/a&gt;</code></li>
+</ul>
+</li>
+</ul>
+<h2 id="代码折叠"><a href="#代码折叠" class="headerlink" title="代码折叠"></a>代码折叠</h2><ul>
+<li><p>效果：</p>
+<details>
+  <summary><b>示例：Hello World 程序</b></summary> 
+
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Hello</span></span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"Hello World!"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+</details>
+</li>
+<li><p>格式：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&lt;details&gt;</span><br><span class="line">  &lt;summary&gt;&lt;b&gt;示例：Hello World 程序&lt;&#x2F;b&gt;&lt;&#x2F;summary&gt; </span><br><span class="line"></span><br><span class="line">  (自行替换为代码块的三点) java </span><br><span class="line">  public class Hello&#123;</span><br><span class="line">      public static void main(String[] args)&#123;</span><br><span class="line">          System.out.println(&quot;Hello World!&quot;);</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  (自行替换为代码块的三点)</span><br><span class="line"></span><br><span class="line">&lt;&#x2F;details&gt;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h1 id="Markdown-Math"><a href="#Markdown-Math" class="headerlink" title="Markdown Math"></a>Markdown Math</h1><h2 id="行内与独行"><a href="#行内与独行" class="headerlink" title="行内与独行"></a>行内与独行</h2><ul>
+<li><strong>行内公式</strong>：将公式插入到本行内，符号：<code>$公式内容$</code>，如：$xyz$</li>
+<li><strong>独行公式</strong>：将公式插入到新的一行内并且居中，符号：<code>$$公式内容$$</code>，如：<script type="math/tex; mode=display">xyz</script></li>
+</ul>
+<h2 id="上下标"><a href="#上下标" class="headerlink" title="上下标"></a>上下标</h2><ul>
+<li><strong>上标符号</strong>，写法举例：<code>$x^4$</code>，显示：$x^4$</li>
+<li><strong>下标符号</strong>，写法举例：<code>$x_1$</code>，显示：$x_1$</li>
+<li><strong>组合符号</strong>，写法举例：<code>${abc}_{12}^{123}$</code>，显示：${abc}_{12}^{123}$</li>
+</ul>
+<h2 id="常用的格式控制"><a href="#常用的格式控制" class="headerlink" title="常用的格式控制"></a>常用的格式控制</h2><ul>
+<li><strong>上划线符号</strong>，写法举例：<code>$\overline{x+y}$</code>，显示：$\overline{x+y}$</li>
+<li><strong>下划线符号</strong>，写法举例：<code>$\underline{x+y}$</code>，显示：$\underline{x+y}$</li>
+<li><strong>上大括号</strong>，写法举例：<code>$\overbrace{a+b+c+d}^{2.0}$</code>，显示：$\overbrace{a+b+c+d}^{2.0}$</li>
+<li><strong>下大括号</strong>，写法举例：<code>$a+\underbrace{b+c}_{1.0}+d$</code>，显示：$a+\underbrace{b+c}_{1.0}+d$</li>
+<li><strong>上位符号</strong>：<ul>
+<li>符号：<code>\stacrel{上位符号}{基位符号}</code>，写法举例：<code>$\vec{x}\stackrel{\mathrm{def}}{=}{x_1,\dots,x_n}$</code>，显示：<script type="math/tex">\vec{x}\stackrel{\mathrm{def}}{=}{x_1,\dots,x_n}</script></li>
+<li>符号：{上位公式 \choose 下位公式}，写法举例：<code>${n+1 \choose k}={n \choose k}+{n \choose k-1}$</code>，显示：<script type="math/tex">{n+1 \choose k}={n \choose k}+{n \choose k-1}</script></li>
+<li>符号：{上位公式 \atop 下位公式}，写法举例：<code>$\sum_{k_0,k_1,\ldots&gt;0 \atop k_0+k_1+\cdots=n}A_{k_0}A_{k_1}\cdots$</code>，显示：<script type="math/tex">\sum_{k_0,k_1,\ldots>0 \atop k_0+k_1+\cdots=n}A_{k_0}A_{k_1}\cdots</script></li>
+</ul>
+</li>
+<li><strong>给公式编号</strong>：写法：<code>$$e^{i\theta}=cos\theta+\sin\theta i\tag{1}$$</code>，效果：<script type="math/tex; mode=display">e^{i\theta}=cos\theta+\sin\theta i\tag{1}</script></li>
+</ul>
+<h2 id="占位符"><a href="#占位符" class="headerlink" title="占位符"></a>占位符</h2><p>主要用来微调距离，使得公式更加漂亮：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>写法</th>
+<th>效果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>紧贴</td>
+<td><code>$a\!b$</code></td>
+<td>$a!b$</td>
+</tr>
+<tr>
+<td>没有空格</td>
+<td><code>$ab$</code></td>
+<td>$ab$</td>
+</tr>
+<tr>
+<td>小空格</td>
+<td><code>$a\,b$</code></td>
+<td>$a\,b$</td>
+</tr>
+<tr>
+<td>中等空格</td>
+<td><code>$a\;b$</code></td>
+<td>$a\;b$</td>
+</tr>
+<tr>
+<td>大空格</td>
+<td><code>$a\ b$</code></td>
+<td>$a\ b$</td>
+</tr>
+<tr>
+<td>quad 空格</td>
+<td><code>$a\quad b$</code></td>
+<td>$a\quad b$</td>
+</tr>
+<tr>
+<td>两个 quad 空格</td>
+<td><code>$a\qquad b$</code></td>
+<td>$a\qquad b$</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="定界符与组合"><a href="#定界符与组合" class="headerlink" title="定界符与组合"></a>定界符与组合</h2><ul>
+<li><strong>小括号</strong>，写法：<code>（）\big(\big) \Big(\Big) \bigg(\bigg) \Bigg(\Bigg)</code>，效果：$（）\big(\big) \Big(\Big) \bigg(\bigg) \Bigg(\Bigg)$</li>
+<li><strong>中括号</strong>，写法举例：<code>$[x+y]$</code>，如：$[x+y]$</li>
+<li><strong>大括号</strong>，写法举例：<code>$\{x+y\}$</code>，如：$\{x+y\}$</li>
+<li><strong>自适应括号</strong>，写法举例：<code>\left(x\right)</code> <code>\left(x{yz}\right)</code>，如：$\left(x\right)$，$\left(x{yz}\right)$</li>
+</ul>
+<h2 id="矩阵和多维数组"><a href="#矩阵和多维数组" class="headerlink" title="矩阵和多维数组"></a>矩阵和多维数组</h2><h3 id="常用用法"><a href="#常用用法" class="headerlink" title="常用用法"></a>常用用法</h3><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>写法</th>
+<th>效果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>$\begin{matrix}1 &amp; 2\\\\3 &amp;4\end{matrix}$</code></td>
+<td>$\begin{matrix}1 &amp; 2\\\\3 &amp;4\end{matrix}$</td>
+</tr>
+<tr>
+<td><code>$\begin{pmatrix}1 &amp; 2\\\\3 &amp;4\end{pmatrix}$</code></td>
+<td>$\begin{pmatrix}1 &amp; 2\\\\3 &amp;4\end{pmatrix}$</td>
+</tr>
+<tr>
+<td><code>$\begin{bmatrix}1 &amp; 2\\\\3 &amp;4\end{bmatrix}$</code></td>
+<td>$\begin{bmatrix}1 &amp; 2\\\\3 &amp;4\end{bmatrix}$</td>
+</tr>
+<tr>
+<td><code>$\begin{Bmatrix}1 &amp; 2\\\\3 &amp;4\end{Bmatrix}$</code></td>
+<td>$\begin{Bmatrix}1 &amp; 2\\\\3 &amp;4\end{Bmatrix}$</td>
+</tr>
+<tr>
+<td><code>$\begin{vmatrix}1 &amp; 2\\\\3 &amp;4\end{vmatrix}$</code></td>
+<td>$\begin{vmatrix}1 &amp; 2\\\\3 &amp;4\end{vmatrix}$</td>
+</tr>
+<tr>
+<td><code>$\begin{Vmatrix}1 &amp; 2\\\\3 &amp;4\end{Vmatrix}$</code></td>
+<td>$\begin{Vmatrix}1 &amp; 2\\\\3 &amp;4\end{Vmatrix}$</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>还有一种写法：</p>
+<ul>
+<li><code>$\left|\begin{matrix}1 &amp; 2\\\\3 &amp;4\end{matrix}\right|$</code>，显示：$\left|\begin{matrix}1 &amp; 2\\\\3 &amp;4\end{matrix}\right|$</li>
+</ul>
+<p>类似于 left/right，这里是 begin/end；<br><strong>具体的矩阵语法，<code>&amp;</code> 区分行间元素，<code>\\\\</code> 代表换行；</strong>    </p>
+<h3 id="高级用法"><a href="#高级用法" class="headerlink" title="高级用法"></a>高级用法</h3><h4 id="数组排版"><a href="#数组排版" class="headerlink" title="数组排版"></a>数组排版</h4><p>效果：</p>
+<script type="math/tex; mode=display">
+\mathbf{X} =
+\left( \begin{array}{ccc}
+x\_{11} & x\_{12} & \ldots \\\\
+x\_{21} & x\_{22} & \ldots \\\\
+\vdots & \vdots & \ddots
+\end{array} \right)</script><script type="math/tex; mode=display">
+\left(\begin{array}{|c|c|}
+1 & 2 \\\\
+3 & 4
+\end{array}\right)</script><script type="math/tex; mode=display">
+\begin{array}{|c|c|}
+\hline
+{1111111111} & 2 \\\\
+\hline
+3 & 4 \\\\
+\hline
+\end{array}</script><p>写法:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">$$</span><br><span class="line">\mathbf&#123;X&#125; &#x3D;</span><br><span class="line">\left( \begin&#123;array&#125;&#123;ccc&#125;</span><br><span class="line">x\_&#123;11&#125; &amp; x\_&#123;12&#125; &amp; \ldots \\\\</span><br><span class="line">x\_&#123;21&#125; &amp; x\_&#123;22&#125; &amp; \ldots \\\\</span><br><span class="line">\vdots &amp; \vdots &amp; \ddots</span><br><span class="line">\end&#123;array&#125; \right)</span><br><span class="line">$$</span><br><span class="line"></span><br><span class="line">$$</span><br><span class="line">\left(\begin&#123;array&#125;&#123;|c|c|&#125;</span><br><span class="line">1 &amp; 2 \\\\</span><br><span class="line">3 &amp; 4</span><br><span class="line">\end&#123;array&#125;\right)</span><br><span class="line">$$</span><br><span class="line"></span><br><span class="line">$$</span><br><span class="line">\begin&#123;array&#125;&#123;|c|c|&#125;</span><br><span class="line">\hline</span><br><span class="line">&#123;1111111111&#125; &amp; 2 \\\\</span><br><span class="line">\hline</span><br><span class="line">3 &amp; 4 \\\\</span><br><span class="line">\hline</span><br><span class="line">\end&#123;array&#125;</span><br><span class="line">$$</span><br></pre></td></tr></table></figure></p>
+<h4 id="分段函数"><a href="#分段函数" class="headerlink" title="分段函数"></a>分段函数</h4><p>效果：</p>
+<script type="math/tex; mode=display">
+y=\begin{cases}
+-x,\quad x\leq 0 \\\\
+x,\quad x>0
+\end{cases}</script><p>写法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$$</span><br><span class="line">y&#x3D;\begin&#123;cases&#125;</span><br><span class="line">-x,\quad x\leq 0 \\\\</span><br><span class="line">x,\quad x&gt;0</span><br><span class="line">\end&#123;cases&#125;</span><br><span class="line">$$</span><br></pre></td></tr></table></figure></p>
+<h2 id="运算"><a href="#运算" class="headerlink" title="运算"></a>运算</h2><h3 id="简单运算"><a href="#简单运算" class="headerlink" title="简单运算"></a>简单运算</h3><ul>
+<li><strong>加法运算</strong>，符号：<code>+</code>，如：$x+y=z$</li>
+<li><strong>减法运算</strong>，符号：<code>-</code>，如：$x-y=z$</li>
+<li><strong>加减运算</strong>，符号：<code>\pm</code>，如：$x \pm y=z$</li>
+<li><strong>减甲运算</strong>，符号：<code>\mp</code>，如：$x \mp y=z$</li>
+<li><strong>乘法运算</strong>，符号：<code>\times</code>，如：$x \times y=z$</li>
+<li><strong>点乘运算</strong>，符号：<code>\cdot</code>，如：$x \cdot y=z$</li>
+<li><strong>星乘运算</strong>，符号：<code>\ast</code>，如：$x \ast y=z$</li>
+<li><strong>除法运算</strong>，符号：<code>\div</code>，如：$x \div y=z$</li>
+<li><strong>斜法运算</strong>，符号：<code>/</code>，如：$x/y=z$</li>
+<li><strong>分式表示</strong>：<ul>
+<li>符号：<code>\frac{分子}{分母}</code>，如：$\frac{x+y}{y+z}$</li>
+<li>符号：<code>{分子} \voer {分母}</code>，如：${x+y} \over {y+z}$</li>
+</ul>
+</li>
+<li><strong>绝对值表示</strong>，符号：<code>||</code>，如：$|x+y|$</li>
+</ul>
+<h3 id="高级运算"><a href="#高级运算" class="headerlink" title="高级运算"></a>高级运算</h3><ul>
+<li><strong>平均数运算</strong>：<ul>
+<li>符号：<code>\overline{算式}</code>，如：<code>$\overline{xyz}$</code>，显示：$\overline{xyz}$</li>
+</ul>
+</li>
+<li><strong>开方运算</strong>：<ul>
+<li>开二次方运算，符号：<code>\sqrt</code>，如：<code>$\sqrt x$</code>，显示：$\sqrt x$</li>
+<li>高次方：<code>\sqrt[开方数]{被开方数}</code>，如：<code>$\sqrt[3]{x+y}$</code>，显示：$\sqrt[3]{x+y}$</li>
+</ul>
+</li>
+<li><strong>取整运算</strong>：<ul>
+<li>向上取整：<code>$\lceil n/2 \rceil$</code>，显示：$\lceil n/2 \rceil$</li>
+<li>向下取整：<code>$\lfloor n/2 \rfloor$</code>，显示：$\lfloor n/2 \rfloor$</li>
+</ul>
+</li>
+<li><strong>对数运算</strong>：<ul>
+<li>符号：<code>\log</code>，如：<code>$\log_2(x)$</code>，显示：$\log_2(x)$</li>
+<li>符号：<code>\lg</code>，如：<code>\$\lg(x)$</code>，显示：$\lg(x)$</li>
+<li>符号：<code>\ln</code>，如：<code>$\ln(x)$</code>，显示：$\ln(x)$</li>
+</ul>
+</li>
+<li><strong>极限运算</strong>：<ul>
+<li>符号：<code>\lim</code>，如：<code>$\lim^{x \to \infty}_{y \to 0}{\frac{x}{y}}$</code>，显示：$\lim^{x \to \infty}_{y \to 0}{\frac{x}{y}}$</li>
+<li>加上风格控制：如：<code>$\displaystyle \lim^{x \to \infty}_{y \to 0}{\frac{x}{y}}$</code>，显示：<script type="math/tex">\displaystyle \lim^{x \to \infty}_{y \to 0}{\frac{x}{y}}</script></li>
+</ul>
+</li>
+<li><strong>叠加运算</strong>：<ul>
+<li>符号：<code>\sum</code>，如：<code>$\sum^{x \to \infty}_{y \to 0}{\frac{x}{y}}$</code>，显示：$\sum^{x \to \infty}_{y \to 0}{\frac{x}{y}}$</li>
+<li>加上风格控制，符号：<code>\displaystyle \sum</code>，如：<code>$\displaystyle \sum^{x \to \infty}_{y \to 0}{\frac{x}{y}}$</code>，显示：<script type="math/tex">\displaystyle \sum^{x \to \infty}_{y \to 0}{\frac{x}{y}}</script></li>
+</ul>
+</li>
+<li><strong>叠乘运算</strong>：<ul>
+<li>符号：<code>\prod</code>，如：<code>$\prod_{i=0}^n \frac{1}{i^2}$</code>，显示：$\prod_{i=0}^n \frac{1}{i^2}$</li>
+<li>加上风格控制，符号：<code>\displaystyle \prod</code>，如：<code>$\displaystyle \prod_{i=0}^n \frac{1}{i^2}$</code>，显示：<script type="math/tex">\displaystyle \prod_{i=0}^n \frac{1}{i^2}</script></li>
+</ul>
+</li>
+<li><strong>积分运算</strong>：<ul>
+<li>符号：<code>\int</code>，如：$\int^{\infty}_{0}{xdx}$，显示：$\int^{\infty}_{0}{xdx}$</li>
+<li>加上风格控制，符号：<code>\displaystyle \int</code>，如：<code>$\displaystyle \int^{\infty}_{0}{xdx}$</code>，显示：<script type="math/tex">\displaystyle \int^{\infty}_{0}{xdx}</script></li>
+<li>多重积分等：符号：<code>\int</code>，<code>\iint</code>，<code>\iiint</code>，<code>\oint</code>，显示：$\int$，$\iint$，$\iiint$，$\oint$</li>
+</ul>
+</li>
+<li><strong>微分运算</strong>：<ul>
+<li>符号：<code>\partial</code>，如：<code>$\frac{\partial x}{\partial y}$</code>，显示：$\frac{\partial x}{\partial y}$</li>
+</ul>
+</li>
+</ul>
+<h3 id="逻辑运算"><a href="#逻辑运算" class="headerlink" title="逻辑运算"></a>逻辑运算</h3><ul>
+<li><strong>等于运算</strong>，符号：<code>=</code>，如：$x+y=z$</li>
+<li><strong>大于运算</strong>，符号：<code>&gt;</code>，如：$x+y&gt;z$</li>
+<li><strong>小于运算</strong>，符号：<code>&lt;</code>，如：$x+y&lt;z$</li>
+<li><strong>大于等于运算</strong>，符号：<code>\geq</code>，如：$x+y \geq z$</li>
+<li><strong>小于等于运算</strong>，符号：<code>\leq</code>，如：$x+y \leq z$</li>
+<li><strong>不等于运算</strong>，符号：<code>\neq</code>，如：$x+y \neq z$</li>
+<li><strong>不大于等于运算</strong>，符号：<code>\ngeq</code>，如：$x+y \ngeq z$</li>
+<li><strong>不大于等于运算</strong>，符号：<code>\not\geq</code>，如：$x+y \not\geq z$</li>
+<li><strong>不小于等于运算</strong>，符号：<code>\nleq</code>，如：$x+y \nleq z$</li>
+<li><strong>不小于等于运算</strong>，符号：<code>\not\leq</code>，如：$x+y \not\leq z$</li>
+<li><strong>约等于运算</strong>，符号：<code>\approx</code>，如：$x+y \approx z$</li>
+<li><strong>恒定等于运算</strong>，符号：<code>\equiv</code>，如：$x+y \equiv z$</li>
+</ul>
+<h3 id="逻辑条理"><a href="#逻辑条理" class="headerlink" title="逻辑条理"></a>逻辑条理</h3><ul>
+<li><strong>因为</strong>，写法：<code>\because</code>，如：$\because$</li>
+<li><strong>所以</strong>，写法：<code>\therefore</code>，如：$\therefore$</li>
+<li><strong>任意</strong>，写法：<code>\forall</code>，如：$\forall$</li>
+<li><strong>存在</strong>，写法：<code>\exists</code>，如：$\exists$</li>
+</ul>
+<h3 id="集合运算"><a href="#集合运算" class="headerlink" title="集合运算"></a>集合运算</h3><ul>
+<li><strong>属于运算</strong>，符号：<code>\in</code>，如：$x \in y$</li>
+<li><strong>不属于运算</strong>，符号：<code>\notin</code>，如：$x \notin y$</li>
+<li><strong>不属于运算</strong>，符号：<code>\not\in</code>，如：$x \not\in y$</li>
+<li><strong>子集运算</strong>，符号：<code>\subset</code>，如：$x \subset y$</li>
+<li><strong>子集运算</strong>，符号：<code>\supset</code>，如：$x \supset y$</li>
+<li><strong>真子集运算</strong>，符号：<code>\subseteq</code>，如：$x \subseteq y$</li>
+<li><strong>非真子集运算</strong>，符号：<code>\subsetneq</code>，如：$x \subsetneq y$</li>
+<li><strong>真子集运算</strong>，符号：<code>\supseteq</code>，如：$x \supseteq y$</li>
+<li><strong>非真子集运算</strong>，符号：<code>\supsetneq</code>，如：$x \supsetneq y$</li>
+<li><strong>非子集运算</strong>，符号：<code>\not\subset</code>，如：$x \not\subset y$</li>
+<li><strong>非子集运算</strong>，符号：<code>\not\supset</code>，如：$x \not\supset y$</li>
+<li><strong>并集运算</strong>，符号：<code>\cup</code>，如：$x \cup y$</li>
+<li><strong>交集运算</strong>，符号：<code>\cap</code>，如：$x \cap y$</li>
+<li><strong>差集运算</strong>，符号：<code>\setminus</code>，如：$x \setminus y$</li>
+<li><strong>同或运算</strong>，符号：<code>\bigodot</code>，如：$x \bigodot y$</li>
+<li><strong>同与运算</strong>，符号：<code>\bigotimes</code>，如：$x \bigotimes y$</li>
+<li><strong>实数集合</strong>，符号：<code>\mathbb{R}</code>，如：$\mathbb{R}$</li>
+<li><strong>自然数集合</strong>，符号：<code>\mathbb{Z}</code>，如：$\mathbb{Z}$</li>
+<li><strong>空集</strong>，符号：<code>\emptyset</code>，如：$\emptyset$</li>
+</ul>
+<h3 id="三角运算"><a href="#三角运算" class="headerlink" title="三角运算"></a>三角运算</h3><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>符号</th>
+<th>写法</th>
+<th>符号</th>
+<th>写法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$\bot$</td>
+<td><code>\bot</code></td>
+<td>$\angle$</td>
+<td><code>\angle</code></td>
+</tr>
+<tr>
+<td>$30^\circ$</td>
+<td><code>30^\circ</code></td>
+<td>$\sin$</td>
+<td><code>\sin</code></td>
+</tr>
+<tr>
+<td>$\cos$</td>
+<td><code>\cos</code></td>
+<td>$\tan$</td>
+<td><code>\tan</code></td>
+</tr>
+<tr>
+<td>$\cot$</td>
+<td><code>\cot</code></td>
+<td>$\sec$</td>
+<td><code>\sec</code></td>
+</tr>
+<tr>
+<td>$\csc$</td>
+<td><code>\csc</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="数学符号"><a href="#数学符号" class="headerlink" title="数学符号"></a>数学符号</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>符号</th>
+<th>写法</th>
+<th>举例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>无穷</td>
+<td>符号：\infty，</td>
+<td>如：$\infty$</td>
+</tr>
+<tr>
+<td>虚数</td>
+<td>符号：\imath，</td>
+<td>如：$\imath$</td>
+</tr>
+<tr>
+<td>虚数</td>
+<td>符号：\jmath，</td>
+<td>如：$\jmath$</td>
+</tr>
+<tr>
+<td>矢量符号</td>
+<td>符号：\vec{a}，</td>
+<td>如：$\vec{a}$</td>
+</tr>
+<tr>
+<td>一阶导数符号</td>
+<td>符号：\dot{a}，</td>
+<td>如：$\dot{a}$</td>
+</tr>
+<tr>
+<td>二阶导数符号</td>
+<td>符号：\ddot{a}，</td>
+<td>如：$\ddot{a}$</td>
+</tr>
+<tr>
+<td>上箭头</td>
+<td>符号：\uparrow，</td>
+<td>如：$\uparrow$</td>
+</tr>
+<tr>
+<td>上箭头</td>
+<td>符号：\Uparrow，</td>
+<td>如：$\Uparrow$</td>
+</tr>
+<tr>
+<td>下箭头</td>
+<td>符号：\downarrow，</td>
+<td>如：$\downarrow$</td>
+</tr>
+<tr>
+<td>下箭头</td>
+<td>符号：\Downarrow，</td>
+<td>如：$\Downarrow$</td>
+</tr>
+<tr>
+<td>左箭头</td>
+<td>符号：\leftarrow，</td>
+<td>如：$\leftarrow$</td>
+</tr>
+<tr>
+<td>左箭头</td>
+<td>符号：\Leftarrow，</td>
+<td>如：$\Leftarrow$</td>
+</tr>
+<tr>
+<td>右箭头</td>
+<td>符号：\rightarrow，</td>
+<td>如：$\rightarrow$</td>
+</tr>
+<tr>
+<td>右箭头</td>
+<td>符号：\Rightarrow，</td>
+<td>如：$\Rightarrow$</td>
+</tr>
+<tr>
+<td>底端对齐的省略号</td>
+<td>符号：\ldots，</td>
+<td>如：$1,2,\ldots,n$</td>
+</tr>
+<tr>
+<td>中线对齐的省略号</td>
+<td>符号：\cdots，</td>
+<td>如：$x_1^2 + x_2^2 + \cdots + x_n^2$</td>
+</tr>
+<tr>
+<td>竖直对齐的省略号</td>
+<td>符号：\vdots，</td>
+<td>如：$\vdots$</td>
+</tr>
+<tr>
+<td>斜对齐的省略号</td>
+<td>符号：\ddots，</td>
+<td>如：$\ddots$</td>
+</tr>
+<tr>
+<td>数学符号</td>
+<td>符号：\hat{a}，</td>
+<td>如：$\hat{a}$</td>
+</tr>
+<tr>
+<td>数学符号</td>
+<td>符号：\check{a}，</td>
+<td>如：$\check{a}$</td>
+</tr>
+<tr>
+<td>数学符号</td>
+<td>符号：\breve{a}，</td>
+<td>如：$\breve{a}$</td>
+</tr>
+<tr>
+<td>数学符号</td>
+<td>符号：\tilde{a}，</td>
+<td>如：$\tilde{a}$</td>
+</tr>
+<tr>
+<td>数学符号</td>
+<td>符号：\bar{a}，</td>
+<td>如：$\bar{a}$</td>
+</tr>
+<tr>
+<td>数学符号</td>
+<td>符号：\acute{a}，</td>
+<td>如：$\acute{a}$</td>
+</tr>
+<tr>
+<td>数学符号</td>
+<td>符号：\grave{a}，</td>
+<td>如：$\grave{a}$</td>
+</tr>
+<tr>
+<td>数学符号</td>
+<td>符号：\mathring{a}，</td>
+<td>如：$\mathring{a}$</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>注意：有些符号一定要加$$才可以显示效果</p>
+<h2 id="希腊字母表"><a href="#希腊字母表" class="headerlink" title="希腊字母表"></a>希腊字母表</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>字母</th>
+<th>实现</th>
+<th>字母</th>
+<th>实现</th>
+<th>字母</th>
+<th>实现</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$\epsilon$</td>
+<td><code>\epsilon</code></td>
+<td>$\alpha$</td>
+<td><code>\alpha</code></td>
+<td>$\beta$</td>
+<td><code>\beta</code></td>
+</tr>
+<tr>
+<td>$\zeta$</td>
+<td><code>\zeta</code></td>
+<td>$\Gamma$</td>
+<td><code>\Gamma</code></td>
+<td>$\gamma$</td>
+<td><code>\gamma</code></td>
+</tr>
+<tr>
+<td>$\eta$</td>
+<td><code>\eta</code></td>
+<td>$\Delta$</td>
+<td><code>\Delta</code></td>
+<td>$\delta$</td>
+<td><code>\delta</code></td>
+</tr>
+<tr>
+<td>$\iota$</td>
+<td><code>\iota</code></td>
+<td>$\Theta$</td>
+<td><code>\Theta</code></td>
+<td>$\theta$</td>
+<td><code>\theta</code></td>
+</tr>
+<tr>
+<td>$\kappa$</td>
+<td><code>\kappa</code></td>
+<td>$\Lambda$</td>
+<td><code>\Lambda</code></td>
+<td>$\lambda$</td>
+<td><code>\lambda</code></td>
+</tr>
+<tr>
+<td>$\omicron$</td>
+<td><code>\omicron</code></td>
+<td>$\mu$</td>
+<td><code>\mu</code></td>
+<td>$\nu$</td>
+<td><code>\nu</code></td>
+</tr>
+<tr>
+<td>$\rho$</td>
+<td><code>\rho</code></td>
+<td>$\Xi$</td>
+<td><code>\Xi</code></td>
+<td>$\xi$</td>
+<td><code>\xi</code></td>
+</tr>
+<tr>
+<td>$\tau$</td>
+<td><code>\tau</code></td>
+<td>$\Pi$</td>
+<td><code>\Pi</code></td>
+<td>$\pi$</td>
+<td><code>\pi</code></td>
+</tr>
+<tr>
+<td>$\chi$</td>
+<td><code>\chi</code></td>
+<td>$\Sigma$</td>
+<td><code>\Sigma</code></td>
+<td>$\sigma$</td>
+<td><code>\sigma</code></td>
+</tr>
+<tr>
+<td>$\omega$</td>
+<td><code>\omega</code></td>
+<td>$\Upsilon$</td>
+<td><code>\Upsilon</code></td>
+<td>$\upsilon$</td>
+<td><code>\upsilon</code></td>
+</tr>
+<tr>
+<td>$\Omega$</td>
+<td><code>\Omega</code></td>
+<td>$\Psi$</td>
+<td><code>\Psi</code></td>
+<td>$\psi$</td>
+<td><code>\psi</code></td>
+</tr>
+<tr>
+<td>$\nabla$</td>
+<td><code>\nabla</code></td>
+<td>$\Phi$</td>
+<td><code>\Phi</code></td>
+<td>$\Phi$</td>
+<td><code>\Phi</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>更多详情，参考：『<a href="https://github.com/mk43/BlogResource/blob/master/LaTex/LATEX%E6%95%B0%E5%AD%A6%E7%AC%A6%E5%8F%B7%E8%A1%A8.pdf" target="_blank" rel="noopener">PDF</a>』</p>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><ul>
+<li><a href="https://www.jianshu.com/p/e74eb43960a1" target="_blank" rel="noopener">Markdown数学公式语法</a></li>
+<li><a href="https://blog.csdn.net/qq_32126633/article/details/85268708?utm_medium=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-1&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-1" target="_blank" rel="noopener">markdown使用数学符号/特殊符号</a></li>
+<li><a href="https://juejin.im/post/5a6721bd518825733201c4a2#heading-12" target="_blank" rel="noopener">MarkDown 插入数学公式实验大集合</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/04/04/Blog-Related/Markdown-Writing/" title="Markdown 写作指南">http://www.thebetterkong.cn/2020/04/04/Blog-Related/Markdown-Writing/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Markdown/" rel="tag"><i class="fa fa-tag"></i> Markdown</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/03/31/FPGA-technology/FPGA-RoutingDesignMethodology/" rel="prev" title="FPGA-Routing Design Methodology">
+      <i class="fa fa-chevron-left"></i> FPGA-Routing Design Methodology
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/04/04/Blog-Related/Blog-Establish/" rel="next" title="Blog 搭建">
+      Blog 搭建 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#文案书写规范"><span class="nav-number">1.</span> <span class="nav-text">文案书写规范</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#空格"><span class="nav-number">1.1.</span> <span class="nav-text">空格</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#全角和半角"><span class="nav-number">1.2.</span> <span class="nav-text">全角和半角</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#名词"><span class="nav-number">1.3.</span> <span class="nav-text">名词</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Else（非官方）"><span class="nav-number">1.4.</span> <span class="nav-text">Else（非官方）</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Markdown-语法格式"><span class="nav-number">2.</span> <span class="nav-text">Markdown 语法格式</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#GitHub-支持的表情符号"><span class="nav-number">2.1.</span> <span class="nav-text">GitHub 支持的表情符号</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实现按键效果"><span class="nav-number">2.2.</span> <span class="nav-text">实现按键效果</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#区域高亮显示"><span class="nav-number">2.3.</span> <span class="nav-text">区域高亮显示</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#表格单元格内换行"><span class="nav-number">2.4.</span> <span class="nav-text">表格单元格内换行</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#制作代办事项"><span class="nav-number">2.5.</span> <span class="nav-text">制作代办事项</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#文字加下划线"><span class="nav-number">2.6.</span> <span class="nav-text">文字加下划线</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#定义锚点实现跳转"><span class="nav-number">2.7.</span> <span class="nav-text">定义锚点实现跳转</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#代码折叠"><span class="nav-number">2.8.</span> <span class="nav-text">代码折叠</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Markdown-Math"><span class="nav-number">3.</span> <span class="nav-text">Markdown Math</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#行内与独行"><span class="nav-number">3.1.</span> <span class="nav-text">行内与独行</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#上下标"><span class="nav-number">3.2.</span> <span class="nav-text">上下标</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#常用的格式控制"><span class="nav-number">3.3.</span> <span class="nav-text">常用的格式控制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#占位符"><span class="nav-number">3.4.</span> <span class="nav-text">占位符</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#定界符与组合"><span class="nav-number">3.5.</span> <span class="nav-text">定界符与组合</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#矩阵和多维数组"><span class="nav-number">3.6.</span> <span class="nav-text">矩阵和多维数组</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#常用用法"><span class="nav-number">3.6.1.</span> <span class="nav-text">常用用法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#高级用法"><span class="nav-number">3.6.2.</span> <span class="nav-text">高级用法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#数组排版"><span class="nav-number">3.6.2.1.</span> <span class="nav-text">数组排版</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#分段函数"><span class="nav-number">3.6.2.2.</span> <span class="nav-text">分段函数</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#运算"><span class="nav-number">3.7.</span> <span class="nav-text">运算</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#简单运算"><span class="nav-number">3.7.1.</span> <span class="nav-text">简单运算</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#高级运算"><span class="nav-number">3.7.2.</span> <span class="nav-text">高级运算</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#逻辑运算"><span class="nav-number">3.7.3.</span> <span class="nav-text">逻辑运算</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#逻辑条理"><span class="nav-number">3.7.4.</span> <span class="nav-text">逻辑条理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#集合运算"><span class="nav-number">3.7.5.</span> <span class="nav-text">集合运算</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#三角运算"><span class="nav-number">3.7.6.</span> <span class="nav-text">三角运算</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数学符号"><span class="nav-number">3.8.</span> <span class="nav-text">数学符号</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#希腊字母表"><span class="nav-number">3.9.</span> <span class="nav-text">希腊字母表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考链接"><span class="nav-number">3.10.</span> <span class="nav-text">参考链接</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

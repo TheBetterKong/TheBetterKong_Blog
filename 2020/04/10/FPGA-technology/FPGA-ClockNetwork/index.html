@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="介绍 FPGA 里时钟信号的产生与传输；">
+<meta property="og:type" content="article">
+<meta property="og:title" content="FPGA-Clock Network">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/04/10/FPGA-technology/FPGA-ClockNetwork/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="介绍 FPGA 里时钟信号的产生与传输；">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/ClockDistributionNetwork.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/PLL.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/BasicFrequency.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/EnhancedFrequencyProgrammability.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/PLLBasedClockGeneration.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/DLLBasedClockGeneration.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/ClockUncertainty.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/ClockSkew.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/ClockJitter.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/TreebasedStructure.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/Mesh-basedStructure.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/AllTopologies.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/ClockNetworkRange.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/FirstStage.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/SecondStage.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/ThirdStage.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/DynamicPower.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/SpineReduction.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/MoreExample.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/ClockGatedCircuit.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/ClockGatingArchitecture.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/FinegrainedArchitecture.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/EnableImplementationChoices.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/TopologyModeling.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/ClockNetworkComponents.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/vsWlb.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/vsWrib.png">
+<meta property="article:published_time" content="2020-04-10T08:01:24.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:30:50.086Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="国科大研究生课程笔记">
+<meta property="article:tag" content="FPGA">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/ClockDistributionNetwork.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/04/10/FPGA-technology/FPGA-ClockNetwork/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>FPGA-Clock Network | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/04/10/FPGA-technology/FPGA-ClockNetwork/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          FPGA-Clock Network
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-04-10 16:01:24" itemprop="dateCreated datePublished" datetime="2020-04-10T16:01:24+08:00">2020-04-10</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:30:50" itemprop="dateModified" datetime="2020-08-14T17:30:50+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%8F%AF%E7%BC%96%E7%A8%8B%E9%80%BB%E8%BE%91%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1%E4%B8%8E-FPGA-%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">可编程逻辑系统设计与 FPGA 技术</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/04/10/FPGA-technology/FPGA-ClockNetwork/" class="post-meta-item leancloud_visitors" data-flag-title="FPGA-Clock Network" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/04/10/FPGA-technology/FPGA-ClockNetwork/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/04/10/FPGA-technology/FPGA-ClockNetwork/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>介绍 FPGA 里时钟信号的产生与传输；</p>
+<a id="more"></a> 
+<h1 id="分布式时钟网络"><a href="#分布式时钟网络" class="headerlink" title="分布式时钟网络"></a>分布式时钟网络</h1><h2 id="时钟分布式网络构成"><a href="#时钟分布式网络构成" class="headerlink" title="时钟分布式网络构成"></a>时钟分布式网络构成</h2><p>时钟分配网络由金属走线和缓冲器组成，将时钟信号传播到所有时钟元件：</p>
+<ul>
+<li>使用中继器缓冲时钟信号并均衡延迟；</li>
+</ul>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/ClockDistributionNetwork.png" alt="Clock Distribution Network"></p>
+<h2 id="PLL（Phase-Locked-Loop，锁相环）"><a href="#PLL（Phase-Locked-Loop，锁相环）" class="headerlink" title="PLL（Phase Locked Loop，锁相环）"></a>PLL（Phase Locked Loop，锁相环）</h2><p><mark>PLL（锁相环）</mark>作为时钟发生器，是所有时钟信号的来源；   </p>
+<h3 id="原理图"><a href="#原理图" class="headerlink" title="原理图"></a>原理图</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/PLL.png" alt="PLL"></p>
+<h3 id="PLL-基本频率的可编程性"><a href="#PLL-基本频率的可编程性" class="headerlink" title="PLL 基本频率的可编程性"></a>PLL 基本频率的可编程性</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/BasicFrequency.png" alt="basic frequency">   </p>
+<p>PLL 增强了频率可编程性:<br><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/EnhancedFrequencyProgrammability.png" alt="enhanced frequency programmability"></p>
+<h2 id="两种时钟生成方式"><a href="#两种时钟生成方式" class="headerlink" title="两种时钟生成方式"></a>两种时钟生成方式</h2><h3 id="基于-PLL-的时钟生成"><a href="#基于-PLL-的时钟生成" class="headerlink" title="基于 PLL 的时钟生成"></a>基于 PLL 的时钟生成</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/PLLBasedClockGeneration.png" alt="PLL based clock generation"></p>
+<ul>
+<li>宽频率合成范围</li>
+<li>精细分辨率的相位选择</li>
+<li>有效降低抖动</li>
+</ul>
+<h3 id="基于-DLL-的时钟生成"><a href="#基于-DLL-的时钟生成" class="headerlink" title="基于 DLL 的时钟生成"></a>基于 DLL 的时钟生成</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/DLLBasedClockGeneration.png" alt="DLL based clock generation"><br>DCM (Digital Clock Manager)，即：数字时钟管理器，提供：</p>
+<ul>
+<li>DLL（Delay Lock Loop）：延迟锁定循环</li>
+<li>DFS（Digital Frequency Synthesis）：数字频率合成</li>
+<li>DPS（Digital Phase Shifter）：数字移相器</li>
+</ul>
+<h2 id="Clock-uncertainty"><a href="#Clock-uncertainty" class="headerlink" title="Clock uncertainty"></a>Clock uncertainty</h2><p><mark>Clock uncertainty</mark>：$\Delta = skew \pm jitter$   </p>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/ClockUncertainty.png" alt="Clock uncertainty"></p>
+<h3 id="Clock-skew"><a href="#Clock-skew" class="headerlink" title="Clock skew"></a>Clock skew</h3><p>定义：每个触发器的时钟到达时间的确定性差异    </p>
+<p>产生原因：主要是由于时钟树/网格的不平衡引起的；（Buffering 时钟信号可以减少但不能消除 skew）；    </p>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/ClockSkew.png" alt="Clock skew"></p>
+<h3 id="Clock-jitter"><a href="#Clock-jitter" class="headerlink" title="Clock jitter"></a>Clock jitter</h3><p>定义：每个触发器的时钟到达时间的确定性或随机性差异；     </p>
+<p>产生原因：由管芯上的工艺，电源噪声，温度变化，PLL 抖动，串扰等引起；    </p>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/ClockJitter.png" alt="Clock jitter"></p>
+<h2 id="时钟分布拓扑结构"><a href="#时钟分布拓扑结构" class="headerlink" title="时钟分布拓扑结构"></a>时钟分布拓扑结构</h2><p>主要有两种结构：<code>tree-based structure</code>、<code>grid/mesh-based structure</code>   </p>
+<p>对于同步操作，时钟到达时钟控制的元件，必须满足如下要求：</p>
+<ul>
+<li>极低的时钟 <code>skew（偏斜）</code>：<ul>
+<li>确保最小的内部 hold-time 问题</li>
+</ul>
+</li>
+<li>低时钟 <code>jitter（抖动）</code>：<ul>
+<li>允许最高性能</li>
+</ul>
+</li>
+<li>占空比保持：<ul>
+<li>对双倍数据速率（DDR）应用非常重要</li>
+</ul>
+</li>
+<li>低插入延迟：<ul>
+<li>对同步输入和输出接口很重要</li>
+</ul>
+</li>
+</ul>
+<h3 id="基于树的结构"><a href="#基于树的结构" class="headerlink" title="基于树的结构"></a>基于树的结构</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/TreebasedStructure.png" alt="Tree-based structure"></p>
+<ul>
+<li>广泛应用于 ASICs（专用集成电路，Application Specific Integrated Circuits）；</li>
+<li>要保证时钟信号同时送往每个末梢；</li>
+<li>优点：<ul>
+<li>在接线、电容、功耗上，低开销；</li>
+<li>易于进行时钟门控（不用时，可以随时关闭）；</li>
+</ul>
+</li>
+<li>缺点：<ul>
+<li>FF 分布不均等导致难以平衡路径延迟（难以保证时钟信号同时到达末梢）；</li>
+<li>对 PVT（过程，电压，温度）变化敏感；</li>
+</ul>
+</li>
+</ul>
+<h3 id="基于网格-网格的结构"><a href="#基于网格-网格的结构" class="headerlink" title="基于网格/网格的结构"></a>基于网格/网格的结构</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/Mesh-basedStructure.png" alt="Mesh-based structure"></p>
+<ul>
+<li>结构特点：<ul>
+<li>$n \times n$ 的均匀网格；</li>
+<li>由 $k \times k$ 个 buffers 组成的分布式数组驱动网格;</li>
+<li>Buffers 由全局 H 树驱动;</li>
+<li>Flip-flops 触发器直接连接到最近的网格段;</li>
+</ul>
+</li>
+<li>用于现代微处理器；</li>
+<li>优点：<ul>
+<li>非常适合低 skew（偏斜：时钟到达不同位置的时差）；</li>
+<li>强大的变化能力；</li>
+</ul>
+</li>
+<li>缺点：<ul>
+<li>更大的布线面积，大的负载电容，更多的功耗；</li>
+<li>难以分析：循环和冗余</li>
+</ul>
+</li>
+</ul>
+<h3 id="对比总结"><a href="#对比总结" class="headerlink" title="对比总结"></a>对比总结</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/AllTopologies.png" alt="All Topologies"> </p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Topologies</th>
+<th>应用</th>
+<th>特点</th>
+<th>Advantage</th>
+<th>Disadvantage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>H-tree</td>
+<td>Altera, Stratix</td>
+<td>树状的高度对称的架构</td>
+<td>可提供出色的时钟偏斜控制</td>
+<td>需要更多的路由资源来实现所需的对称性；<br>更大的插入延迟；</td>
+</tr>
+<tr>
+<td>Rip-spine</td>
+<td>Xilinx, Virtex 4~7</td>
+<td>包含类似于鱼骨头的主网络和子网络</td>
+<td>易于实现</td>
+<td>子分支中存在较大的时钟偏斜</td>
+</tr>
+<tr>
+<td>Hybrid</td>
+<td>Altera, Stratix V</td>
+<td>H-树和 Rip-spine 结构的结合；<br>将 H-tree 作为主网络，将 Rip-spine 作为子网络；</td>
+<td>综合</td>
+<td>综合</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><mark>最坏情况下的偏斜约为数百皮秒；</mark>     </p>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/ClockNetworkRange.png" alt="clock network范围"></p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>控制范围</th>
+<th>特点</th>
+<th>优点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Global clock network</td>
+<td>时钟驱动整个芯片</td>
+<td></td>
+</tr>
+<tr>
+<td>Regional clock network</td>
+<td>时钟仅适用于他们进入的特定区域</td>
+<td>较低的时钟插入延迟和偏斜</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="三个网络阶段"><a href="#三个网络阶段" class="headerlink" title="三个网络阶段"></a>三个网络阶段</h2><h3 id="第一阶段"><a href="#第一阶段" class="headerlink" title="第一阶段"></a>第一阶段</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/FirstStage.png" alt="first stage"><br>时钟网络的第一级以可编程方式将芯片外围的时钟源连接到每个区域的中心:</p>
+<ul>
+<li>第一阶段包括两个并行网络：一个用于全局时钟，一个用于本地时钟</li>
+<li>将全局时钟信号总数表示为：$W_{global}$</li>
+<li>全局时钟网络从每一侧的每个 $\frac{n_{source}}{4}$ 个潜在时钟源中选择 $\frac{W_{global}}{4}$ 个信号</li>
+<li>所有 $W_{global}$ 信号均通过专用线路路由到芯片中心</li>
+</ul>
+<p>优势：由于信号源均来自芯片外围，因此信号源与芯片中心之间的连接几乎不会或根本不会产生偏斜;</p>
+<ul>
+<li>在某些来源来自芯片内部的架构中，可以调整驱动器的大小以使歪斜最小化</li>
+</ul>
+<p>通过带有 ny_region 肋的脊柱和肋骨分配网络，从芯片的中心开始将所有 $W_{global}$ 时钟分配到所有区域的中心；    </p>
+<p>尽管 H 型树拓扑具有较低的偏斜度，但将这种拓扑网格划分到具有任意行数和列数的平铺 FPGA 上更加困难；</p>
+<h3 id="第二阶段"><a href="#第二阶段" class="headerlink" title="第二阶段"></a>第二阶段</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/SecondStage.png" alt="Second stage"><br>时钟网络第二级以可编程方式将时钟信号从每个区域的中心连接到该区域内的逻辑块：</p>
+<ul>
+<li>每个第二级网络的输入均由第一级的 $W_{global}$ 全局时钟和 $W_{local}$ 本地时钟组成：<ul>
+<li>这些时钟使用脊柱和肋骨拓扑分布</li>
+<li>脊柱包含 $W_{global}+W_{local}$ 导线</li>
+</ul>
+</li>
+<li>在每一行中，都使用 concentrator（集中器）网络从脊柱中选择任意一组 $W_{rib}$ clocks：<ul>
+<li>这些时钟通过局部肋骨分配到该行中的逻辑块</li>
+</ul>
+</li>
+<li>行中的每个逻辑块都通过另一个集中器网络连接到肋，集中器再从肋骨中选择任意一套 $W_{lb}$ 时钟</li>
+</ul>
+<h3 id="第三阶段"><a href="#第三阶段" class="headerlink" title="第三阶段"></a>第三阶段</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/ThirdStage.png" alt="Third stage"><br>最后，第三级网络将 $W_{lb}$ 逻辑块时钟可编程地连接到逻辑块内的 N 个 logic elements:</p>
+<ul>
+<li>为了给群集工具提供灵活性，我们假设逻辑块的时钟引脚使用完整的交叉网络连接到逻辑元件（在该逻辑块内）的时钟引脚；<ul>
+<li>因此，N 个逻辑元素中的任意一个都可以由任意 $W_{lb}$ 个逻辑块时钟提供时钟</li>
+</ul>
+</li>
+<li>注意：这只是时钟网络中使用完整  crossbars（交叉开关）的阶段，其他阶段使用集中器交叉开关来减少开关数量；</li>
+</ul>
+<hr>
+<h1 id="时钟网络中的功耗降低"><a href="#时钟网络中的功耗降低" class="headerlink" title="时钟网络中的功耗降低"></a>时钟网络中的功耗降低</h1><p>时钟网络由于其<strong>高扇出和切换频率</strong>而在FPGA中占很大一部分功耗。   </p>
+<ul>
+<li>约占 FPGA 总功率的 20-39％：<br><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/DynamicPower.png" alt="Dynamic Power">  </li>
+</ul>
+<p>主要是两种技术：<code>by spine reduction</code>、<code>by clock gating</code></p>
+<h2 id="逻辑块的功耗感知布局"><a href="#逻辑块的功耗感知布局" class="headerlink" title="逻辑块的功耗感知布局"></a>逻辑块的功耗感知布局</h2><p>“功耗感知布局”：一种以功耗为导向的布局方法，来减少 spines 的数目；</p>
+<ul>
+<li>减少时钟网络上的互连资源使用</li>
+<li>考虑优化时钟功耗的布局</li>
+</ul>
+<p>“脊柱减少”：</p>
+<ul>
+<li>将相同时钟的 CLB 放在一起；<br><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/SpineReduction.png" alt="Spine Reduction"></li>
+<li>实际例子：<br><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/MoreExample.png" alt="more example">  </li>
+</ul>
+<p>将时钟功耗添加到成本函数中：</p>
+<ul>
+<li>$Cost = \alpha \cdot WireLength + \beta \cdot ClockPower$</li>
+<li>WireLength：两个 CLB 之间互连线的长度；</li>
+<li>通常交换 CLB 时，spines 减少了，但是 WireLength 长度也会随之增加（时钟功率的降低是以增加电线段数为代价的）；</li>
+<li>通过 Trade off 得到 minimum cost：spine reduction 60%，WireLength increase 4%</li>
+</ul>
+<h2 id="Clock-gating"><a href="#Clock-gating" class="headerlink" title="Clock gating"></a>Clock gating</h2><p>主要思想：在设计中为那些空闲区域禁用时钟，以最大程度地减少信号转换，从而减少动态功耗；     </p>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/ClockGatedCircuit.png" alt="clock gated circuit">   </p>
+<p>已广泛用于 VLSI（超大规模集成）的电源优化；    </p>
+<p>固定式预制时钟互连网络：<br><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/ClockGatingArchitecture.png" alt="Clock gating architecture">     </p>
+<p>进一步精细化划分：<br><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/FinegrainedArchitecture.png" alt="Fine-grained architecture">    </p>
+<p>实验结果：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>不同Gating style的结构</th>
+<th>描述</th>
+<th>功耗降低%<br>limited gating</th>
+<th>功耗降低%<br>substantial gating</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NONE</td>
+<td>No gating</td>
+<td>无</td>
+<td>无</td>
+</tr>
+<tr>
+<td>CG REGION</td>
+<td>Gating on a regional basis</td>
+<td>-0.8</td>
+<td>6.6</td>
+</tr>
+<tr>
+<td>CG COLUMN</td>
+<td>Gating on half-columns in regions</td>
+<td>0.8</td>
+<td>7.7</td>
+</tr>
+<tr>
+<td>FG REGION</td>
+<td>Gating on a sub-region</td>
+<td>-1.4</td>
+<td>6.2</td>
+</tr>
+<tr>
+<td>FG COLUMN</td>
+<td>Gating on quarter-columns in sub-regions</td>
+<td>1.1</td>
+<td>6.7</td>
+</tr>
+</tbody>
+</table>
+</div>
+<ul>
+<li>limited gating（有限的门控）：大部分区域资源被使用</li>
+<li>substantial gating（大量门控）：大部分区域资源闲置</li>
+</ul>
+<p>Enable 实现方式 VS. Clock Gating 实现方式：<br><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/EnableImplementationChoices.png" alt="Enable implementation choices"></p>
+<ul>
+<li>比较这些功率值，仅当 $\alpha_A+ \alpha_B &lt; 1$ 时才应选择选项 ＃1。否则，我们应该使用 ungated 的时钟;</li>
+</ul>
+<p>门控时钟主要用在 ASIC（专用集成电路），<mark>为什么在FPGA设计中不建议使用时钟门控？</mark></p>
+<ul>
+<li>因为时钟门控将逻辑放在 FPGA 内部的时钟网络上；</li>
+<li>时钟具有自己优化的低偏斜总线，在时钟源和时钟线之间引入逻辑将导致欺骗斜总线无法轻松使用；</li>
+</ul>
+<p>例子：Virtex V</p>
+<ul>
+<li>全局时钟缓冲器（BUFGs）从外部或内部源接收时钟信号，并将这些信号馈入专用的全局时钟互连网络：<ul>
+<li>全局时钟互连网络以低偏斜，低抖动和低功耗在整个 FPGA 中分配时钟信号；</li>
+<li>每个芯片包含32个全局时钟缓冲器，因此可以支持设计中存在 32 个全局时钟信号；</li>
+<li>架构上的限制限制了设备上每个触发器都具有 32 个单独的全局时钟信号的可能性；</li>
+<li>时钟区域高 20 个CLB，水平跨过 Virtex-5 芯片的一半；</li>
+<li>最多 10 个全局时钟信号可以馈入任何给定区域；</li>
+<li>一个区域内的 10 个全局时钟可以从设计中存在的（最多）32 个全局时钟信号中的任何一个中选择；</li>
+</ul>
+</li>
+<li>Virtex-5 内置的两种时钟使能机制可用于实现时钟门控：<ul>
+<li>SLICE 内的寄存器具有时钟使能引脚，允许以精细的粒度实现时钟使能；<ul>
+<li>SLICE 中的所有寄存器必须接收相同的时钟使能信号；</li>
+</ul>
+</li>
+<li>将时钟信号驱动到专用时钟互连网络中的全局时钟缓冲器（BUFG）具有使能引脚<ul>
+<li>当 BUFG 与启用一起使用时，称为 BUFGCE；</li>
+<li>使能引脚可以由来自 I/O 的信号或内部信号驱动；</li>
+<li>取消使能时，BUFG 驱动的时钟网络将变为静音，并且不会消耗任何动态功率；</li>
+</ul>
+</li>
+<li>一个主要的观察结果是：<ul>
+<li>使用 SLICE 上的时钟使能引脚并不能消除全局时钟网络上的切换，因此不能节省全局时钟网络上的动态功耗；</li>
+<li>但是，使用 BUFG 上的时钟使能引脚将停止在 BUFG 驱动的全局时钟网络上的所有切换；</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h1 id="时钟网络的设计"><a href="#时钟网络的设计" class="headerlink" title="时钟网络的设计"></a>时钟网络的设计</h1><h2 id="拓扑建模"><a href="#拓扑建模" class="headerlink" title="拓扑建模"></a>拓扑建模</h2><p><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/TopologyModeling.png" alt="Topology Modeling">  </p>
+<p>FPGA 本身几何分布的参数：</p>
+<ul>
+<li>$n_x$：BLK 列的数目</li>
+<li>$n_y$：BLK 行的数目</li>
+<li>$N$：每个逻辑块的逻辑元素（LE）数</li>
+</ul>
+<p>FPGA 时钟网络的参数：</p>
+<ul>
+<li>$n_{x_region}$：X 维时钟区域数目</li>
+<li>$n_{y_region}$：Y 维时钟区域数目</li>
+<li>$n_{source}$：潜在时钟源的数量</li>
+<li>$W_{glb}$：一次可传送到 fabric 的 global 时钟数目</li>
+<li>$W_{loc}$：一次可传送到 fabric 的 local 时钟数目</li>
+<li>$W_{rib}$：一次可以路由到一个区域的一行中的所有逻辑块的时钟数目</li>
+<li>$W_{lb}$：可以连接到每个逻辑块的时钟数目</li>
+<li>$W_{le}$：可以连接到 LE 的时钟数目</li>
+</ul>
+<h2 id="时钟网络组件"><a href="#时钟网络组件" class="headerlink" title="时钟网络组件"></a>时钟网络组件</h2><p><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/ClockNetworkComponents.png" alt="Clock network components"></p>
+<ul>
+<li>Spine-Rib switch</li>
+<li>Rib-LB switch</li>
+<li>LB-LE switch</li>
+<li>clock buffers</li>
+</ul>
+<p>正是因为这些 switchs，实现了时钟网络的可编程性；</p>
+<h2 id="实验结果"><a href="#实验结果" class="headerlink" title="实验结果"></a>实验结果</h2><h3 id="面积和功耗-vs-W-lb"><a href="#面积和功耗-vs-W-lb" class="headerlink" title="面积和功耗 vs. $W_{lb}$"></a>面积和功耗 vs. $W_{lb}$</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/vsWlb.png" alt="vs. Wlb"></p>
+<h3 id="面积和功耗-vs-W-rib"><a href="#面积和功耗-vs-W-rib" class="headerlink" title="面积和功耗 vs. $W_{rib}$"></a>面积和功耗 vs. $W_{rib}$</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/vsWrib.png" alt="vs. Wrib"></p>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/04/10/FPGA-technology/FPGA-ClockNetwork/" title="FPGA-Clock Network">http://www.thebetterkong.cn/2020/04/10/FPGA-technology/FPGA-ClockNetwork/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%9B%BD%E7%A7%91%E5%A4%A7%E7%A0%94%E7%A9%B6%E7%94%9F%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 国科大研究生课程笔记</a>
+              <a href="/tags/FPGA/" rel="tag"><i class="fa fa-tag"></i> FPGA</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/05/DataStructure-Algorithm/Finger-offer67/" rel="prev" title="剑指 offer 67题">
+      <i class="fa fa-chevron-left"></i> 剑指 offer 67题
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/04/13/FPGA-technology/FPGA-CADTools-Synthesis/" rel="next" title="FPGA-CAD Tools：Synthesis">
+      FPGA-CAD Tools：Synthesis <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#分布式时钟网络"><span class="nav-number">1.</span> <span class="nav-text">分布式时钟网络</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#时钟分布式网络构成"><span class="nav-number">1.1.</span> <span class="nav-text">时钟分布式网络构成</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PLL（Phase-Locked-Loop，锁相环）"><span class="nav-number">1.2.</span> <span class="nav-text">PLL（Phase Locked Loop，锁相环）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#原理图"><span class="nav-number">1.2.1.</span> <span class="nav-text">原理图</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PLL-基本频率的可编程性"><span class="nav-number">1.2.2.</span> <span class="nav-text">PLL 基本频率的可编程性</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#两种时钟生成方式"><span class="nav-number">1.3.</span> <span class="nav-text">两种时钟生成方式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#基于-PLL-的时钟生成"><span class="nav-number">1.3.1.</span> <span class="nav-text">基于 PLL 的时钟生成</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基于-DLL-的时钟生成"><span class="nav-number">1.3.2.</span> <span class="nav-text">基于 DLL 的时钟生成</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Clock-uncertainty"><span class="nav-number">1.4.</span> <span class="nav-text">Clock uncertainty</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Clock-skew"><span class="nav-number">1.4.1.</span> <span class="nav-text">Clock skew</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Clock-jitter"><span class="nav-number">1.4.2.</span> <span class="nav-text">Clock jitter</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#时钟分布拓扑结构"><span class="nav-number">1.5.</span> <span class="nav-text">时钟分布拓扑结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#基于树的结构"><span class="nav-number">1.5.1.</span> <span class="nav-text">基于树的结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基于网格-网格的结构"><span class="nav-number">1.5.2.</span> <span class="nav-text">基于网格&#x2F;网格的结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#对比总结"><span class="nav-number">1.5.3.</span> <span class="nav-text">对比总结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三个网络阶段"><span class="nav-number">1.6.</span> <span class="nav-text">三个网络阶段</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#第一阶段"><span class="nav-number">1.6.1.</span> <span class="nav-text">第一阶段</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#第二阶段"><span class="nav-number">1.6.2.</span> <span class="nav-text">第二阶段</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#第三阶段"><span class="nav-number">1.6.3.</span> <span class="nav-text">第三阶段</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#时钟网络中的功耗降低"><span class="nav-number">2.</span> <span class="nav-text">时钟网络中的功耗降低</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#逻辑块的功耗感知布局"><span class="nav-number">2.1.</span> <span class="nav-text">逻辑块的功耗感知布局</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Clock-gating"><span class="nav-number">2.2.</span> <span class="nav-text">Clock gating</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#时钟网络的设计"><span class="nav-number">3.</span> <span class="nav-text">时钟网络的设计</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#拓扑建模"><span class="nav-number">3.1.</span> <span class="nav-text">拓扑建模</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#时钟网络组件"><span class="nav-number">3.2.</span> <span class="nav-text">时钟网络组件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实验结果"><span class="nav-number">3.3.</span> <span class="nav-text">实验结果</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#面积和功耗-vs-W-lb"><span class="nav-number">3.3.1.</span> <span class="nav-text">面积和功耗 vs. $W_{lb}$</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#面积和功耗-vs-W-rib"><span class="nav-number">3.3.2.</span> <span class="nav-text">面积和功耗 vs. $W_{rib}$</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

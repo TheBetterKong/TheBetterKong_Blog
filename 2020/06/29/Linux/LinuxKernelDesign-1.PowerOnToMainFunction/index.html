@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="这里提到的 linux 版本是 0.11，在当时，操作系统都是存在软盘里的，而 CPU 的逻辑电路被设计为只能运行内存中的程序。电路刚通电时，内存（RAM）里什么都没有，那么计算机是怎样将操作系统运行起来的呢？">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux 内核设计 | （1）从开机到 main 函数执行">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/06/29/Linux/LinuxKernelDesign-1.PowerOnToMainFunction/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="这里提到的 linux 版本是 0.11，在当时，操作系统都是存在软盘里的，而 CPU 的逻辑电路被设计为只能运行内存中的程序。电路刚通电时，内存（RAM）里什么都没有，那么计算机是怎样将操作系统运行起来的呢？">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/Mem-BIOS.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/MemPlanning-bootsect.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/JumpAndSSSPDSES-bootsect.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/LoadMachineSystemData-setup.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/SetGDTRAndIDTR.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/MemAddressingChange.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/Pragram8259A.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/ChangeToAddressing.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/GDT1item.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/SystemInMem.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/DSESFSGS-head.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/SSESP-head.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/InterruptDescriptor.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/IDT-head.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/RebuildGDT-head.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/DSESFSGS2-head.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/PushForMain.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/SetPageTable.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/PageTableStatus.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/MemDistribution-head.png">
+<meta property="article:published_time" content="2020-06-29T08:04:25.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:32:26.816Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="国科大研究生课程笔记">
+<meta property="article:tag" content="Linux Kernel">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/Mem-BIOS.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/06/29/Linux/LinuxKernelDesign-1.PowerOnToMainFunction/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Linux 内核设计 | （1）从开机到 main 函数执行 | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/06/29/Linux/LinuxKernelDesign-1.PowerOnToMainFunction/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Linux 内核设计 | （1）从开机到 main 函数执行
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-29 16:04:25" itemprop="dateCreated datePublished" datetime="2020-06-29T16:04:25+08:00">2020-06-29</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:32:26" itemprop="dateModified" datetime="2020-08-14T17:32:26+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/06/29/Linux/LinuxKernelDesign-1.PowerOnToMainFunction/" class="post-meta-item leancloud_visitors" data-flag-title="Linux 内核设计 | （1）从开机到 main 函数执行" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/06/29/Linux/LinuxKernelDesign-1.PowerOnToMainFunction/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/06/29/Linux/LinuxKernelDesign-1.PowerOnToMainFunction/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>这里提到的 linux 版本是 0.11，在当时，操作系统都是存在软盘里的，而 CPU 的逻辑电路被设计为只能运行内存中的程序。电路刚通电时，内存（RAM）里什么都没有，那么计算机是怎样将操作系统运行起来的呢？</p>
+<a id="more"></a>
+<h1 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h1><p>这里约定的计算机是基于 IA-32 系列 CPU，安装了标准单色显示器、标准键盘、一个软盘、一块硬盘、16 MB 内存，在内存中开辟了 2 MB 内存作为虚拟盘，并在 BIOS 中设置软驱为启动设备。    </p>
+<p>为什么选 Linux 0.11 内核？</p>
+<ul>
+<li>Linux 0.11 内核代码虽然只有约两万行，但却实实在在的撑起了一个现代OS，更便于初学者学习理解；</li>
+<li>它是 Linux 其他后续版本的鼻祖，这样我们能更容易的看清设计者最初的、最根本的设计意图和设计指导思想；</li>
+</ul>
+<p>系列参考资料：</p>
+<ul>
+<li>《Linux 内核设计的艺术-图解 Linux 操作系统架构设计与实现原理（第 2 版）》</li>
+<li>《IA-32-3》</li>
+<li>《Linux 内核完全注释》- 内核版本0.11 - 赵炯</li>
+</ul>
+<p>说明：该系列是本人结合国科大相关课程总结的笔记心得，按书籍教程主要分为三大部分：</p>
+<ol>
+<li>分析从开机加电到 OS 启动完成并进入怠速状态的整个过程：<ul>
+<li>开机加电启动 BIOS，通过 BIOS 加载操作系统程序，对主机的初始化，打开保护模式和分页，调用 main 函数，创建进程 0、进程 1、进程 2 以及 shell 进程，并且具备用文件的形式与外设交互。</li>
+</ul>
+</li>
+<li>OS 进入系统怠速后，在执行用户程序的过程中，OS 和用户进程的实际运行过程和状态：<ul>
+<li>利用几个设计好的简单的又具有代表性的应用程序，以其执行作为引导，详细讲解安装文件系统、文件操作、用户进程与内存管理、多个进程对文件的操作以及进程间的通信。</li>
+</ul>
+</li>
+<li>整个 Linux 的设计指导思想，从微观到宏观的回归分析：<ul>
+<li>重点部分：详细阐述主奴机制以及实现主奴机制的三项关键技术（保护和分页、特权级、中断），分析保障主奴机制实现的决定性因素—先机，详细讲解缓冲区、共享页面、信号、管道的设计指导思想。（作者尝试从操作系统设计者的视角讲解操作系统的设计指导思想。希望帮助读者用体系的思想理解、把握、驾驭整个操作系统以及背后的设计思想和设计意图）</li>
+</ul>
+</li>
+</ol>
+<h1 id="BIOS-启动"><a href="#BIOS-启动" class="headerlink" title="BIOS 启动"></a>BIOS 启动</h1><p>前面说到 CPU 只能执行内存里的程序，而刚通电时，计算机内存为空，OS 处在软盘。那么，自然就需要由某个部分将 OS 加载到内存，而完成这项工作的就是 <strong>BIOS</strong>。    </p>
+<p>问题就来了，BIOS 自身也是一段程序，那它最开始又是如何执行的呢？      </p>
+<p>这一过程得益于硬件 CPU 强制执行 BIOS。CPU 都被设计为<strong>加电即进入 16 位实模式状态运行</strong>，其硬件逻辑在加电瞬间就会设置 CS（<code>0xF000</code>）和 IP（<code>0xFFF0</code>），这样 CS:IP 也就指向 <strong><code>0xFFFF0</code></strong> 这个地址，而这里就处在 BIOS 中，是 <strong>BIOS 程序的入口地址</strong>。    </p>
+<div class="note warning">
+            <ul><li>CPU 将要执行的指令的内存地址是由 IP（偏移）和 CS（段基址）组合来指定。实模式下该地址为绝对地址，指令指针为 16 位；保护模式下为线性地址，指令指针为 32 位，即 EIP。    </li><li>BIOS 是固化在计算机主板上一块很小的 ROM 芯片里的程序。不同主板会有所不同，这里的 BIOS 是 8KB，所占地址段为 <code>0xFE000 ~ 0xFFFFF</code>。</li></ul>
+          </div>
+<h1 id="BIOS-执行"><a href="#BIOS-执行" class="headerlink" title="BIOS 执行"></a>BIOS 执行</h1><p>BIOS 启动后，开始执行一系列 BIOS 代码，完成自检等操作。检测显卡、内存等，并在屏幕上显示这些机器系统数据（显卡信息、内存信息等）。而这个过程需要重点说的就是：<strong>BIOS 在内存里建立中断向量表和中断服务程序</strong>。     </p>
+<p>具体来说就是：<br><img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/Mem-BIOS.png" alt="Mem-BIOS"></p>
+<ul>
+<li>在 <code>0x00000 ~ 0x003FF</code> 这 1 KB 的内存空间里构建<strong>中断向量表</strong>；<ul>
+<li>一共有 256 个中断向量，每个占 4 B（2 B 为 CS 的值，2 B 为 IP 的值）；</li>
+</ul>
+</li>
+<li>在紧接着的 <code>0x00400 ~ 0x004FF</code> 这 256 B 的内存空间里构建 <strong>BIOS 数据区</strong>（存放机器系统数据）；</li>
+<li>在接着大约 57 KB 之后的位置 <code>0x0E05B</code> 处加载了 8 KB 左右的与中断向量表相对应的<strong>中断服务程序</strong>；</li>
+</ul>
+<p>在上述自检过程完成后，计算机硬件（体系结构的设计）和 BIOS 一同产生一个 <strong><code>int 0x19</code></strong> 中断。CPU 收到此中断后，查找中断向量表，并找到 <code>int 0x19 中断向量</code>。这个中断向量就将 CPU 指向 <strong><code>0x0E6F2</code></strong> 这个地址执行（<code>int 0x19</code> 对应的中断服务程序的入口地址）。这个中断服务程序是 BIOS 事先设计好的（代码固定，与 OS 无关），它的工作就是：<strong>把软盘第一扇区中的程序 <code>bootsect.s</code>（512 B，因此两个扇区为 1 KB）加载到内存指定位置（<code>0x07C00</code>）</strong>。    </p>
+<div class="note warning">
+            <p>这个过程就需要 OS 设计者和 BIOS 的设计者完成一种两头约定：   </p><ul><li>操作系统：必须把最开始执行的程序 “定位” 在启动扇区（软盘中的 0 盘面 0 磁道 1 扇区）；   </li><li>BIOS：“约定” 接到启动操作系统的命令，就 “定位识别” 只从启动扇区把代码加载到 <code>0x7C00</code>（BOOTSEG）这个位置；</li></ul>
+          </div>
+<h1 id="bootsect-s"><a href="#bootsect-s" class="headerlink" title="bootsect.s"></a>bootsect.s</h1><p>在实模式下，指令指针 CS 和 IP 都是 16 位的，它们组合的内存寻址最大范围为 1 MB（20 位）。而 <strong>bootsect.s 首先的工作就是对这 1 MB 的内存空间进行规划</strong>，来确保后续代码的加载与已加载的代码互不干扰，并且都有足够大的内存空间可用；<br><img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/MemPlanning-bootsect.png" alt="MemPlanning-bootsect"></p>
+<ul>
+<li>bootsect.s 的开头会设定一段代码来设置相应的内存位置：<ul>
+<li>将要加载的 setup 程序的扇区数（<code>SETUPLEN</code>）以及它要被加载到的位置（<code>SETUPSEG</code>）；</li>
+<li>启动扇区 bootsect 被 BIOS 重新加载的位置（<code>BOOTSEG</code>）及将要移动到的新位置（<code>INITSEG</code>）；</li>
+<li>内核（kernel）被加载的位置（<code>SYSSEG</code>）、内核的末尾位置（<code>ENDSEG</code>）；</li>
+<li>根文件系统设备号（<code>BOOT_DEV</code>）；    </li>
+</ul>
+</li>
+</ul>
+<p>接着，booesect 按之前的内存规划将自己全部（512 B）的内容从 <code>0x07C00</code>（<code>BOOTSEG</code>） <strong>拷贝到新的内存位置</strong> <code>0x90000</code>（<code>INITSEG</code>）。    </p>
+<ul>
+<li>由于之前说过的 OS 设计和 BIOS 设计的约定，才会在开始时 bootsect 被迫被加载到 <code>0x07C00</code> 的位置。现在将自身拷贝的 <code>0x90000</code> 处，则说明 OS 已经开始根据自身需要安排内存了；</li>
+</ul>
+<p>拷贝完成后，但是 CPU 的 CS 还在原先的 <code>0x07C0</code>（BOOTSEG）处，于是需要<strong>修改 CS</strong> 值为 <code>0x9000</code>（INITSEG），并<strong>修改 IP</strong> 偏移值至下一条指令。这样，使程序在新的地方接着原先的过程执行。此时，代码整体位置改变，代码中的各个段也会随之改变，所以还需要<strong>设置 DS、ES、SS、SP 的值</strong>。这也是个分水岭，至此，程序可以开始执行更为复杂的数据运算类指令。<br><img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/JumpAndSSSPDSES-bootsect.png" alt="JumpAndSSSPDSES-bootsect">   </p>
+<p>接下来，bootsect 还需要负责<strong>将 os 剩余的代码（<code>setup.s</code> 和 <code>system 模块</code>）拷贝进内存中</strong>。整个拷贝过程分两次进行：</p>
+<ul>
+<li>拷贝 <code>setup.s</code>：<ul>
+<li><strong>传参</strong>：事先将指定的扇区、加载的内存位置等信息传递给服务程序；</li>
+<li>参数传递完毕后，<strong>执行 <code>int 0x13</code> 指令</strong>，产生 <code>int 0x13</code> 中断，通过中断向量表找到对应的中断服务程序（<code>0x0E6FE</code>），将软盘<strong>第二个扇区开始的 4 个扇区（setup.s，2 KB）加载至内存的 SETUPSEG（0x90200）处</strong>，紧挨着重新拷贝后的 bootset.s；（注意：它还不足以影响到栈的内存空间）；</li>
+</ul>
+</li>
+<li>拷贝 <code>system 模块</code>（包括 head.s 和 main 函数开始的 os 内核程序）：<ul>
+<li>bootsect 同样借助 BIOS 的 <code>int 0x13</code> 中断，<strong>调用 <code>read_it</code> 子程序</strong>，将软盘第六扇区开始的 <strong>240 个扇区</strong>的 sysytem 模块加载至内存的 <strong>SYSSEG（0x10000）处</strong>往后的 <strong>120 KB 空间</strong>中；</li>
+<li>整个加载过程时间较长，所以也会有一段用汇编编写的程序，使显示器显示 “Loading system…”，也涉及到其他 BIOS 中断；</li>
+</ul>
+</li>
+</ul>
+<div class="note warning">
+            <ul><li><strong>system 模块</strong>是整个 OS 的核心部分，它由两部分构成：head.s 和 main 函数。</li><li><strong>head.s</strong> 同之前加载的 bootsect.s 和 setup.s 一样，是由汇编代码生成的程序，它处在 system 的开头位置，在内存中占有 25 KB + 184 B 的空间；</li><li><strong>main 函数</strong>紧接着 head.s 存在，它是由 c 语言编写的内核程序，可以说它才是真正的操作系统，在它之前执行的 bootsect.s、setup.s 和 head.s 都是为它做准备的；</li><li>这种特殊性，也让 syetem 模块和 bootsect.s、setup.s 的加载方式不同。<strong>大致的过程</strong>是：先将 head.s 汇编成目标代码，将用 c 语言编写的内核程序编译成目标代码，然后再将它们链接成 system 模块。</li></ul>
+          </div>
+<p>至此，<mark>整个 OS 的代码都已被加载进内存</mark>。最后，由 bootsect 确认根设备号。根据开始处假设的计算机组成，这里经过一系列检测后，会确认计算机中实际安装的软盘驱动器为根设备，并将此信息写入机器系统数据。    </p>
+<p>bootsect.s 的工作已全部完成。</p>
+<h1 id="setup-s"><a href="#setup-s" class="headerlink" title="setup.s"></a>setup.s</h1><p>在 bootsect.s 完成它所有的任务后，会<strong>执行 <code>jmpi 0,SETUPSEG</code> 跳转</strong>至 <code>0x90200</code> 处（setup.s 所在的位置），也即 CS:IP 指向 setup 程序的第一条指令，<strong>setup.s 开始执行</strong>。</p>
+<p>首先，setup.s 会利用 BIOS 提供的中断服务从设备上<strong>提取内核运行所需的机器系统数据 510 B</strong>（注意这里加载的不是 BIOS 数据区里的），并将这些数据加载到内存的 <code>0x90000 ~ 0x901FC</code> 位置。<br><img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/LoadMachineSystemData-setup.png" alt="LoadMachineSystemData-setup"></p>
+<ul>
+<li>注意：加载的这部分机器系统数据是覆盖了原先已经执行完的 512 B 的 bootsect.s，只有 2 B 未被覆盖，这样很好的利用了内存空间，使内存利用率更高；</li>
+</ul>
+<p>至此，<mark>整个操作系统内核程序所需的加载工作都已完成，通过内存中的这些代码数据，将开始实现从实模式到保护模式的转变</mark>。</p>
+<p>之前，我们所有用到的中断服务都是由 BIOS 提供，而之后 OS 会接管整个系统，它自身也会提供一套的中断服务系统。为了完全这个转变，不让接下来的工作出错，此时就得<strong>先关中断（cli）</strong>。即：<strong>将 CPU 的标志寄存器（EFLAGS）中的中断允许标志（IF）置 0</strong>；</p>
+<div class="note warning">
+            <ul><li>关中断（cli）和开中断（sti）它们在 OS 里总是成对出现的，目的就是为了防止中断在某个过程中介入；   </li><li>此处，即将进行的是实模式下中断向量表和保护模式下中断描述符表（IDT）的交接。如果在此期间，用户不小心碰到键盘等引入了中断，就会导致不可预估的后果；</li></ul>
+          </div>
+<p>接下来，setup 程序会<strong>将位于 <code>0x10000</code> 的内核程序复制至内存的起始地址 <code>0x00000</code> 处</strong>（由 DS 和 ES 配合完成）。</p>
+<ul>
+<li>这个过程也就意味着，原先 BIOS 提供的中断向量表、BIOS 数据区以及相应的中断服务程序都完全被覆盖，旧的中断体系已经失效，系统准备向 32 位的保护模式转变；</li>
+</ul>
+<p>然后，setup 程序利用自身提供的数据信息<strong>对中断描述符表寄存器（IDTR）和全局描述符表寄存器（GDTR）进行初始化设置</strong>，进而完成<strong>中断描述符比表（IDT）和全局描述符表（GDT）的初始化</strong>；   </p>
+<div class="note ">
+            <ul><li><strong>GDT（全局描述符表）</strong>：是一个存放段寄存器内容（段描述符）的数组，用来配合程序进行保护模式下的段寻址。在 OS 中进程切换具有重要意义，可理解为所有进程的总目录表，其中存放着每一个任务（task）局部描述符表（LDT）地址和任务状态段（TSS）地址，完成进程中各段的寻址、现场保护与现场恢复；   </li><li><strong>GDTR（GDT 基址寄存器）</strong>：GDT 可以存放在内存中任意位置，而 GDTR 的内容就是标识 GDT 的入口地址；</li><li><strong>IDT（中断描述符表）</strong>：保存保护模式下所有中断服务程序的入口地址；</li><li><strong>IDTR（IDT 基址寄存器）</strong>：保存 IDT 起始地址；</li></ul>
+          </div>
+<ul>
+<li>这个过程可以理解为：内核设计时，已经将两个表（包括所需的初始数据）写好，随着 OS 代码一起已经被加载到了内存，之后程序通过 <code>lidt</code> 和 <code>lgdt</code> 指令将两个专用寄存器指向这两个表（即 idt_48 和 gdt_48 对应的标号处）即可；<br><img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/SetGDTRAndIDTR.png" alt="SetGDTRAndIDTR"><ul>
+<li>由图可以看到：IDTR 指向了 <code>0x00000</code> 位置（IDT 基址），此时出于关中断状态，IDT 还是一张空表；</li>
+<li>GDTR 指向了 <code>0x90200+</code> 位置（现在创建的 GDT 基址），此时内核还未运行没有进程，GDT 的内容也就如图所示，其余项全为空；</li>
+</ul>
+</li>
+</ul>
+<p>接下来的工作就是：<strong>打开 A20</strong>，<strong>这也就意味着 CPU 可以进行 32 位寻址，最大寻址空间为 4 GB</strong>。下图显示了此时内存寻址空间的变化（注意区别）：<br><img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/MemAddressingChange.png" alt="MemAddressingChange"></p>
+<ul>
+<li>此时，物理地址空间虽然受限于 16 MB，但是其线性地址空间已经变成了 4 GB；</li>
+<li>实模式下，CPU 寻址范围为 <code>0 ~ 0xFFFFF</code>，共 1 MB，需要 0 ~ 19 号（20 根）地址线。进入保护模式，使用 32 位寻址，自然也就需要打开剩余的 20 ~ 31 号地址线；</li>
+<li>实模式下，CS 和 IP 的最大值都为 <code>0xFFFF</code>，这两者组合而成的最大绝对地址为 <code>0x10FFEF</code>（16*CS+IP），而此时 CPU 最大寻址为 <code>0xFFFFF</code>。对于超出的这 16 KB 地址，CPU 会将其 “回滚” 至内存起始处寻址。而启用 A20 后，相当于关闭了 CPU 在实模式下的 “回滚” 机制，也就正好可以利用这个特点验证 A20 地址线是否已经打开；</li>
+</ul>
+<p>为了建立保护模式下的中断机制，setup 开始<strong>对可编程中断控制器 8259A 进行重新编程</strong>；<br><img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/Pragram8259A.png" alt="Pragram8259A">    </p>
+<p>之后，setup 还需要<strong>将 CR0（0 号 32 位控制寄存器，存放系统控制标志）寄存器的第 0 位（PE）置 1</strong>，即开启 CPU 的工作方式为保护模式；此后，寻址方式变化如下：<br><img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/ChangeToAddressing.png" alt="ChangeToAddressing">    </p>
+<p>至此，setup 的工作全部完成，它还有最后一行<strong>代码 <code>jmpi 0,8</code>，跳转至 head 程序起始地址开始执行</strong>；</p>
+<ul>
+<li>关于 <code>0,8</code>，对应到二进制也就为：<code>0000,1000</code>：<ul>
+<li>最后两位 <code>00</code>：表示内核特权级，对应的 <code>11</code> 就是用户特权级，其他形式无效；</li>
+<li>第三位 <code>0</code>：表示 GDT，如果为 <code>1</code> 则表示 LDT；</li>
+<li>再接下来的 <code>1</code>：表示所选的表（GDT）的 1 项（GDT 表项从 0 开始）；</li>
+<li>由这些信息就可以推算出：<strong>内核代码段（0x08）、内核数据段（0x10）、用户代码段（0x17）、用户数据段（0x0F）</strong>；</li>
+</ul>
+</li>
+<li>再对整个的跳转指令寻址进行解读：<ul>
+<li><code>jmpi 0,8</code>：它是处在内核级，会选择 GDT 的 1 项（代码段），这一项的解读如下：<br><img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/GDT1item.png" alt="GDT1item"></li>
+<li>由此确定段基址为 <code>0x00000000</code>，偏移为 0，也即 head 程序的起始位置处；</li>
+</ul>
+</li>
+</ul>
+<h1 id="head-s"><a href="#head-s" class="headerlink" title="head.s"></a>head.s</h1><p>经过前面一连串的准备工作，这里终于进入到了 system 模块，但是这并不意味着就进入到了 main 函数的执行。前面加载时说过，在 system 模块的开头还有一段叫做 head.s 的代码。此时的 system 在内存的分布情况如下：<br><img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/SystemInMem.png" alt="SystemInMem">      </p>
+<p>head 程序的除了<strong>做一些调用 main 函数的准备工作</strong>之外，还会<strong>用程序自身的代码在程序自身所在的内存空间创建内核分页机制</strong>，即在 <code>0x000000</code> 的位置创建页目录表、页表、缓冲区、GDT、IDT，并将 head 程序已经执行过的代码所占内存空间覆盖（自身边执行，边自我覆盖）。具体过程如下：</p>
+<p><strong>标号 <code>_pg_dir</code></strong> 标识内核分页机制完成后的内核起始位置，即物理内存起始位置 <code>0x000000</code>；</p>
+<p>前面的 <code>jmpi 0,8</code>，已经使得 CS 和 GDT 第二项关联（CS 不再是代码段基址而是代码段选择符），并且使代码段基址指向 <code>0x000000</code>。相应的，也需要<strong>修改 DS、ES、FS 和 GS 的值为 0x10</strong>（内核数据段）；具体内容如下图：<br>  <img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/DSESFSGS-head.png" alt="DSESFSGS-head"></p>
+<p><strong>SS</strong> 也需要变为栈段选择符（也是 <code>0x10</code>），栈顶指针也由 16 位的 SP 变为 32 位的 <strong>ESP</strong>（并且起始位置大概在 <code>0x1E25C</code>）<br>  <img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/SSESP-head.png" alt="SSESP-head">   </p>
+<p><strong>设置 IDT，搭建中断机制的整体框架</strong>，具体内容如下：</p>
+<ul>
+<li>IDT 有 256 个表项，每个表项占 64 位，因此其大小为 2 KB。每个表项（中断描述符）结构如下：<br><img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/InterruptDescriptor.png" alt="InterruptDescriptor"></li>
+<li>设置相关的 IDT 寄存器：<br><img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/IDT-head.png" alt="IDT-head"></li>
+<li>让所有的中断描述符默认指向 ignore_int 这个位置（将来 main 函数再让中断描述符对应到具体的中断服务程序），即此时所有的中断服务程序都是指向同一段只显示一行提示信息就返回的服务程序（这样，既可以避免无意中覆盖代码数据，也可给开发过程中的误操提供提示）；</li>
+</ul>
+<p><strong>废除旧的 GDT，并在内核新的位置重新创建 GDT</strong>：<br><img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/RebuildGDT-head.png" alt="RebuildGDT-head"></p>
+<ul>
+<li>重新设置一方面是设置新的位置，另一方面是修改段限长，这样做的目的也明显：旧 GDT 由 setup.s 设置，处在 <code>0x90200+</code> 的位置，而现在它已经执行完毕，未来它所处的内存位置必然会被替换为别的用途（缓冲区），这样只好重新将它放在 head.s 已经执行完的位置最好，物尽其用。</li>
+</ul>
+<p>段限长被修改了，那么相应的 <strong>DS、ES、FS、GS 及 SS</strong> 的段选择符也需要重新设置（再来一遍 <code>0x10</code>，重新加载 GDT 相应表项，这只是在原有基础上将<strong>段限长扩大为 16 MB</strong>，其他内容并未发生改变）；ESP 不需要；<br><img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/DSESFSGS2-head.png" alt="DSESFSGS2-head">    </p>
+<p><strong>检验 A20 地址线是否打开</strong>，检验方法就是之前提及的 “回滚法”，具体如下：</p>
+<ul>
+<li>通过在内存 <code>0x000000</code> 位置写入一个数据，然后比较此处和 1 MB（<code>0x100000</code>，已超过实模式寻址范围）处数据是否一致；</li>
+</ul>
+<p>head 程序如果检测到数学协处理器，则将其设置为保护模式工作状态；</p>
+<ul>
+<li>486 处理器以前，为弥补 CPU 浮点运算不足设置的外置可选芯片。486 处理器之后，CPU 就都基本内置了协处理器，也就不需要此步；</li>
+</ul>
+<p>接下来，就是 head.s <strong>为调用 main 函数做最后的准备工作</strong>：</p>
+<ul>
+<li><strong>将 envp、argv、argc 压栈：将 L6 标号（也就是 main 函数异常退出后返回的执行位置）和 main 函数入口地址压栈</strong>。此时，栈顶为 main 函数的入口地址，这样在 head.s 执行完毕后，就可以直接通过 ret 指令执行 main 函数；<br><img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/PushForMain.png" alt="PushForMain"></li>
+<li>压栈完成后，head.s 跳转至 <code>setup_paging:</code> 执行，开始<strong>创建分页机制</strong>（下面创建的 4 个页表是内核专属页表，将来每个用户进程也会有它们自己的专属页表）：<br><img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/SetPageTable.png" alt="SetPageTable"></li>
+<li>页表设置完毕，但分页机制还没完全建立，还需要<strong>设置页目录表基址寄存器 CR3</strong>（3 号 32 位控制寄存器，高 20 位存放页目录表基址，当 CR0 的 PG=1 时，CPU 使用 CR3 指向的页目录表和页表进行虚拟地址到物理地址的映射）<strong>使之指向页目录表</strong>，再将 <strong>CR0 寄存器的最高位（PG</strong>，分页机制控制位，它必须在 PE=1 的保护模式下才能开启）<strong>置 1</strong>。此时分页机制完成后，总体状态如下：<br><img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/PageTableStatus.png" alt="PageTableStatus"><ul>
+<li>注意：标号 pg_dir 标识的 <code>0x0000</code> 这个位置是内核通过分页机制能够实现线性地址等于物理地址的唯一起始位置；</li>
+</ul>
+</li>
+<li>此时的内存分布情况如下（注意 head.s 的大小和内存分布的情况）：<br><img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/MemDistribution-head.png" alt="MemDistribution-head"></li>
+</ul>
+<p>现在，就是 head.s 的最后一步，<strong>通过 ret 指令，将压入栈的 main 函数的执行入口地址弹出给 EIP</strong>，跳入 main 函数开始执行；</p>
+<ul>
+<li>这里需要说明一下，OS 的 main 函数和其他普通函数的调用过程不太一样；</li>
+<li>通常函数：都是通过 call 指令调用，它会将 EIP 的值自动压栈，保护返回现场，然后执行被调函数的程序。等到执行被调函数的 ret 指令时，自动出栈给 EIP 并还原现场，继续执行 call 的下一条执行；</li>
+<li>而操作系统则不同，它是用 ret 实现的调用操作系统的 main 函数。事先由 OS 的设计者手工编写代码压栈（压栈的 EIP 值为 main 函数的入口地址）和跳转，来模仿 call 的全部动作，进而去调用 <code>setup_paging</code> 函数。然后，当 <code>setup_paging</code> 函数执行到 ret 时，从栈中将 main 函数的入口地址 _main 弹出给 EIP，构成 CS:EIP，这也就等价于 CPU 开始执行 main 函数程序；</li>
+</ul>
+<p>之后，操作系统 main 函数开始执行，但是注意：此时仍然是关中断的状态！</p>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/06/29/Linux/LinuxKernelDesign-1.PowerOnToMainFunction/" title="Linux 内核设计 | （1）从开机到 main 函数执行">http://www.thebetterkong.cn/2020/06/29/Linux/LinuxKernelDesign-1.PowerOnToMainFunction/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%9B%BD%E7%A7%91%E5%A4%A7%E7%A0%94%E7%A9%B6%E7%94%9F%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 国科大研究生课程笔记</a>
+              <a href="/tags/Linux-Kernel/" rel="tag"><i class="fa fa-tag"></i> Linux Kernel</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/27/DataStructure-Algorithm/DataStructure-LinearList/" rel="prev" title="java 数据结构之线性表">
+      <i class="fa fa-chevron-left"></i> java 数据结构之线性表
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/07/02/DataStructure-Algorithm/DataStructure-String/" rel="next" title="java 数据结构之字符串">
+      java 数据结构之字符串 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#写在前面"><span class="nav-number">1.</span> <span class="nav-text">写在前面</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#BIOS-启动"><span class="nav-number">2.</span> <span class="nav-text">BIOS 启动</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#BIOS-执行"><span class="nav-number">3.</span> <span class="nav-text">BIOS 执行</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#bootsect-s"><span class="nav-number">4.</span> <span class="nav-text">bootsect.s</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#setup-s"><span class="nav-number">5.</span> <span class="nav-text">setup.s</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#head-s"><span class="nav-number">6.</span> <span class="nav-text">head.s</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

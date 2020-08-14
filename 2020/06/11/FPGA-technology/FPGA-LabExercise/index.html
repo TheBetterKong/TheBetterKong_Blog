@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="主要介绍 FPGA 具体的实验操作；">
+<meta property="og:type" content="article">
+<meta property="og:title" content="FPGA-Lab Exercise">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/06/11/FPGA-technology/FPGA-LabExercise/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="主要介绍 FPGA 具体的实验操作；">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-LabExercise/FullAdder.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-LabExercise/Concurrent.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-LabExercise/UDP.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-LabExercise/TBStimulus.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-LabExercise/DLatch.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-LabExercise/DFlipflop.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-LabExercise/RDFlipflop.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-LabExercise/Assignment.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-LabExercise/FSM.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-LabExercise/FSMStateDiagrams.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-LabExercise/MooreSequenceDetector.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-LabExercise/MooreSynthesizedSimulation.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-LabExercise/MealySequenceDetector.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-LabExercise/MealySynthesizedSimulation.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-LabExercise/XST.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-LabExercise/FPGAOptimization.png">
+<meta property="article:published_time" content="2020-06-11T08:29:36.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:31:17.859Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="国科大研究生课程笔记">
+<meta property="article:tag" content="FPGA">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/FPGA-LabExercise/FullAdder.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/06/11/FPGA-technology/FPGA-LabExercise/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>FPGA-Lab Exercise | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/06/11/FPGA-technology/FPGA-LabExercise/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          FPGA-Lab Exercise
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-06-11 16:29:36" itemprop="dateCreated datePublished" datetime="2020-06-11T16:29:36+08:00">2020-06-11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:31:17" itemprop="dateModified" datetime="2020-08-14T17:31:17+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%8F%AF%E7%BC%96%E7%A8%8B%E9%80%BB%E8%BE%91%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1%E4%B8%8E-FPGA-%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">可编程逻辑系统设计与 FPGA 技术</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/06/11/FPGA-technology/FPGA-LabExercise/" class="post-meta-item leancloud_visitors" data-flag-title="FPGA-Lab Exercise" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/06/11/FPGA-technology/FPGA-LabExercise/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/06/11/FPGA-technology/FPGA-LabExercise/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>主要介绍 FPGA 具体的实验操作；</p>
+<a id="more"></a> 
+<h1 id="概述：FPGA-构建工具链"><a href="#概述：FPGA-构建工具链" class="headerlink" title="概述：FPGA 构建工具链"></a>概述：FPGA 构建工具链</h1><p>实验开始之前，我们应该熟悉 CAD（计算机辅助设计）工具，该工具可将 HDL（Verilog）转换为 FPGA 上的工作电路：</p>
+<ul>
+<li>这些工具将使您的设计经历多个阶段，每个阶段都使其更接近于具体的实现；</li>
+<li>在过去的几年中，较旧的评估平台（ML505）使用较旧的 FPGA（Xilinx Virtex-5 LX110T）和较旧的软件套件（Xilinx ISE）；</li>
+<li>尽管有一个 GUI，也可有 Makefiles 来调用工具链中的每个后续程序，以进行完整的综合并进行分析；</li>
+</ul>
+<p>Xilinx 更新后的设计软件：Vivado Design Suite</p>
+<ul>
+<li>Vivado 强调了其强大的集成脚本功能（使用 Tcl 语言）以及与其他高级设计工具（例如，高级综合）的集成；</li>
+<li>它还支持等效的 Makefiles 和 Tcl 自动化；</li>
+</ul>
+<p>GUI 本身的缺点是使用起来非常手工：</p>
+<ul>
+<li>反复更改和运行参数很快变得乏味；</li>
+<li>最终的目标是使设计过程尽可能自动化；</li>
+<li>但是，对于学习而言，GUI 具有宝贵的属性，可以指导我们完成流程的每个步骤；</li>
+</ul>
+<h1 id="FPGA-设计流程"><a href="#FPGA-设计流程" class="headerlink" title="FPGA 设计流程"></a>FPGA 设计流程</h1><p><strong>① 综合 Synthesis</strong>：</p>
+<ul>
+<li>要在 Vivado Design Suite 中运行综合步骤（即，将 HDL 转换为组合逻辑和顺序逻辑），请在 “Flow Navigator（流导航器）” 窗格的其他左侧界面中选择 “ Run<br>Synthesis”；</li>
+<li>如果之前已经运行过，则可以通过选择 “Open Synthesized Design” 来检查综合设计；</li>
+</ul>
+<p><strong>② 实现 Implementation</strong>：</p>
+<ul>
+<li>Vivado GUI 中的实现步骤等效于手动 pipeline 中的 translation，mapping 以及 place 和 route 步骤；</li>
+<li>同样，这将采用先前综合的逻辑电路，并将其映射到我们特定的 FPGA 实际具有的物理逻辑设备；</li>
+<li>在 “Flow Navigator” 中选择 “Run Implementation” 以运行它，然后选择 “Open Implementation” 以检查其输出；</li>
+</ul>
+<p><strong>③ Xilinx 设计约束（XDC）</strong>：</p>
+<ul>
+<li>我们如何将信号之一连接到物理设备？</li>
+<li>我们如何指定电路的特殊性质，这可能对正确性和时序至关重要？</li>
+<li>Xilinx 设计约束文件（具有 <code>.xdc</code> 扩展名）指定了设计的必要属性（就像旧的 User Constraints 文件），并且是实施阶段的关键输入。</li>
+<li>XDC 受 Synopsis ASIC 综合工具链的启发，旨在实现某种程度的兼容性；</li>
+<li>以 TCL 形式为 Vivado TCL 解释器编写；</li>
+<li>例子：<code>set_property -dict{ PACKAGE_PIN L19 IOSTANDARD LVCMOS33 } [get_ports{ BUTTONS[3] }];</code><ul>
+<li>此语法分别将属性 LACK 和 LVCMOS33 的值 PACKAGE_PIN 和 IOSTANDARD 分配给端口 BUTTONS [3]，这是我们在 Verilog 源中定义的信号。这些属性中的每一个在合成过程中都有单独的结果：</li>
+<li>BUTTONS [3] 信号应连接到的引脚与 FPGA 封装上的物理引脚 L19 相连；</li>
+<li>该端口的逻辑约定（最大电压，什么范围构成高低，等等）将为 LVCMOS33；</li>
+</ul>
+</li>
+</ul>
+<p><strong>④ Bitstream generation</strong>：</p>
+<ul>
+<li>为了生成 FPGA 可以理解的编程文件，我们在 “Flow Navigator” 中调用 “Generate Bitstream”；</li>
+</ul>
+<p><strong>⑤ Timing Analysis</strong>：</p>
+<ul>
+<li>通过展开 “Open Synthesized Design” 并选择 “Report Timing Summary”，可以在 “Flow Navigator” 中的 “Synthesis” 下生成时序分析报告；</li>
+</ul>
+<p><strong>⑥ Design Reports</strong>：</p>
+<ul>
+<li>在构建流程的每个步骤都会自动生成报告。</li>
+<li>您应该能够在 “Flow Navigator” 的每个扩展阶段下找到它们；</li>
+<li>“Project Summary” 窗口（在 “Window” 菜单下）显示了每个步骤生成的报告的摘要；</li>
+</ul>
+<p><strong>⑦ Programming the FPGA</strong>：</p>
+<ul>
+<li>要使用 Vivado GUI 将 bitstream 发送到 FPGA，必须使用 Hardware Manager；</li>
+<li>可以在 “Flow Navigator” 中的 “Program and Debug” 下的 “Generate Bitstream” 下进行访问；</li>
+<li>通过 USB JTAG 接口连接到 FPGA 后，您可以在 “Flow Navigator”（或在打开的Hardware Manager 窗格中）中选择 “Program Device” 来执行编程；</li>
+</ul>
+<h1 id="Verilog-基础"><a href="#Verilog-基础" class="headerlink" title="Verilog 基础"></a>Verilog 基础</h1><p><strong>基本格式</strong>：</p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">module</span> &lt;module_name&gt; (&lt;module_terminal_list&gt;);</span><br><span class="line">    &lt;module_terminal_definitions&gt;</span><br><span class="line">    ...</span><br><span class="line">    &lt;functionality_of_module&gt;</span><br><span class="line">    ...</span><br><span class="line"><span class="keyword">endmodule</span></span><br></pre></td></tr></table></figure>
+<h2 id="简单运用举例"><a href="#简单运用举例" class="headerlink" title="简单运用举例"></a>简单运用举例</h2><p><strong>全加器</strong>：<br><img src="http://img.thebetterkong.cn/blog/FPGA-LabExercise/FullAdder.png" alt="FullAdder">   </p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">module</span> FullAdder(a,b,cin,cout,sum);</span><br><span class="line">    <span class="keyword">input</span>   a,b,cin;      <span class="comment">//inputs</span></span><br><span class="line">    <span class="keyword">output</span>  cout,sum;    <span class="comment">//outputs</span></span><br><span class="line">    <span class="keyword">wire</span>    w1,w2,w3,w4;   <span class="comment">//internal nets</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">xor</span> <span class="variable">#(10)   (w1,a,b)</span>; <span class="comment">//delay time of 10 units</span></span><br><span class="line">    <span class="keyword">xor</span> <span class="variable">#(10)   (sum,w1,cin)</span>;</span><br><span class="line">    <span class="keyword">and</span> <span class="variable">#(8)    (w2,a,b)</span>;</span><br><span class="line">    <span class="keyword">and</span> <span class="variable">#(8)    (w3,a,cin)</span>;</span><br><span class="line">    <span class="keyword">and</span> <span class="variable">#(8)    (w4,b,cin)</span>;</span><br><span class="line">    <span class="keyword">or</span>  <span class="variable">#(10,8) (cout,w2,w3,w4); // (rise time of 10, fall 8)</span></span><br><span class="line"><span class="keyword">endmodule</span></span><br></pre></td></tr></table></figure>
+<p><strong>全加器另一中实现方式（时序）</strong>：   </p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">module</span> FullAdder(a,b,cin,sum,cout);</span><br><span class="line">    <span class="keyword">input</span>   a,b,cin;</span><br><span class="line">    <span class="keyword">output</span>  cout,sum;</span><br><span class="line">    <span class="keyword">reg</span>     sum,cout;   <span class="comment">//registers retain value</span></span><br><span class="line">    <span class="keyword">always</span> @(a <span class="keyword">or</span> b <span class="keyword">or</span> cin) <span class="comment">//Any time a or b or cin change,run the process</span></span><br><span class="line">        <span class="keyword">begin</span> </span><br><span class="line">            sum &lt;= a ^ b ^ cin;</span><br><span class="line">            cout &lt;= ( a &amp; b ) |  ( a &amp; cin ) |  ( b &amp; cin );</span><br><span class="line">        <span class="keyword">end</span></span><br><span class="line"><span class="keyword">endmodule</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>其中：两种赋值号 <code>=</code> 和 <code>&lt;=</code> 区别：<ul>
+<li>Verilog 中的所有语句都是并发的（除非它们在顺序块中），并发表示每行中描述的操作并行进行；<br><img src="http://img.thebetterkong.cn/blog/FPGA-LabExercise/Concurrent.png" alt="Concurrent"></li>
+<li>Nonblocking：<code>&lt;=</code>，代表按顺序执行；</li>
+<li>Blocking：<code>=</code>，代表并发执行；</li>
+</ul>
+</li>
+</ul>
+<p><strong>纹波进位加法器（ripple carry adder）</strong>：</p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 4-bit Adder</span></span><br><span class="line"><span class="keyword">module</span> adder4(A,B,cin,S,cout)</span><br><span class="line">    <span class="keyword">input</span>[<span class="number">3</span>:<span class="number">0</span>]  A,B;</span><br><span class="line">    <span class="keyword">input</span>   cin;</span><br><span class="line">    <span class="keyword">output</span>[<span class="number">3</span>:<span class="number">0</span>] S;</span><br><span class="line">    <span class="keyword">output</span>  cout;</span><br><span class="line">    <span class="keyword">wire</span> c1,c2,c3;</span><br><span class="line">    <span class="comment">// 4 instantiated 1-bit Full Adders</span></span><br><span class="line">    FullAdder fa0(A[<span class="number">0</span>], B[<span class="number">0</span>], cin, c1, S[<span class="number">0</span>]);</span><br><span class="line">    FullAdder fa1(A[<span class="number">1</span>], B[<span class="number">1</span>], c1, c2, S[<span class="number">1</span>]);</span><br><span class="line">    FullAdder fa2(A[<span class="number">2</span>], B[<span class="number">2</span>], c2, c3, S[<span class="number">2</span>]);</span><br><span class="line">    FullAdder fa3(A[<span class="number">3</span>], B[<span class="number">3</span>], c3, cout, S[<span class="number">3</span>]);</span><br><span class="line"><span class="keyword">endmodule</span></span><br></pre></td></tr></table></figure>
+<h2 id="具体描述"><a href="#具体描述" class="headerlink" title="具体描述"></a>具体描述</h2><p>HDL（Hardware descrip languages）提供了一种通过使用文本文件来描述电路的方式；</p>
+<ul>
+<li>通过 keywords 和 expressions 来描述硬件：<ul>
+<li>共用的形式：logic expression、truth table、functions、logic gates</li>
+<li>任何的组合或者时序电路都可以描述；</li>
+</ul>
+</li>
+<li>两个目标：<ul>
+<li>通过计算机仿真（时序，延迟）来测试/验证；</li>
+<li>综合：可综合的 HDL</li>
+</ul>
+</li>
+<li>两种主要的硬件描述语言：VHDL、Verilog（主要）</li>
+</ul>
+<p><strong>HDL</strong>（verilog）：</p>
+<ul>
+<li>代表硬件结构和行为；</li>
+<li>逻辑仿真：生成波形图</li>
+</ul>
+<p><strong>keywords 和 syntax（语法、词法）</strong>：</p>
+<ul>
+<li><code>//</code> 开始的表述注释；</li>
+<li>一般有 100 个 keywords，是大小写敏感的（通常小写）；</li>
+<li><code>module</code> 一个模块，以 <code>endmodule</code> 结束；</li>
+<li><code>module</code> 后面跟电路名和端口（输入或输出）列表；</li>
+</ul>
+<p>两种基本的<strong>声明形式</strong>：</p>
+<ul>
+<li>Concurrent（同时）声明，常用在组合电路，执行与声明顺序无关；<ul>
+<li>gate 实例化：<code>and (z,x,y)</code>，<code>or (c,a,b)</code>，<code>xor (S,x,y)</code>，etc</li>
+<li>连续 assign：<code>assign Z=x&amp;y, c=a|b, S=x^y;</code></li>
+</ul>
+</li>
+<li>Procedural（程序）声明，常用在时序电路，按书写的顺序执行；<ul>
+<li><code>always @</code>：当 event 激活时连续执行</li>
+<li><code>initial</code>：只执行一次（用在仿真里）</li>
+<li><code>if then else</code></li>
+</ul>
+</li>
+</ul>
+<p><strong>wire</strong> 和 <strong>gate-level</strong>：</p>
+<ul>
+<li><code>wire</code>：定义为电路内部的连接点</li>
+<li><code>and g1(e,A,B)</code>：一行定义一个 gate（and，or，xor），并为其指定名字，第一个参数为输出；</li>
+</ul>
+<p><strong>boolean 表达式</strong>；</p>
+<ul>
+<li>OR:<code>|</code>，AND:<code>&amp;</code>，NOT:<code>~</code></li>
+</ul>
+<p><strong>UDP</strong>（user defined primitives）用户自定义原语：<br><img src="http://img.thebetterkong.cn/blog/FPGA-LabExercise/UDP.png" alt="UDP"></p>
+<p><strong>Modeling Circuit Delay</strong>：</p>
+<ul>
+<li>为了 simulation（不是 synthesis，synthesis 的延迟是不可控的）；</li>
+<li>可以利用 <code>timescale 1ns/100ps</code>，定义仿真时间的单位；<ul>
+<li><code>#(30)</code> 指示，gate 从输入到输出的延迟为 30ns；</li>
+</ul>
+</li>
+</ul>
+<p><strong>Test bench Stimulus（激励）</strong>：<br><img src="http://img.thebetterkong.cn/blog/FPGA-LabExercise/TBStimulus.png" alt="TBStimulus"></p>
+<ul>
+<li>然后就可以通过仿真波形图，观察电路是否满足预期要求；</li>
+</ul>
+<p><strong>Modiling Sequential Elements</strong>：</p>
+<ul>
+<li>D Latch：<br><img src="http://img.thebetterkong.cn/blog/FPGA-LabExercise/DLatch.png" alt="DLatch"></li>
+<li>D Flip-flop：<br><img src="http://img.thebetterkong.cn/blog/FPGA-LabExercise/DFlipflop.png" alt="DFlipflop"></li>
+<li>带有同步 reset 的 D Flip-flop：<br><img src="http://img.thebetterkong.cn/blog/FPGA-LabExercise/RDFlipflop.png" alt="RDFlipflop"></li>
+</ul>
+<p><strong>Assignment</strong>：<br>  <img src="http://img.thebetterkong.cn/blog/FPGA-LabExercise/Assignment.png" alt="Assingment"></p>
+<p><strong>Finite State Machines（有限状态机）</strong>：</p>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-LabExercise/FSM.png" alt="FSM"><br>利用状态图来展示：<br><img src="http://img.thebetterkong.cn/blog/FPGA-LabExercise/FSMStateDiagrams.png" alt="FSMStateDiagrams"></p>
+<p>例：序列检测器 Sequence Detector</p>
+<ul>
+<li>电路功能：当收到 3 个连续的 1 时，输出 1；其余时候输出 0；</li>
+<li>FSM 类型：Moore<ul>
+<li>状态图及 Verilog 描述：<br><img src="http://img.thebetterkong.cn/blog/FPGA-LabExercise/MooreSequenceDetector.png" alt="MooreSequenceDetector"></li>
+<li>综合 + 仿真查看结果：<br><img src="http://img.thebetterkong.cn/blog/FPGA-LabExercise/MooreSynthesizedSimulation.png" alt="MooreSynthesizedSimulation"></li>
+</ul>
+</li>
+<li>FSM 类型：Mealy<ul>
+<li>状态图及 Verilog 描述：<br><img src="http://img.thebetterkong.cn/blog/FPGA-LabExercise/MealySequenceDetector.png" alt="MealySequenceDetector"></li>
+<li>综合 + 仿真查看结果：<br><img src="http://img.thebetterkong.cn/blog/FPGA-LabExercise/MealySynthesizedSimulation.png" alt="MealySynthesizedSimulation"></li>
+</ul>
+</li>
+</ul>
+<h1 id="FPGA-设计工具"><a href="#FPGA-设计工具" class="headerlink" title="FPGA 设计工具"></a>FPGA 设计工具</h1><h2 id="应用举例"><a href="#应用举例" class="headerlink" title="应用举例"></a>应用举例</h2><p>下面的介绍都是在 Vivado 平台上介绍；</p>
+<h3 id="组合电路：AND"><a href="#组合电路：AND" class="headerlink" title="组合电路：AND"></a>组合电路：AND</h3><p>① 写 Verilog 代码（comb.v）：</p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">module</span> and2_comb(data_1,data_2,data_out); <span class="comment">// port-list</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">input</span>   data_1,data_2;</span><br><span class="line"><span class="keyword">output</span> <span class="keyword">reg</span> data_out;</span><br><span class="line"></span><br><span class="line"><span class="comment">//combinational circuit description</span></span><br><span class="line"><span class="keyword">always</span> @ (*)</span><br><span class="line">    <span class="keyword">begin</span></span><br><span class="line">        data_out = data_1 &amp;&amp; data_2; <span class="comment">// binary bit-wise:&amp;, binary logic:&amp;&amp;</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">endmodule</span></span><br></pre></td></tr></table></figure>
+<p>② 创建 project：</p>
+<ul>
+<li>Flow Navigator 里点击 <kbd>File-Project-New</kbd>，<kbd>next</kbd>；</li>
+<li>输入 Project name, Project location，<kbd>next</kbd>；</li>
+<li>选择 RTL Project，<kbd>next</kbd>；</li>
+<li>选择 <kbd>Add Files</kbd>，添加 comb.v 文件，<kbd>next</kbd>；</li>
+<li>如果需要的话，添加或者创建 Constraints Files，<kbd>next</kbd>；</li>
+<li>选择 FPGA device，例如：xa7a12tcpg238-2l，<kbd>next</kbd>；</li>
+<li>回顾：Project Summary，点击 <kbd>Finish</kbd>；</li>
+</ul>
+<p>③ 写 Verilog testbench（comb_sim.v)：</p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">`<span class="meta-keyword">timescale</span> 1ns / 1ps</span></span><br><span class="line"><span class="keyword">module</span> tb;</span><br><span class="line">    <span class="keyword">reg</span> data_1, data_2;        <span class="comment">//define input registers</span></span><br><span class="line">    <span class="keyword">wire</span> data_out;             <span class="comment">//define output type</span></span><br><span class="line">    and2_comb and2_comb_dut(   <span class="comment">//instantiate ports</span></span><br><span class="line">        <span class="variable">.data_1</span>(data_1),</span><br><span class="line">        <span class="variable">.data_2</span>(data_2),</span><br><span class="line">        <span class="variable">.data_out</span>(data_out)</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="keyword">initial</span> <span class="keyword">begin</span>               <span class="comment">//signal flow</span></span><br><span class="line">        data_1 = <span class="number">0</span>;data_2 = <span class="number">0</span>;</span><br><span class="line">        #<span class="number">200</span></span><br><span class="line">        data_1 = <span class="number">1</span>;data_2 = <span class="number">0</span>;</span><br><span class="line">        #<span class="number">200</span></span><br><span class="line">        data_1 = <span class="number">0</span>;data_2 = <span class="number">1</span>;</span><br><span class="line">        #<span class="number">200</span></span><br><span class="line">        data_1 = <span class="number">1</span>;data_2 = <span class="number">1</span>;</span><br><span class="line">        #<span class="number">200</span></span><br><span class="line">        data_1 = <span class="number">0</span>;data_2 = <span class="number">0</span>;</span><br><span class="line">        #<span class="number">200</span></span><br><span class="line">        <span class="built_in">$stop</span>;                  <span class="comment">//cease system tasks</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"><span class="keyword">endmodule</span></span><br></pre></td></tr></table></figure>
+<p>④ 综合逻辑电路，并进行仿真</p>
+<ul>
+<li>Flow Navigator 里点击 <kbd>SYNTHESIS</kbd>，<kbd>Run Synthesis</kbd>；</li>
+<li>之后就能得到一个 netlist，就可以以后进行 functional simulation；</li>
+<li>在 source 窗口里，右键 Simulation Sources，选择 <kbd>Add Sources</kbd>；</li>
+<li>选择 <kbd>Add or Create Simulation Sources</kbd>，添加编写好的 comb_sim.v 文件；</li>
+<li>右键：<kbd>sim_1</kbd> —&gt; <kbd>Run Simulation</kbd> —&gt; <kbd>Run Post-Synthesis Functional Simulation</kbd></li>
+</ul>
+<p>⑤ 检查仿真结果</p>
+<ul>
+<li>仿真结束后，点击 Flow Navigator 里的 <kbd>Window</kbd> —&gt; <kbd>Waveform</kbd> 来查看波形图；</li>
+</ul>
+<h3 id="时序电路：AND"><a href="#时序电路：AND" class="headerlink" title="时序电路：AND"></a>时序电路：AND</h3><p>① 写 Verilog 代码：</p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">module</span> and2_seq(clk,data_1,data_2,data_out); <span class="comment">// port-list</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">input</span>   clk,data_1,data_2;</span><br><span class="line"><span class="keyword">output</span> <span class="keyword">reg</span> data_out;</span><br><span class="line"></span><br><span class="line"><span class="comment">//sequential circuit description</span></span><br><span class="line"><span class="keyword">always</span> @ (<span class="keyword">posedge</span> clk)</span><br><span class="line">    <span class="keyword">begin</span></span><br><span class="line">        data_out &lt;= data_1 &amp;&amp; data_2; </span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">endmodule</span></span><br></pre></td></tr></table></figure>
+<p>② 创建 project：</p>
+<p>③ 写 Verilog testbench：</p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">`<span class="meta-keyword">timescale</span> 1ns / 1ps</span></span><br><span class="line"><span class="keyword">module</span> tb;</span><br><span class="line">    <span class="keyword">reg</span> clk,data_1, data_2;    <span class="comment">//define input registers</span></span><br><span class="line">    <span class="keyword">wire</span> data_out;             <span class="comment">//define output type</span></span><br><span class="line"></span><br><span class="line">    and2_seq and2_seq_dut(   <span class="comment">//instantiate ports</span></span><br><span class="line">        <span class="variable">.clk</span>(clk),</span><br><span class="line">        <span class="variable">.data_1</span>(data_1),</span><br><span class="line">        <span class="variable">.data_2</span>(data_2),</span><br><span class="line">        <span class="variable">.data_out</span>(data_out)</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="keyword">initial</span> <span class="keyword">begin</span> <span class="comment">//signal flow</span></span><br><span class="line">        clk = <span class="number">1</span>; data_1 = <span class="number">0</span>;data_2 = <span class="number">0</span>;</span><br><span class="line">        #<span class="number">200</span><span class="variable">.1</span></span><br><span class="line">        data_1 = <span class="number">1</span>;data_2 = <span class="number">0</span>;</span><br><span class="line">        #<span class="number">200</span><span class="variable">.1</span></span><br><span class="line">        data_1 = <span class="number">0</span>;data_2 = <span class="number">1</span>;</span><br><span class="line">        #<span class="number">200</span><span class="variable">.1</span></span><br><span class="line">        data_1 = <span class="number">1</span>;data_2 = <span class="number">1</span>;</span><br><span class="line">        #<span class="number">200</span><span class="variable">.1</span></span><br><span class="line">        data_1 = <span class="number">0</span>;data_2 = <span class="number">0</span>;</span><br><span class="line">        #<span class="number">200</span></span><br><span class="line">        <span class="built_in">$stop</span>; <span class="comment">//cease system tasks</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">always</span> #<span class="number">10</span> clk = ~clk;</span><br><span class="line"></span><br><span class="line"><span class="keyword">endmodule</span></span><br></pre></td></tr></table></figure>
+<p>④ 综合逻辑电路，并进行仿真</p>
+<ul>
+<li>综合，添加仿真文件；</li>
+<li>右键：<kbd>sim_1</kbd> —&gt; <kbd>Run Simulation</kbd> —&gt; <kbd>Run Post-Synthesis Timing Simulation</kbd></li>
+</ul>
+<p>⑤ 检查仿真结果</p>
+<h3 id="基于-IP-的电路：32-bit-Multiplier"><a href="#基于-IP-的电路：32-bit-Multiplier" class="headerlink" title="基于 IP 的电路：32-bit Multiplier"></a>基于 IP 的电路：32-bit Multiplier</h3><p>下面会从使用 DSP-IP 和不使用 DSP-IP 两个角度实现；   </p>
+<p>① 写 verilog 代码（mul32.v）：   </p>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">module</span> mul32(mula,mulb,product,clk,rst);</span><br><span class="line">    <span class="keyword">input</span> [<span class="number">31</span>:<span class="number">0</span>]mula;</span><br><span class="line">    <span class="keyword">input</span> [<span class="number">31</span>:<span class="number">0</span>]mulb;</span><br><span class="line">    <span class="keyword">input</span> clk,rst;</span><br><span class="line">    <span class="keyword">output</span> [<span class="number">63</span>:<span class="number">0</span>]product;</span><br><span class="line">    <span class="keyword">reg</span> [<span class="number">63</span>:<span class="number">0</span>]product;</span><br><span class="line">    <span class="keyword">reg</span> [<span class="number">31</span>:<span class="number">0</span>]mulaq;</span><br><span class="line">    <span class="keyword">reg</span> [<span class="number">31</span>:<span class="number">0</span>]mulbq;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">always</span>@(<span class="keyword">posedge</span> clk,<span class="keyword">negedge</span> rst)</span><br><span class="line">        <span class="keyword">begin</span></span><br><span class="line">            <span class="keyword">if</span>(~rst)</span><br><span class="line">                <span class="keyword">begin</span></span><br><span class="line">                    mulaq &lt;= <span class="number">0</span>;</span><br><span class="line">                    mulbq &lt;= <span class="number">0</span>;</span><br><span class="line">                <span class="keyword">end</span></span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">                <span class="keyword">begin</span></span><br><span class="line">                    mulaq &lt;= mula;</span><br><span class="line">                    mulbq &lt;= mulb;</span><br><span class="line">                <span class="keyword">end</span></span><br><span class="line">            <span class="keyword">end</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">always</span>@(<span class="keyword">posedge</span> clk,<span class="keyword">negedge</span> rst)</span><br><span class="line">        <span class="keyword">begin</span></span><br><span class="line">            <span class="keyword">if</span>(~rst)</span><br><span class="line">                product &lt;= <span class="number">64'h0123_4567_89ab_cdef</span>;</span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">                product &lt;= mulaq * mulbq;</span><br><span class="line">            <span class="keyword">end</span></span><br><span class="line"><span class="keyword">endmodule</span></span><br></pre></td></tr></table></figure>
+<p>② 创建 project：   </p>
+<p>③ 写 Verilog testbench：略   </p>
+<p>④ 综合逻辑电路：</p>
+<ul>
+<li>Flow Navigator 里点击 <kbd>Tools</kbd>，<kbd>Settings</kbd>；</li>
+<li>找到 <kbd>Synthesis</kbd> 选项，设置 <kbd>max_dsp</kbd>为 -1（只用 DSP），0（不用 DSP）；</li>
+</ul>
+<p>⑤ 仿真：   </p>
+<p>⑥ 检查仿真结果；   </p>
+<p>⑦ 比较资源利用报告；</p>
+<h2 id="执行时序分析"><a href="#执行时序分析" class="headerlink" title="执行时序分析"></a>执行时序分析</h2><p>定义时钟：</p>
+<ul>
+<li>在 Flow Navigator 里的 Project Manager section 里选择 <kbd>Add Source</kbd>；   </li>
+<li>在对话框里，选择 <kbd>Add or Create Constraints</kbd>，点击 <kbd>next</kbd>；    </li>
+<li>在接来下的对话框里，选择 <kbd>Create File</kbd>，File type：XDC，输入 File name，点击 <kbd>OK</kbd>，就会产生一个 xdc 的文件；    </li>
+<li>在 Netlist Analysis section 下的 Flow Navigator 里找到 Implement，选择 Edit Timing Constraints；然后就会展示出一个时序约束的编辑窗口；    </li>
+<li>双击 <kbd>Create Clock</kbd>，定义 clock：<ul>
+<li>clock name：可以随便定义，这里定为：clk，它不会和设计中的任何成分匹配；</li>
+<li>Source Object：点击 <kbd>…</kbd>：<ul>
+<li>将后面的 <code>*</code> 改为 <code>*clk</code>，接着 clk 就会出现在 Find result 块里；</li>
+<li>选择 clk，将其拖到 Selected 块里；</li>
+</ul>
+</li>
+<li>OK，finish</li>
+</ul>
+</li>
+<li>接来下就会返回到之前的窗口，会显示刚刚所定义的 clock 的信息；    </li>
+<li>点击 <kbd>Save Constraints</kbd> 保存，双击 timing.xdc 文件，查看；   </li>
+</ul>
+<p>查看时序结果：</p>
+<ul>
+<li>接下来，也是在 Implement 下选择，<kbd>Report Timing Summary</kbd>，会出现一个窗口来显示之前的 timing 的定义，也可以在这里进行修改，之后点击 OK；    </li>
+<li>会在 Design Timing Summary 里显示一些信息，例如：Worst Negative Slack，Worst Hold Slack 和 WPSN 等；    </li>
+<li>也可以为所有的路径都产生一个 timing report：<ul>
+<li>选择 <kbd>Tools</kbd> &gt; <kbd>Timing</kbd> &gt; <kbd>Report Timing</kbd>；</li>
+<li>在产生的窗口里，点击 OK，就会生成一个十分详细的 timing report</li>
+</ul>
+</li>
+</ul>
+<h2 id="执行功耗分析"><a href="#执行功耗分析" class="headerlink" title="执行功耗分析"></a>执行功耗分析</h2><p>在 Synthesis 列里找到 <kbd>Report Power</kbd>，出现一个窗口显示相关的定义，可以修改一些参数等，点击 OK 后，就可以看到一个 Power Analythesis 的窗口，改窗口就显示了一些功耗信息；   </p>
+<h1 id="设计约束与优化"><a href="#设计约束与优化" class="headerlink" title="设计约束与优化"></a>设计约束与优化</h1><p>Constraints 用于影响 FPGA 设计实现工具，包括：synthesizer 以及 place 和 route 工具；</p>
+<ul>
+<li>它们使设计团队可以指定设计性能要求，并指导工具满足这些要求；</li>
+</ul>
+<p>Implementation tools 会根据综合的优化级别，指定的时序，引脚分配以及设计团队提供给工具的逻辑分组来确定其操作的优先级；    </p>
+<p>约束的四种主要类型包括：synthesis，I/O，timing 和 area/location 约束    </p>
+<ul>
+<li><strong>Synthesis constraints</strong>：影响如何将HDL代码合成为RTL的细节。 有多种综合约束，它们的上下文，格式和使用通常在不同工具之间有所不同。</li>
+<li><strong>I/O constraints</strong>（通常也称为引脚分配）：用于将信号分配给特定的 I/O（引脚）或 I/O bank。I/O 约束还可用于为各个 I/O 和 I/O 组指定用户可配置的 I/O 特性；</li>
+<li><strong>Timing constraints</strong>：用于指定设计的时序特性。时序约束可能会影响所有内部时序互连，逻辑和 LUT 以及触发器或寄存器之间的延迟。时间约束可以是全局约束，也可以是路径约束。</li>
+<li><strong>Area constraints</strong>：用于将特定电路映射到 FPGA 内的一系列资源。位置约束指定相对于另一个设计元素或相对于 FPGA 中特定固定资源的位置；</li>
+</ul>
+<h2 id="Synthesis-Constraints"><a href="#Synthesis-Constraints" class="headerlink" title="Synthesis Constraints"></a>Synthesis Constraints</h2><p>综合约束的类型，语法和上下文通常在工具之间有所不同；   </p>
+<p>下表列出了 Xilinx 综合工具（XST）的一些综合约束：<br><img src="http://img.thebetterkong.cn/blog/FPGA-LabExercise/XST.png" alt="XST">    </p>
+<p>Synthesis Constraints 用于指导综合工具执行特定操作：</p>
+<ul>
+<li>例如，考虑综合约束 CLOCK_BUFFER。该约束用于指定时钟端口上使用的时钟缓冲区的类型；</li>
+<li>可用于优化设计实现的两个重要综合约束是 REGISTER_BALANCING 和 INCREMENTAL_SYNTHESIS<ul>
+<li>REGISTER_BALANCING 寄存器平衡用于优化性能</li>
+<li>INCREMENTAL_SYNTHESIS 增量合成可减少合成时间</li>
+</ul>
+</li>
+</ul>
+<p><strong>Register balancing</strong>：用于通过跨寄存器边界移动布尔逻辑功能的位置来满足设计时序要求。</p>
+<ul>
+<li>寄存器平衡会增加电路时钟频率；</li>
+<li>通过调整相对路径延迟可以获得改进的性能；</li>
+<li>寄存器平衡分为两类，分别称为：forward 正向和 backward 反向平衡<ul>
+<li>前向寄存器平衡旨在将位于 LUT 输入处的一组寄存器移至 LUT 输出处的单个寄存器；</li>
+<li>后向寄存器平衡基于相反的原理，综合工具可将位于 LUT 输出处的寄存器移至 LUT 输入处的一组触发器。</li>
+</ul>
+</li>
+<li>在该过程结束时，可以增加或减少设计中寄存器的总数（不确定）；</li>
+</ul>
+<p><strong>Incremental synthesis</strong>：的主要目的是减少编译设计所需的总时间：</p>
+<ul>
+<li>通过仅综合设计中已更改的部分来执行此操作；</li>
+<li>综合工具在综合阶段可能具有不同的开关或约束，以支持此方法；</li>
+<li>可能会严重影响综合阶段的其他两个因素包括保留已实现的设计层次结构以及正确使用设计约束；</li>
+</ul>
+<h2 id="Pin-Constraints"><a href="#Pin-Constraints" class="headerlink" title="Pin Constraints"></a>Pin Constraints</h2><p>重要的是要注意，引脚分配对于所有设计或设计中的所有引脚并不重要：</p>
+<ul>
+<li>I/O 余量较大或工作速度较慢的设计可能不需要仔细分配引脚；</li>
+<li>但是，如果设计余量受到以下任何 FPGA 设计因素的限制，则引脚分配可能会成为关键因素：<ul>
+<li>I/O 引脚可用性</li>
+<li>FPGA 架构级逻辑资源</li>
+<li>片内路由资源</li>
+<li>所需逻辑速度与最大 FPGA 速度</li>
+<li>所需的逻辑速度与实施设计所需的逻辑层之间的关系</li>
+</ul>
+</li>
+</ul>
+<p>设计时钟注意事项：</p>
+<ul>
+<li>时钟抖动影响会严重降低已实现系统的性能。时钟抖动的影响包括时序预算余量和性能的降低；</li>
+<li>时钟偏差描述了相关信号和时钟到达时间之间的差异。信号和时钟偏斜的影响包括保持时间故障，数据错误和减少的 I/O 时序裕量；</li>
+<li>时钟占空比失真会导致脉冲宽度减小，数据错误和电路性能不可靠；</li>
+<li>时钟抖动，偏斜和占空比失真的影响会影响 FPGA 电路性能的所有水平，应仔细管理和控制；</li>
+<li><strong>将 FPGA 时钟分成优先级组</strong>；<ul>
+<li>使用约束条件来更清楚地表征设计工具的时钟。</li>
+<li>约束可用于指定时钟速率，相位关系和占空比。</li>
+<li>约束还可用于将高优先级时钟与其驱动的电路相关联。</li>
+<li>时钟优先级组：<ul>
+<li>高频率，高扇出</li>
+<li>中频或低频，高扇出</li>
+<li>高频率，低扇出</li>
+<li>中频或低频，低扇出</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>首先分配最高优先级的时钟</strong>。FPGA 时钟最重要的两个挑战是高速和高扇出。具有这些特征的时钟应分配给更高性能的全局资源。高性能缓冲区和路由资源的数量有限，因此应谨慎管理。</li>
+<li><strong>分配时钟块管理资源</strong>。Xilinx’s 的数字时钟管理器（DCM）等时钟模块可以实现高级时钟电路功能，包括分频和乘法，相移，基于反馈的调整和同步时钟生成。时钟块是 FPGA 组件中有限的资源。设计团队应监视和控制如何分配这些资源。</li>
+<li><strong>管理优先级较低的时钟</strong>。尽管较低优先级的时钟可以在完整的 FPGA 全局资源上实现（如果可用），它们也可以通过标准 FPGA 路由结构进行路由。有可能将全局时钟路由分成多个较小的高性能时钟路由。</li>
+</ul>
+<h2 id="Timing-Constraints"><a href="#Timing-Constraints" class="headerlink" title="Timing Constraints"></a>Timing Constraints</h2><p>时序约束可用于影响和指导设计元素的放置以及所放置元素之间的信号路径，以满足设计性能要求；   </p>
+<p>时序约束的两种常规类型是全局约束和特定于路径的：</p>
+<ul>
+<li>全局时序约束涵盖了逻辑设计中的所有路径；</li>
+<li>特定于路径的约束涵盖特定路径；</li>
+</ul>
+<p>指定时钟和数据信号的关系以及时序，以确保不违反内部 FPGA 寄存器的设置和保持时间要求；   </p>
+<p>以下两个约束的时序关系为实施工具提供了最佳实施设计所需的信息：</p>
+<ul>
+<li>OFFSET_IN_BEFORE 约束用于定义在系统时钟的上升沿到达 FPGA 时钟引脚之前，数据信号应有效的时间；</li>
+<li>VALID 约束用于指定系统时钟上升沿之后数据信号有效的时间量和数据信号有效的时间量；</li>
+</ul>
+<p>使用系统同步定时方法将信号从 FPGA 内部的寄存器发送到外部组件：</p>
+<ul>
+<li>了解 FPGA 对外部设备时序的要求是约束过程的第一步；</li>
+<li>必须确定外部组件接口 I/O 标准，到外部组件的路由延迟以及 FPGA I/O 引脚的负载；</li>
+<li>了解详细的时序值可以支持时序约束的分配，从而指定数据信号必须从内部 FPGA 寄存器的输出传播到 FPGA 输出引脚的最长时间；</li>
+<li>FPGA 的内部延迟包括时钟路径延迟，寄存器时钟到输出时间以及从寄存器到输出引脚的数据路径延迟；</li>
+</ul>
+<p>基于这些约束，实现工具可以确定满足指定时序要求的路径路由。</p>
+<h2 id="Area-Constraints"><a href="#Area-Constraints" class="headerlink" title="Area Constraints"></a>Area Constraints</h2><p>Area 限制了引导和控制布局布线工具可能将 FPGA 设计元素放置在何处：</p>
+<ul>
+<li>区域约束还可以定义设计元素的潜在放置区域。</li>
+<li>区域约束的好处是可以减少布局布线工具的实施时间。</li>
+<li>如果 block element 受区域限制，则放置和布线工具不必搜索放置 block element 的位置；</li>
+<li>将多个设计元素块布置到目标 FPGA 架构上的过程通常称为布局规划；</li>
+</ul>
+<h2 id="Design-Optimization"><a href="#Design-Optimization" class="headerlink" title="Design Optimization"></a>Design Optimization</h2><p>设计优化是一个增量过程，需要增加工程量和工具计算时间来利用设计来满足时序要求。</p>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-LabExercise/FPGAOptimization.png" alt="FPGAOptimization"></p>
+<h1 id="Exercises"><a href="#Exercises" class="headerlink" title="Exercises"></a>Exercises</h1><p>设计练习1：组合电路 ⎯ 1 位加法器<br>设计练习2：组合电路 ⎯ 2 位乘法器<br>设计练习3：时序电路 ⎯ 1 位计数器<br>设计练习4：时序电路 ⎯ 4 位移位寄存器  </p>
+<p>提示：在 Vivado 上执行 FPGA 设计:</p>
+<ul>
+<li>编写 Verilog 代码</li>
+<li>创建项目</li>
+<li>编写 Verilog testbench</li>
+<li>综合逻辑电路</li>
+<li>检查仿真结果 </li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/06/11/FPGA-technology/FPGA-LabExercise/" title="FPGA-Lab Exercise">http://www.thebetterkong.cn/2020/06/11/FPGA-technology/FPGA-LabExercise/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%9B%BD%E7%A7%91%E5%A4%A7%E7%A0%94%E7%A9%B6%E7%94%9F%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 国科大研究生课程笔记</a>
+              <a href="/tags/FPGA/" rel="tag"><i class="fa fa-tag"></i> FPGA</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/06/09/FPGA-technology/FPGA-Outlook-NewFPGA/" rel="prev" title="FPGA-Outlook：New FPGA">
+      <i class="fa fa-chevron-left"></i> FPGA-Outlook：New FPGA
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/06/15/DataStructure-Algorithm/SearchingAlgorithm/" rel="next" title="查找算法（详解 + java 实现）">
+      查找算法（详解 + java 实现） <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#概述：FPGA-构建工具链"><span class="nav-number">1.</span> <span class="nav-text">概述：FPGA 构建工具链</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#FPGA-设计流程"><span class="nav-number">2.</span> <span class="nav-text">FPGA 设计流程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Verilog-基础"><span class="nav-number">3.</span> <span class="nav-text">Verilog 基础</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#简单运用举例"><span class="nav-number">3.1.</span> <span class="nav-text">简单运用举例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#具体描述"><span class="nav-number">3.2.</span> <span class="nav-text">具体描述</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#FPGA-设计工具"><span class="nav-number">4.</span> <span class="nav-text">FPGA 设计工具</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#应用举例"><span class="nav-number">4.1.</span> <span class="nav-text">应用举例</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#组合电路：AND"><span class="nav-number">4.1.1.</span> <span class="nav-text">组合电路：AND</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#时序电路：AND"><span class="nav-number">4.1.2.</span> <span class="nav-text">时序电路：AND</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基于-IP-的电路：32-bit-Multiplier"><span class="nav-number">4.1.3.</span> <span class="nav-text">基于 IP 的电路：32-bit Multiplier</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#执行时序分析"><span class="nav-number">4.2.</span> <span class="nav-text">执行时序分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#执行功耗分析"><span class="nav-number">4.3.</span> <span class="nav-text">执行功耗分析</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#设计约束与优化"><span class="nav-number">5.</span> <span class="nav-text">设计约束与优化</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Synthesis-Constraints"><span class="nav-number">5.1.</span> <span class="nav-text">Synthesis Constraints</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pin-Constraints"><span class="nav-number">5.2.</span> <span class="nav-text">Pin Constraints</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Timing-Constraints"><span class="nav-number">5.3.</span> <span class="nav-text">Timing Constraints</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Area-Constraints"><span class="nav-number">5.4.</span> <span class="nav-text">Area Constraints</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Design-Optimization"><span class="nav-number">5.5.</span> <span class="nav-text">Design Optimization</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Exercises"><span class="nav-number">6.</span> <span class="nav-text">Exercises</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

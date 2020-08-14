@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本文是一篇综述性质的文章，主要介绍了SGX的基础架构，分析其技术原理，也从各个角度阐述了SGX侧信道攻击及其防御。分析对比了一些主要的应用和研究方向，指出了SGX自身的一些优势与不足。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《SGX技术的分析和研究》阅读笔记">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/02/14/Literature-reading-notes/SGX-Technology-Analysis-and-Research/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="本文是一篇综述性质的文章，主要介绍了SGX的基础架构，分析其技术原理，也从各个角度阐述了SGX侧信道攻击及其防御。分析对比了一些主要的应用和研究方向，指出了SGX自身的一些优势与不足。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/SGX-Technology-Analysis-and-Research/SGX-overall-architecture.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/SGX-Technology-Analysis-and-Research/PRM-layout.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/SGX-Technology-Analysis-and-Research/Enclave-structure.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/SGX-Technology-Analysis-and-Research/SGX-memory-access-control.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/SGX-Technology-Analysis-and-Research/EPCM-logical-structure.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/SGX-Technology-Analysis-and-Research/Enclave-build-protection.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/SGX-Technology-Analysis-and-Research/Remote-authentication.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/SGX-Technology-Analysis-and-Research/SGX-side-channel-attack-surface.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/SGX-Technology-Analysis-and-Research/Typical-DRAM-structure.png">
+<meta property="article:published_time" content="2020-02-14T07:07:08.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:33:04.570Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="Computer Architecture">
+<meta property="article:tag" content="SGX">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/SGX-Technology-Analysis-and-Research/SGX-overall-architecture.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/02/14/Literature-reading-notes/SGX-Technology-Analysis-and-Research/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>《SGX技术的分析和研究》阅读笔记 | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/02/14/Literature-reading-notes/SGX-Technology-Analysis-and-Research/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          《SGX技术的分析和研究》阅读笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-02-14 15:07:08" itemprop="dateCreated datePublished" datetime="2020-02-14T15:07:08+08:00">2020-02-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:33:04" itemprop="dateModified" datetime="2020-08-14T17:33:04+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%96%87%E7%8C%AE%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">文献阅读笔记</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/02/14/Literature-reading-notes/SGX-Technology-Analysis-and-Research/" class="post-meta-item leancloud_visitors" data-flag-title="《SGX技术的分析和研究》阅读笔记" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/02/14/Literature-reading-notes/SGX-Technology-Analysis-and-Research/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/02/14/Literature-reading-notes/SGX-Technology-Analysis-and-Research/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本文是一篇综述性质的文章，主要介绍了SGX的基础架构，分析其技术原理，也从各个角度阐述了SGX侧信道攻击及其防御。分析对比了一些主要的应用和研究方向，指出了SGX自身的一些优势与不足。</p>
+<a id="more"></a> 
+<h1 id="SGX的技术背景"><a href="#SGX的技术背景" class="headerlink" title="SGX的技术背景"></a>SGX的技术背景</h1><p>移动环境和云平台的安全对硬件和平台安全机制的需要更加迫切，基于硬件的可信执行环境必不可少，以处理器安全为核心的硬件安全技术竞相发展；   </p>
+<p>当前主流的技术：</p>
+<ol>
+<li><strong>虚拟化技术</strong>：<ul>
+<li>例子：Intel VT(Intel virtualization technology)与AMD SVM(AMD secure virtual machine)技术；</li>
+<li>虚拟化技术基于<strong>特权软件hypervisor</strong>对系统资源进行分配与监控，极大提升了资源利用率，但hypervisor潜在的软件漏洞可能威胁到整个系统。</li>
+</ul>
+</li>
+<li><strong>基于可信平台模块(trusted platforill module，TPM)的可信计算技术</strong>：<ul>
+<li>例子：Intel TXT(Intel trusted execution technology)、嵌入式平台ARM TrustZone安全扩展等；</li>
+<li>基于TPM的可信架构在程序加载时进行完整性度量，却难以保障程序运行时的可信执行；</li>
+<li>TrustZone为程序提供了两种隔离的执行环境，但需要硬件厂商的签名验证才能运行在安全执行环境，这一特性使得多数软件开发者望而却步。</li>
+</ul>
+</li>
+</ol>
+<p>2013年，Intel推出<strong>SGX(software guard extensions)指令集扩展</strong>：</p>
+<ul>
+<li>旨在以硬件安全为强制性保障，不依赖于固件和软件的安全状态，提供用户空间的可信执行环境</li>
+<li>SGX是Intel在原有架构上增加的一组新的指令集和内存访问机制，进而允许用户实现enclave容器（在应用程序地址空间划分出保护区域），来保护代码和数据，免受特权攻击。</li>
+<li>要求：处理器、内存管理部件、BIOS、驱动程序、运行时环境等软硬件协同完成。</li>
+<li>目标：<ol>
+<li>允许应用程序开发者保护敏感数据不被未授权访问或者更高特权级别软件的修改； </li>
+<li>使得应用程序能够拥有保护敏感代码和数据的机密性与完整性的能力，而不会中断这些资源被合法程序和系统调度、使用和管理的能力； </li>
+<li>使得计算设备的消费者能够控制自己平台，并且具有自由安装和卸载应用与服务的能力； </li>
+<li>使得平台能够度量应用程序的可信代码，生成签名验证，并且度量和认证过程的代码都能够在可信赖的环境中正确的初始化； </li>
+<li>使得可信应用程序的开发过程中能够使用原来的工具和流程； </li>
+<li>允许可信应用程序的性能能够随着处理器的能力增强而得到扩展； </li>
+<li>使得软件代理商能够使用它们选择的分发通道来分发、更新可信应用程序； </li>
+<li>使得应用程序可以定义一个安全代码和数据区域，这一区域可以维护其机密性，即使攻击者能够物理上控制这个平台以及产生对内存的直接攻击，也能够有效加以抵御；</li>
+</ol>
+</li>
+</ul>
+<p>TrustZone 和 SGX 的不同之处在于：</p>
+<ul>
+<li>TrustZone中，通过CPU将系统划分为两个隔离环境，两者之间通过SMC指令通信，一旦Secure world中存在恶意程序，那么将危害整个系统的安全；</li>
+<li>而SGX中，一个CPU可以运行多个安全enclaves，并发执行，即使某个enclave中存在恶意程序，它也不能访问和危害其他enclave的被保护内容。</li>
+</ul>
+<h1 id="SGX架构及技术分析"><a href="#SGX架构及技术分析" class="headerlink" title="SGX架构及技术分析"></a>SGX架构及技术分析</h1><h2 id="SGX整体架构"><a href="#SGX整体架构" class="headerlink" title="SGX整体架构"></a>SGX整体架构</h2><p>&emsp;&emsp;<img src="http://img.thebetterkong.cn/blog/SGX-Technology-Analysis-and-Research/SGX-overall-architecture.png" alt="SGX整体架构"></p>
+<h2 id="处理器保留内存：PRM（processor-reserved-memory）"><a href="#处理器保留内存：PRM（processor-reserved-memory）" class="headerlink" title="处理器保留内存：PRM（processor reserved memory）"></a>处理器保留内存：PRM（processor reserved memory）</h2><p>&emsp;&emsp;<img src="http://img.thebetterkong.cn/blog/SGX-Technology-Analysis-and-Research/PRM-layout.png" alt="PRM布局示例"></p>
+<ul>
+<li>所有的Enclave都驻留在<strong>EPC(enclave page cache)</strong>，这是系统内一块被保护的物理内存区域，用来存放Enclave和SGX数据结构。</li>
+<li>如果CPU支持SGX架构并在加密保护的DRAM中实现EPC，那么它也支持BIOS保留一段叫<strong>PRM的内存范围</strong>；   </li>
+<li>BIOS通过配置一组范围寄存器分配PRM。具体的PRM和EPC布局和平台有关，并取决于BIOS设置；</li>
+</ul>
+<h2 id="Enclave容器"><a href="#Enclave容器" class="headerlink" title="Enclave容器"></a>Enclave容器</h2><p>一个被保护的内容容器：用于存放应用程序敏感数据和代码，在创建enclave之前，不必对这些代码和数据进行检查或分析，但加载到enclave中去的代码和数据必须被度量；  </p>
+<ul>
+<li>Enclave可以向远程认证者证明自己的身份，并提供必需的功能结构用于安全地提供密钥；</li>
+<li>用户也可以请求独有的密钥，这个密钥通过结合enclave身份和平台的身份做到独一无二，可以用来保护存储在enclave之外的密钥或数据；</li>
+</ul>
+<p>特征：</p>
+<ul>
+<li>具有自己的代码和数据； </li>
+<li>提供机密性和完整性保护； </li>
+<li>具有可控的入口点； </li>
+<li>支持多线程； </li>
+<li>对应用程序内存具有最高访问权限；</li>
+</ul>
+<p>结构：<br>&emsp;&emsp;<img src="http://img.thebetterkong.cn/blog/SGX-Technology-Analysis-and-Research/Enclave-structure.png" alt="Enclave结构"></p>
+<ul>
+<li><strong>TCS(thread control structure)</strong>：保存着进入或退出Enclave时恢复Enclave线程的特殊信息。<ul>
+<li>每一个Enclave中的执行线程都和一个TCS相关联；</li>
+<li>它需要4K字节对齐；</li>
+<li>由多个部分组成，例如：保留位(RESERVED)、标志位(FLAGS)、状态保存区偏移量(state save area offset，简称OSSA)等</li>
+</ul>
+</li>
+</ul>
+<h2 id="Enclave保护机制"><a href="#Enclave保护机制" class="headerlink" title="Enclave保护机制"></a>Enclave保护机制</h2><p>由Enclave<strong>内存访问语义</strong>的变化、应用程序<strong>地址映射关系的保护</strong>，这两项功能共同完成对Enclave的机密性和完整性的保护。</p>
+<h3 id="内存访问语义"><a href="#内存访问语义" class="headerlink" title="内存访问语义"></a>内存访问语义</h3><p>作用：</p>
+<ul>
+<li>保证内存保护机制在物理上锁住EPC内存区域，将外部的访问请求视为引用了不存在的内存，使得外部的实体(直接存储器访问、图像引擎等)无法访问。</li>
+</ul>
+<p>对于使用MOV等指令访问Enclave内部的页面的情况，硬件将执行下列的检查：</p>
+<ul>
+<li>处理器当前运行在Enclave mode中； </li>
+<li>访问地址在Enclave地址空间； </li>
+<li>物理地址在EPC内存中； </li>
+<li>EPCM(enclave page cache map)检查，请求访问的页属于正在运行的Enclave(只有Enclave内的代码才能访问该Enclave的内容)；</li>
+</ul>
+<p>SGX所提供的内存保护机制，是在保护模式所提供的段保护、页保护机制基础上进行进一步的内存保护，访问地址由虚拟地址转换为物理地址进行访问。   </p>
+<p>对内存的访问可分为如下5种类型：<br>&emsp;&emsp;<img src="http://img.thebetterkong.cn/blog/SGX-Technology-Analysis-and-Research/SGX-memory-access-control.png" alt="SGX内存访问控制"></p>
+<ol>
+<li>运行于非Enclave模式的处理器访问PRM之外的内存，按照保护模式下的机制进行访问； </li>
+<li>运行于非Enclave模式的处理器访问PRM内部内存，将被视为引用了不存在的内存； </li>
+<li>处理器运行于Enclave模式，访问的页面不在Enclave的虚拟地址空间，但是处于EPC的区域范围内，则CPU将这次访问视为引用了不存在的内存： </li>
+<li>处理器运行于Enclave模式，硬件允许Enclave代码访问处理器保留内存(PRM)外部的地址； </li>
+<li>如果页面在Enclave的虚拟地址空间外，且指向PRM页面，硬件将阻止访问并且发出异常。</li>
+</ol>
+<h3 id="地址映射保护EPCM-enclave-page-cache-map"><a href="#地址映射保护EPCM-enclave-page-cache-map" class="headerlink" title="地址映射保护EPCM(enclave page cache map)"></a>地址映射保护EPCM(enclave page cache map)</h3><p>&emsp;&emsp;<img src="http://img.thebetterkong.cn/blog/SGX-Technology-Analysis-and-Research/EPCM-logical-structure.png" alt="EPCM逻辑结构">   </p>
+<ul>
+<li>EPC内存，以<em>页为单位</em>进行管理，<em>页的控制信息保存在硬件结构EPCM里</em>，一个页面对应一个EPCM表项；类似于操作系统内的页表，管理着EPC页面的基本信息：包括页面是否已被使用、该页的拥有者、页面类型、地址映射和权限属性等。</li>
+<li>EPCM结构，<em>在CPU地址映射过程中用于执行Enclave页面的访问控制</em>，逻辑上而言， 它在保护模式的段保护和页保护机制的基础上，增加了一层安全的访问控制。</li>
+<li>EPCM结构，由 <strong>PMH(page miss handler)</strong> 硬件模块访问，这个模块通过查询页表(系统软件维护的)、范围寄存器、EPCM来进行内存访问。</li>
+</ul>
+<h3 id="Enclave机密性和完整性保护"><a href="#Enclave机密性和完整性保护" class="headerlink" title="Enclave机密性和完整性保护"></a>Enclave机密性和完整性保护</h3><p>&emsp;&emsp;<img src="http://img.thebetterkong.cn/blog/SGX-Technology-Analysis-and-Research/Enclave-build-protection.png" alt="Enclave建立保护过程"><br>过程描述：（较粗箭头表示请求的操作，细箭头表示具体步骤）</p>
+<ul>
+<li>应用程序在申请创建一个Enclave时：需要进行页面分配、复制程序代码与数据、和度量操作，创建过程的最后一步需要对Enclave的完整性进行验证（判断特权软件在创建过程中是否篡改了程序数据，如分配了多余的页、将恶意代码复制进来，或是篡改了复制的数据等）。通过对每个添加的页面内容进行度量，最终得到一个创建序列的度量结果，保存在enclave的控制结构中。</li>
+<li>然后，SGX通过一条初始化指令将这个结果与Enclave所有者签名的证书中的完整性值进行比较：<ul>
+<li>如果匹配，则将证书中的所有者公钥进行哈希，作为密封身份保存在Enclave控制结构中；</li>
+<li>如果不匹配，则说明创建过程存在问题，指令返回失败结果． </li>
+</ul>
+</li>
+<li>成功进行了初始化指令之后，才能进入Enclave执行程序，此后SGX提供的内存保护和地址映射保护使得外界无法访问Enclave内存，从而保证了Enclave的机密性和完整性，远程的认证者可以通过Enclave的完整性度量值和其密封身份，确保其正确地创建。</li>
+</ul>
+<h2 id="SGX认证"><a href="#SGX认证" class="headerlink" title="SGX认证"></a>SGX认证</h2><p>SGX两种类型的身份认证方式：</p>
+<ul>
+<li>平台内部enclave间的认证：用来认证进行报告的Enclave和自己是否运行在同一个平台上；</li>
+<li>平台间的远程认证：用于远程的认证者认证Enclave的身份信息；</li>
+</ul>
+<h3 id="平台内部enclave间的认证"><a href="#平台内部enclave间的认证" class="headerlink" title="平台内部enclave间的认证"></a>平台内部enclave间的认证</h3><p>验证使用的是对称密钥；<br>过程：</p>
+<ul>
+<li>当Enclave向平台上其他Enclave报告身份时，先获取当前的Enclave的身份信息和属性、平台硬件TCB信息，附加上用户希望交互的数据，生成报告结构；</li>
+<li>然后获取目标Enclave的报告密钥，对报告结构生成一个MAC标签，形成最终的报告结构，传递给目标Enclave，由目标Enclave验证请求报告身份的Enclave跟自己是否运行于同一平台。</li>
+</ul>
+<h3 id="平台间的远程认证"><a href="#平台间的远程认证" class="headerlink" title="平台间的远程认证"></a>平台间的远程认证</h3><p>对称密钥不再适用于远程认证，平台间的认证采用非对称密钥机制；<br>需要引入一个特殊的<strong>引用(quoting)Enclave</strong>：</p>
+<ul>
+<li>由引用Enclave创建平台认证的签名密钥 EPID(enhanced privacy identification)，这个密钥不仅代表平台，还代表着底层硬件的可信度，并且绑定处理器固件的版本。</li>
+<li>当enclave系统运行时，只有引用enclave才能访问到EPID密钥。</li>
+</ul>
+<p>远程认证的过程（假设远程认证方B 要认证EnclaveA）：<br>&emsp;&emsp;<img src="http://img.thebetterkong.cn/blog/SGX-Technology-Analysis-and-Research/Remote-authentication.png" alt="远程认证过程"></p>
+<ul>
+<li>A 先执行 EREPORT 指令，将 A 的身份和附加信息组合生成 REPORT 结构，利用引用Enclave (称其为Q) 的报告密钥生成一个MAC，连同报告结构一起发给Q，Q通过该结构验证 A 是否运行于同一平台，然后将它封装为一个引用结构体 QUOTE ，并使用 EPID 进行签名，将 QUOTE 和签名一同发给远程认证者。</li>
+<li>报告结构还需提供额外的用户数据域，可用来传递用户自定义的信息，以支持更复杂的交互方式。</li>
+</ul>
+<h2 id="SGX程序机密性"><a href="#SGX程序机密性" class="headerlink" title="SGX程序机密性"></a>SGX程序机密性</h2><p>《Moat：Verifying confidentiality of enclave programs》：基于自动定理证明和信息流分析，提出了一套 SGX 的使用规范，设计了 Moat 这一检测工具，通过在汇编语言层面对程序进行分析，从而检测应用程序是否存在泄露 SGX 区域中秘密信息的可能。</p>
+<h1 id="SGX的漏洞及防御"><a href="#SGX的漏洞及防御" class="headerlink" title="SGX的漏洞及防御"></a>SGX的漏洞及防御</h1><h2 id="威胁模型"><a href="#威胁模型" class="headerlink" title="威胁模型"></a>威胁模型</h2><p>侧信道攻击主要目标：攻击 Enclave 数据的机密性：</p>
+<ul>
+<li>攻击者来自non-enclave部分，包括应用程序和系统软件。</li>
+<li>系统软件：包括OS，hypervisor，SMM(system management mode)，BIOS 等特权级软件。</li>
+</ul>
+<p>三个假设：</p>
+<ul>
+<li>侧信道攻击一般假设攻击者知道Enclave初始化时候的代码和数据，并且知道内存布局（虚拟地址、物理地址以及他们之间的映射关系）。</li>
+<li>有些侧信道攻击假设攻击者知道Enclave的输入数据，并且可以反复触发Enclave，进行多次观察记录。</li>
+<li>侧信道攻击还假设攻击者知道运行Enelave平台的硬件配置、特性和性能，比如：CPU、TLB(translation lookaside buffer)、Cache、DRAM、页表、中断以及异常等各种系统底层机制。</li>
+</ul>
+<h2 id="侧信道攻击面"><a href="#侧信道攻击面" class="headerlink" title="侧信道攻击面"></a>侧信道攻击面</h2><p>&emsp;&emsp;<img src="http://img.thebetterkong.cn/blog/SGX-Technology-Analysis-and-Research/SGX-side-channel-attack-surface.png" alt="SGX侧信道攻击面"> </p>
+<p>Enclave的运行过程中会用到： </p>
+<ul>
+<li><strong>CPU内部结构</strong>：比如pipeline，BPB(branch prediction buffer)等等．这些结构不能够直接访问，但是如果可以间接利用，仍然可能泄露enclave的控制流或数据流； </li>
+<li><strong>TLB</strong>：TLB包括iTLB，dTLB和L2 TLB．如果Hyper-Threading打开，两个逻辑核共享一个物理核，这个时候会大大增加侧信道攻击的可能； </li>
+<li><strong>Cache</strong>：Cache包括LI instruction Cache，LI data Cache，L2 Cache和L3 Cache(又叫LLC Cache)； </li>
+<li><strong>DRAM</strong>：DRAM包括channels，DIMMs(dual inline memory module)，ranks，banks．每个 banks 又包括 rows，columns和row buffer； </li>
+<li><strong>页表(page table)</strong>：页表可以通过权限控制来触发缺页异常，也可以通过页表的状态位来表明CPU的某些操作；</li>
+</ul>
+<p>为了进行切实灵活的攻击，攻击者需掌握 intel 的相关手册；</p>
+<h2 id="侧信道攻击"><a href="#侧信道攻击" class="headerlink" title="侧信道攻击"></a>侧信道攻击</h2><p>侧信道攻击的主要手段：是通过攻击面获取数据，推导获得控制流和数据流信息，最终获取 enclave 的代码和数据的信息</p>
+<h3 id="基于页表"><a href="#基于页表" class="headerlink" title="基于页表"></a>基于页表</h3><p>攻击基本原理：</p>
+<ul>
+<li>利用页表对enclave页面的访问控制权，设置Enclave页面为不可访问。这个时候任何访问都会触发缺页异常，从而能够区分Enclave访问了哪些页面。按照时间顺序把这些信息组合，就能够反推出Enclave的某些状态和保护的数据。</li>
+</ul>
+<p>典型攻击：</p>
+<ul>
+<li>controlled channel 攻击和 pigeonhole 攻击。</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>精度只能达到页粒度，无法区分更细粒度的信息．但是在某些场景下，这类攻击已经能够获得大量有用信息</li>
+</ul>
+<p>变种攻击原理：</p>
+<ul>
+<li>利用页表的状态位；</li>
+<li>页表项的位：<ul>
+<li>访问控制：P，RW，US，XD；</li>
+<li>标识状态：比如，D(dirty bit)和A(access bit)</li>
+<li>如果 Abit 被设置，则表明该页表指向的页面已经被访问：</li>
+<li>如果D bit被设置，则表明该页表指向的页面发生了写操作。</li>
+</ul>
+</li>
+<li>通过监控观察这些状态位，攻击者就可以获取和controlled.channel／pigeonhole攻击类似的信息。</li>
+</ul>
+<p>相关研究：</p>
+<ul>
+<li>《Controlled-Channel attacks：Deterministic side channels for untrusted operating systems》</li>
+<li>《Preventing page faults from telling your secrets》</li>
+</ul>
+<h3 id="基于TLB"><a href="#基于TLB" class="headerlink" title="基于TLB"></a>基于TLB</h3><ul>
+<li>没有完全基于TLB的攻击，但是已经出现TLB作为辅助手段的侧信道攻击（混合）。</li>
+<li>TLB的层次结构。目前，SkyLake的机器分为Ll和L2两层，不同层次出现TLB miss的时间代价不同； </li>
+<li>TLB对代码和数据的区分。Ll区分代码(iTLB)和数据(dTLB)，两者直接有Cache coherence的保证．L2 不区分代码和数据。</li>
+</ul>
+<h3 id="基于cache"><a href="#基于cache" class="headerlink" title="基于cache"></a>基于cache</h3><p>在SGX的环境里面，大部分侧信道技术仍然适用，而且可以做得更好：</p>
+<ul>
+<li>在SGX环境里面仅依赖CPU，因此当操作系统，甚至是BIOS都是恶意的情况下，攻击者可以控制整个系统的资源。</li>
+</ul>
+<p>SGX易受Cache.timing攻击：</p>
+<ul>
+<li>一种基于Cache的 Prime&amp;Probe 算法，能够识别Cache行粒度上的enclave代码访问的内存位置，并在相同的Hyper—threading核心上运行enclave和攻击线程，使得攻击线程和enclave共享内存。通过这种方法，能够在不到10秒的时间获得加密程序的AES密钥。</li>
+</ul>
+<p>SGX能很好地防御利用 Flush+Reload 的Cache攻击：</p>
+<ul>
+<li>因为EPC页面一次只属于一个enclave，这就导致攻击者和enclave程序不能共享代码，也就使得Flush+Reload变得不可能。</li>
+</ul>
+<p>在攻击者能控制整个系统资源的情况下，可以有针对地调度资源，减少侧信道的噪音，增加侧信道的成功率。降低噪音的策略大体可以有以下几种：</p>
+<ul>
+<li><strong>核隔离(core Isolation)</strong>：这个方法的主要目标就是让enclave独自占有一个核(不允许其他程序运行在该核上面)； </li>
+<li><strong>缓存隔离(cache Isolation)</strong>：尽量使用L1或者L2级别的Cache进行侧信道攻击．L3的Cache被所有的核共用，会引入不必要的噪音： </li>
+<li><strong>不间断运行(uninterrupted execution)</strong>：也就是不触发或尽量少触发AEX(asynchronous enclave exit)，因为AEX和后续的ISR(interrupt service routines)都会使用Cache，从而引入不必要噪音。少触发AEX就是要使用中断绑定(interrupt affinity)和时钟频率；不触发AEX基本上就是让系统软件(比如os)屏蔽所有中断。</li>
+</ul>
+<p>除了降低噪音，攻击者还可以提高攻击的精度，大体策略有： </p>
+<ul>
+<li><strong>高精度时钟</strong>：可以采用APIC(advanced programmable interrupt controller)提供的高精度时钟和硬件 TSC(time stamp counter)； </li>
+<li><strong>放大时间差异</strong>：比如，攻击者可以配置侧信道攻击代码所在的CPU以最高频率运行，而对enclave所在的CPU进行降频处理． </li>
+</ul>
+<p>可以进行细粒度的监控．最小粒度可以做到一个Cache line，即64个字节。可以获得更多的信息。</p>
+<p>相关研究：</p>
+<ul>
+<li>《Last-Level cache side—channel aaacks are practical》</li>
+<li>《FLUSH+RELoAD：A high resolution，low noise，L3 cache side—channel attack》</li>
+<li>《ARMageddon：Cache attacks on mobile devices》</li>
+<li>《Flush+Flush：A fast and stealthy cache attack》</li>
+<li>《Cache template attacks：Automating attacks on inclusive last—level caches》</li>
+</ul>
+<h3 id="基于DRAM的攻击"><a href="#基于DRAM的攻击" class="headerlink" title="基于DRAM的攻击"></a>基于DRAM的攻击</h3><p>DRAM的结构：<br>&emsp;&emsp;<img src="http://img.thebetterkong.cn/blog/SGX-Technology-Analysis-and-Research/Typical-DRAM-structure.png" alt="典型DRAM结构">  </p>
+<ul>
+<li>row buffer：用来缓存最近访问过的一个row；</li>
+<li>访问情况：在访问DRAM的时候，如果访问地址已经被缓存在row buffer当中(情况A)，就直接从 buffer里面读取；否则，需要把访问地址对应的整个row都加载到row buffer当中(情况B)．当然，如果row buffer 之前缓存了其他row的内容，还需要先换出row buffer的内容再加载新的row(情况C）。</li>
+<li>A，B，C对应的3种情况，访问速度依次递减(情况A最快，情况C最慢)。 </li>
+</ul>
+<p>通过时间上的差异，攻击者就可以了解当前访问的内存地址是否在row buffer里面以及是否有被换出。   </p>
+<p>不足：</p>
+<ul>
+<li>enclave使用的内存通常都在缓存里面，只有少部分需要从DRAM里面去取： </li>
+<li>DRAM的精度不够。例如，一个页面(4KB)通常分布在4个DRAM row上面，这样，基于DRAM的侧信道攻击的精度就是1KB，仅比基于页表的侧信道攻击好一些，远远不及基于Cache的侧信道攻击的精度； </li>
+<li>DRAM里面存在很难避免的噪音干扰。因为一个DRAM row被很多页面使用，同时，同一个bank不同 ，row的数据读取也会对时间测量造成干扰，使得误报时常发生。</li>
+</ul>
+<p>相关研究：</p>
+<ul>
+<li>《Malware guard extension：Using SGX to conceal cache attacks》用到了基于DRAM的侧信道信息。</li>
+<li>《DRAMA：Exploiting DRAM addressing for cross-CPU attacks》介绍了更多基于DRAM的攻击细节，不过，该文献不是在SGX环境下的攻击。 </li>
+</ul>
+<h3 id="基于CPU内部结构"><a href="#基于CPU内部结构" class="headerlink" title="基于CPU内部结构"></a>基于CPU内部结构</h3><p>CPU内部有大量的结构是在 Enclave 和 non.Enclave 之间共用的。给侧信道攻击提供了大量的攻击面素材。   </p>
+<p>相关研究：</p>
+<ul>
+<li>《Inferring fine-grained control flow inside SGX enclaves with branch shadowing》：<ul>
+<li>提出使用<strong>BPB</strong>来实现侧信道攻击。</li>
+<li><strong>原理</strong>：在 Enclave 和 non-Enclave 切换的时候，BPB里面存留的跳转预测记录并没有被清除。这样使得 non-Enclave 可以构造一个程序，测试这些跳转预测记录。如果预测成功，则执行时问较短；反之，如果预测失败，则执行时间较长。通过时间上的差异，攻击者就可以推测 Enclave 之前运行的跳转分支，进而获得 Enclave 运行的控制流图。通过控制流图，攻击者又可以进一步推测隐私数据，比如加密密钥等。</li>
+<li><strong>强大之处</strong>：它几乎可以还原整个控制流。这样细粒度的信息使得该攻击可以泄露很多信息．该文献也进行了大量实验，充分展示了这个攻击的强大．实验表明，这个攻击可以泄露字符串信息、RSA私钥以及网络数据等等． </li>
+</ul>
+</li>
+</ul>
+<p>SGX可以避免这类侧信道攻击：</p>
+<ul>
+<li>在Enclave到non-Enclave的切换过程中，CPU清除这些共用的内部结构体。这样，non-Enclave就不会得到任何残留的记录。</li>
+<li>注意细节：比如清除的时间也必须是稳定不变的。如果Enclave运行的差异会导致清除操作的时间差异，攻击者很可能据此推导出Enclave的某些运行状态。</li>
+</ul>
+<h3 id="混合侧信道攻击"><a href="#混合侧信道攻击" class="headerlink" title="混合侧信道攻击"></a>混合侧信道攻击</h3><p>典型的做法： </p>
+<ul>
+<li><strong>TLB和页表混合攻击</strong>。比如：TLB miss的时候会加载页表，这个时候CPU会设置页表的Access bit。<ul>
+<li>《Leaky cauldron on the dark land： Understanding memory side—channel hazards in SGX》：在Hyper-Threading的情况下触发大量的TLB miss，再通过观察页表的A bit进行侧信道攻击； </li>
+</ul>
+</li>
+<li><strong>Cache和DRAM混合攻击</strong>。基于DRAM的攻击只能精确到row（一个row通常8KB）的粒度。<ul>
+<li>为了增强这类攻击的效果，《Leaky cauldron on the dark land： Understanding memory side—channel hazards in SGX》：提出了Cache-DRAM攻击来增加空间精度，把精度提高到了一个Cache line(64B)。</li>
+</ul>
+</li>
+</ul>
+<p>3个攻击面(i…e TLB、页表和Cache) 的混合：《Prefetch side—channel attacks：Bypassing SMAP and kernel ASLR》</p>
+<h2 id="SGX侧信道防御"><a href="#SGX侧信道防御" class="headerlink" title="SGX侧信道防御"></a>SGX侧信道防御</h2><p>源码层次解决方案：</p>
+<ul>
+<li>主要思想：通过修改源码，编写出能够防御侧信道的代码实现。</li>
+<li>核心思想：隐藏控制流和数据流． </li>
+<li>运用：<ul>
+<li>密码算法：<ul>
+<li>利用exponent blindingt来增强RSA算法，</li>
+<li>利用bit slicing增强DES和AES算法</li>
+</ul>
+</li>
+<li>机器学习：<ul>
+<li>blivious ML修改了机器学习的算法，使用oblivious assignments and comparisons来隐藏控制流，使用oblivious array access(即：k-anonymity)来隐藏数据流．</li>
+</ul>
+</li>
+<li>《Raccoon：Closing digital side·channels through obfuscated execution》：使用oblivious store隐藏if-else控制流，使用ORAM(oblivious random access memory)来隐藏数据流，从而抵御侧信道攻击</li>
+</ul>
+</li>
+<li>问题：这些技术还很难在一个通用的计算环境下实现，比如loop tripcount，longjump以及break等问题． </li>
+</ul>
+<p>系统层次解决方案：</p>
+<ul>
+<li>主要是利用一些系统特性来防御或检测SGX侧信道攻击。</li>
+<li>思路：<ul>
+<li>随机化技术(randomization)：<ul>
+<li>随机化技术可以应用在控制流和数据流上面，这将大大增加侧信道攻击的代价，防御效果与随机化粒度以及随机化频率有关； </li>
+</ul>
+</li>
+<li>检测可疑异常和中断：<ul>
+<li>《T—SGX：Eradicating controlled—channel attacks against enclave programs》利用TSX技术来检测中断和缺页异常，从而抵御最原始的controlled-channel攻击。但是现在已经出现不需要触发AEX的侧信道攻击； </li>
+</ul>
+</li>
+<li>检测时间异常：<ul>
+<li>目前，《Detecting privileged side—channel attacks in shielded execution with Deja Vu》：Deja Vu系统也使用了TSX技术来保护Enclave自己的时钟。如果攻击者中断或减缓Enclave的运行，Enclave就可以通过自己的时钟检测出时间上的异常。目前，绝大多数侧信道攻击都会引起Enclave的性能显著下降。因此，检测时间异常还是一个比较有效的方案： </li>
+</ul>
+</li>
+<li>Cache隔离：<ul>
+<li>目前，Intel推出了CAT技术，允许对Cache进行粗粒度的隔离。这个技术已经被使用在云计算平台上面防御侧信道攻击。但是还没有看到在SGX环境里面的应用。把CAT应用到SGX的一个很大的障碍是Enclave在用户空间无法有效地检测或验证CAT的配置。</li>
+<li>《CATalyst：Debating last-level cache side channel attacks in cloud computing》</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>硬件层次解决方案：</p>
+<ul>
+<li>硬件层次的解决方案还处于探索阶段。</li>
+<li>加入侧信道防御，将会显著增加硬件复杂度，影响功耗和性能。这也可能是Intel在最初推出SGX的时候没有加入侧信道防御的一个原因。</li>
+<li>硬件解决方案可能有以下两种：<ul>
+<li>硬件分割(partition)：类似于ARM里面的TrustZone，有自己的Cache，memory等一系列硬件资源，物理上与non-enclave分离；</li>
+<li>硬件隔离(isolation)：类似于Intel CAT技术，可以单独为每一个enclave提供一个动态隔离出的Cache。 当enclave销毁的时候，隔离出的Cache可以被收回。这里一个很重要的要求：enclave必须可以验证这个功能的有效性。</li>
+</ul>
+</li>
+<li>Sanctum已经做了一些尝试，但是还不够彻底，还会遭受攻击。<ul>
+<li>《Sanctum：Minimal hardware extensions for strong software isolation》</li>
+<li>《Software grand exposure：SGX cache attacks arepractical》</li>
+</ul>
+</li>
+</ul>
+<h2 id="SGX多线程同步漏洞"><a href="#SGX多线程同步漏洞" class="headerlink" title="SGX多线程同步漏洞"></a>SGX多线程同步漏洞</h2><p>《AsyncShock：Exploiting synchronisation bugs in Intel SGX enclaves》：</p>
+<ul>
+<li>展示了在使用SGX后以往被视为无害的同步漏洞可能会变为严重的安全漏洞。通过在enclave代码中利用UAF(use．after-free)和TOCTTOU(time．of-check．to．time．of-use)漏洞，一个攻击者可以劫持它的控制流或者绕过访问控制。</li>
+<li>提出AsyncShock，一个利用运行于SGX的多线程代码的同步漏洞的工具。AsyncShock只能通过操作用于执行enclave代码的线程调度来达到这一的目标．它允许一个攻击者通过在enclave页强制分割错误来中断线程。</li>
+</ul>
+<h1 id="SGX在云安全中的应用进展"><a href="#SGX在云安全中的应用进展" class="headerlink" title="SGX在云安全中的应用进展"></a>SGX在云安全中的应用进展</h1><p>（这里是对当前的一些研究进行概述总结，想进一步了解可以再去详细阅读列举的论文）</p>
+<h2 id="基于SGX构建云端应用安全隔离执行环境"><a href="#基于SGX构建云端应用安全隔离执行环境" class="headerlink" title="基于SGX构建云端应用安全隔离执行环境"></a>基于SGX构建云端应用安全隔离执行环境</h2><p>云环境采用传统分层安全模型来保护特权程序免受不可信用户程序的攻击，但却无法保证其不被特权软件访问和篡改。于是云环境下的用户只能被动地相信云服务供应商的硬件和软件的可靠性，以及管理人员不会去窃取自己的私密数据。   </p>
+<p>目前，保护云计算环境安全的三种方法：</p>
+<ol>
+<li>基于特定的硬件保护关键的秘密信息：如密钥的安全。该方法难以保证整个应用程序的安全，且密钥通常会以明文的形式在不可信节点上使用；</li>
+<li>基于可信的VMM(virtual machine manager)来保护应用程序：该方法需要整个VMM可信，并且无法防止特权用户窃取用户隐私数据；</li>
+<li>基于密文数据的计算：如密文检索，但该方法在性能方面存在局限性． </li>
+</ol>
+<p>《Shielding applications from all untrusted cloud with haven》利用SGX的方案：</p>
+<ul>
+<li>方案基于<strong>Drawbridge沙箱机制</strong>，为用户程序的运行提供了一个<strong>Picoprocess容器</strong>，从而保证运行在里面的用户程序无法对外界系统造成破坏；再在容器中创建一个Enclave。 </li>
+<li>将<strong>用户程序、System Library和Shield module</strong>放进Enclave中，以防止这些数据和代码被外界的特权软件或恶意程序访问和篡改。<ul>
+<li>System Library：通过Downcalls和Upcalls的方式与Drawbridge主机进行交互，用来完成用户程序需要的系统功能。（由于操作系统自身可能是不可信的，因此方案中设计了一个SystemLibrary库，用来将操作系统的系统调用进行封装，并在应用程序运行时将其一起放到enclave中供应用程序使用，System Library自身实现了全部的系统调用 ）</li>
+<li>Shield module：为了保护用户程序和System Library的代码和数据不被enclave外的恶意软件攻击。（该模块通过仔细地检查参数和函数调用的返回值来进行保护。Shield module自身包含了一些典型的内核函数： 内存管理、进程调度、文件系统操作等）</li>
+</ul>
+</li>
+</ul>
+<h2 id="基于SGX构建安全容器"><a href="#基于SGX构建安全容器" class="headerlink" title="基于SGX构建安全容器"></a>基于SGX构建安全容器</h2><p>现有的容器隔离机制专注于保护其免受不可信容器的访问，然而租户需要保护应用程序数据的机密性和完整性，以防止未经授权的其他容器，或更高级的系统软件(如操作系统内核和管理程序等)访问。这便需要有硬件机制能够保护用户级软件免受特权级系统软件的影响。   </p>
+<p>用SGX来构建安全容器面临着两个挑战：</p>
+<ul>
+<li>尽量减少enclave中可信计算基的大小；</li>
+<li>尽量减少性能开销．</li>
+</ul>
+<p>《SCONE：Secure Linux containers with Intel SGX》提出SCONE：</p>
+<ul>
+<li>一种用于Docker的安全容器环境，其利用Inter CPU提供的SGX机制来保护Docker容器内进程免受外部攻击。</li>
+<li>SCONE的设计主要实现了： <ol>
+<li>一个较小的可信计算基； </li>
+<li>更低的性能消耗：SCONE提供了一个安全C语言静态库接口用于透明的加解密I／O数据；降低了因线程同步和系统调用导致的高性能消耗；支持用户级线程和异步系统调用。</li>
+</ol>
+</li>
+<li>实验评估表明：SCONE能够通过SGX保护未被修改的应用程序。并实现0．6～1．2倍的吞吐量． </li>
+</ul>
+<h2 id="基于SGX构建云端大数据安全可信计算环境"><a href="#基于SGX构建云端大数据安全可信计算环境" class="headerlink" title="基于SGX构建云端大数据安全可信计算环境"></a>基于SGX构建云端大数据安全可信计算环境</h2><ul>
+<li>目前大数据处理最成功的计算技术：MapReduce</li>
+<li>大数据计算通常会租用公共计算设施，如：公有云</li>
+</ul>
+<p>目前的大数据安全方法：</p>
+<ul>
+<li>目前，对于大数据安全通常采用的是基于密码的保护机制，如全同态加密机制、安全多方计算或零知识证明的机制，然而这些方式目前都因受到性能的制约而没有大规模实用。</li>
+<li>另外一些方法，如数据库加密机制，如：CtrptDB和Cipherbase，只能对数据库进行保护，却不能保护计算中的代码和数据。</li>
+</ul>
+<p>《VC3: Trustworthy Data Analytics in the Cloud using SGX》基于SGX技术提出方案，其中关键问题：</p>
+<ul>
+<li>利用SGX构建最小可信计算基：<ul>
+<li>为增加方案的实用性，本方法需要运行在未修改过的Hadoop上，因此系统的可信计算基不包括Hadoop，OS 和hypervisor．用户编写map和reduce代码，并且将它们进行加密，之后上传到云端．在每一个工作节点上，云操作系统将这些代码加载进一个隔离的enclave中之后，enclave内的代码会执行密钥交换协议，解密出map和reduce 函数，从而运行分布式计算处理用户数据． </li>
+</ul>
+</li>
+<li>保证整个分布式计算的完整性：<ul>
+<li>SGX只能在本地计算节点上为程序和数据构建安全执行环境，如何在分布式大数据处理过程中确保代码和数据的安全可信是需要解决的关键问题．本方案提出了一个<strong>高效的分布式作业执行协议</strong>来保证MapReduce作业的正确性和机密性．每个计算节点为正在运行的程序产生一个安全的摘要信息，之后再将这些摘要进行收集整合，通过验证最后结果中的最终摘要信息，用户可以检查云服务提供商是否干扰了计算的执行． </li>
+</ul>
+</li>
+<li>保护用户程序免受非法内存访问攻击： <ul>
+<li>SGX技术允许用户程序访问系统的全部地址空间，因此，不安全的内存访问可能会泄露数据或者带来其他的安全威胁．如何限制enclave内部程序的内存访问，减轻由于应用程序本身的缺陷而导致其遭受非法内存访问攻击，是需要解决的一个问题．该项目<strong>基于GCC开发了安全增强的编译器</strong>，在代码编译过程中增加额外参数，将其地址空间限定在有效范围内，从而有效地将需要保证完整性的代码放到一个独立的区域中，并且对该区域中变量的读写访问都将进行检查．只有通过检查，才能真正访问到用户数据． </li>
+</ul>
+</li>
+</ul>
+<h2 id="基于SGX技术实现NFV的状态保护"><a href="#基于SGX技术实现NFV的状态保护" class="headerlink" title="基于SGX技术实现NFV的状态保护"></a>基于SGX技术实现NFV的状态保护</h2><ul>
+<li><strong>网络功能虚拟化(network function virtualization，简称NFV)</strong>：通过软硬件解耦及功能抽象，使网络设备功能不再依赖于专用硬件，资源可以充分灵活共享，实现新业务的快速开发和部署，并基于实际业务需求进行自动部署、弹性伸缩、故障隔离和自愈等。</li>
+<li><strong>NFV网元</strong>是有状态的，例如，内容分发网络从远程服务器缓存浏览器内容并且把它们发送至客户端．类似地，入侵检测系统和入侵防御系统都有逐流或者多流(共享)状态来应对入侵．在现今NFV的部署方式中，攻击者可以通过访问共享的物理资源来窃取网络应用的状态信息。</li>
+<li>《S-NFV：Securing NFV states by using SGX》提出一种保护方案(S．NFV)，即是利用SGX对NFV产生的状态进行安全隔离保护．但该方案较简单，仅在模拟环境 OpenSGX中验证了保护Snort[26】应用程序流状态安全的方案． </li>
+</ul>
+<h1 id="Intel-SGX的优势与不足"><a href="#Intel-SGX的优势与不足" class="headerlink" title="Intel SGX的优势与不足"></a>Intel SGX的优势与不足</h1><p>主要有3大优势：</p>
+<ul>
+<li>通过内存加密技术保护程序运行态的安全，使得通过内存泄漏攻击获取关键信息的难度增大；</li>
+<li>将系统的可信计算基缩小到CPU，相比以往将整个操作系统或特权软件(如hypervisor等)视为可信计算基，可以避免更多的系统攻击带来的危害；</li>
+<li>支持虚拟化技术、容器技术，可用性更强；</li>
+</ul>
+<p>不足之处：</p>
+<ul>
+<li>由于enclave处于用户态，其自身无法执行系统调用，需要与不可信区域进行交互(运行库的支持有限，接口的安全性)。在执行系统调用前需要退出enclave，执行完成后将结果返回到enclave中，增大了安全风险和系统开销；</li>
+<li>Enclave中的数据和处理过程，如果依赖于外部数据，则存在一定的安全隐患。例如：通过一些不合法输入，可以发起对可信区的缓冲区溢出攻击，这些攻击可能会改变可信区中程序的执行流程、获取可信区中的敏感信息；</li>
+<li>SGX本身无法抵御侧信道攻击； </li>
+<li>SGX提供的enclave可使用内存太小，当程序数量和规模增大时，需要换进换出页面．为了保证安全性， 需要对页面进行完整性和机密性保障，导致系统开销大； </li>
+<li>使用SGX提供的enclave时需要对程序进行改造，当程序规模大时，带来的编程成本高；</li>
+</ul>
+<h1 id="SGX研究和应用需求展望："><a href="#SGX研究和应用需求展望：" class="headerlink" title="SGX研究和应用需求展望："></a>SGX研究和应用需求展望：</h1><ul>
+<li>可信计算与SGX技术的结合</li>
+<li>利用SGX技术构建可信云安全环境</li>
+<li>利用SGX技术构建虚拟网元可信执行环境</li>
+<li>利用SGX技术构建面向云的可信外包计算<ul>
+<li>传统的密文检索方法目前只能在密文数据上实现简单的计算，性能制约</li>
+</ul>
+</li>
+<li>SGX与ORAM（不经意随机存储，效率低）的结合</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/02/14/Literature-reading-notes/SGX-Technology-Analysis-and-Research/" title="《SGX技术的分析和研究》阅读笔记">http://www.thebetterkong.cn/2020/02/14/Literature-reading-notes/SGX-Technology-Analysis-and-Research/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Computer-Architecture/" rel="tag"><i class="fa fa-tag"></i> Computer Architecture</a>
+              <a href="/tags/SGX/" rel="tag"><i class="fa fa-tag"></i> SGX</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/2020/02/21/Computer-Architecture/CA-Introduction/" rel="next" title="Computer Architecture：绪论">
+      Computer Architecture：绪论 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#SGX的技术背景"><span class="nav-number">1.</span> <span class="nav-text">SGX的技术背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#SGX架构及技术分析"><span class="nav-number">2.</span> <span class="nav-text">SGX架构及技术分析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#SGX整体架构"><span class="nav-number">2.1.</span> <span class="nav-text">SGX整体架构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#处理器保留内存：PRM（processor-reserved-memory）"><span class="nav-number">2.2.</span> <span class="nav-text">处理器保留内存：PRM（processor reserved memory）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Enclave容器"><span class="nav-number">2.3.</span> <span class="nav-text">Enclave容器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Enclave保护机制"><span class="nav-number">2.4.</span> <span class="nav-text">Enclave保护机制</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#内存访问语义"><span class="nav-number">2.4.1.</span> <span class="nav-text">内存访问语义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#地址映射保护EPCM-enclave-page-cache-map"><span class="nav-number">2.4.2.</span> <span class="nav-text">地址映射保护EPCM(enclave page cache map)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Enclave机密性和完整性保护"><span class="nav-number">2.4.3.</span> <span class="nav-text">Enclave机密性和完整性保护</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SGX认证"><span class="nav-number">2.5.</span> <span class="nav-text">SGX认证</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#平台内部enclave间的认证"><span class="nav-number">2.5.1.</span> <span class="nav-text">平台内部enclave间的认证</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#平台间的远程认证"><span class="nav-number">2.5.2.</span> <span class="nav-text">平台间的远程认证</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SGX程序机密性"><span class="nav-number">2.6.</span> <span class="nav-text">SGX程序机密性</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#SGX的漏洞及防御"><span class="nav-number">3.</span> <span class="nav-text">SGX的漏洞及防御</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#威胁模型"><span class="nav-number">3.1.</span> <span class="nav-text">威胁模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#侧信道攻击面"><span class="nav-number">3.2.</span> <span class="nav-text">侧信道攻击面</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#侧信道攻击"><span class="nav-number">3.3.</span> <span class="nav-text">侧信道攻击</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#基于页表"><span class="nav-number">3.3.1.</span> <span class="nav-text">基于页表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基于TLB"><span class="nav-number">3.3.2.</span> <span class="nav-text">基于TLB</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基于cache"><span class="nav-number">3.3.3.</span> <span class="nav-text">基于cache</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基于DRAM的攻击"><span class="nav-number">3.3.4.</span> <span class="nav-text">基于DRAM的攻击</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基于CPU内部结构"><span class="nav-number">3.3.5.</span> <span class="nav-text">基于CPU内部结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#混合侧信道攻击"><span class="nav-number">3.3.6.</span> <span class="nav-text">混合侧信道攻击</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SGX侧信道防御"><span class="nav-number">3.4.</span> <span class="nav-text">SGX侧信道防御</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SGX多线程同步漏洞"><span class="nav-number">3.5.</span> <span class="nav-text">SGX多线程同步漏洞</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#SGX在云安全中的应用进展"><span class="nav-number">4.</span> <span class="nav-text">SGX在云安全中的应用进展</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#基于SGX构建云端应用安全隔离执行环境"><span class="nav-number">4.1.</span> <span class="nav-text">基于SGX构建云端应用安全隔离执行环境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基于SGX构建安全容器"><span class="nav-number">4.2.</span> <span class="nav-text">基于SGX构建安全容器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基于SGX构建云端大数据安全可信计算环境"><span class="nav-number">4.3.</span> <span class="nav-text">基于SGX构建云端大数据安全可信计算环境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基于SGX技术实现NFV的状态保护"><span class="nav-number">4.4.</span> <span class="nav-text">基于SGX技术实现NFV的状态保护</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Intel-SGX的优势与不足"><span class="nav-number">5.</span> <span class="nav-text">Intel SGX的优势与不足</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#SGX研究和应用需求展望："><span class="nav-number">6.</span> <span class="nav-text">SGX研究和应用需求展望：</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本节主要介绍一些动态调度技术，重点关注 Tomasulo 算法，以及动态流水线中的例外处理，要了解「乱序执行，顺序结束」的原则。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Computer Architecture：动态调度">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-DynamicScheduling/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="本节主要介绍一些动态调度技术，重点关注 Tomasulo 算法，以及动态流水线中的例外处理，要了解「乱序执行，顺序结束」的原则。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/VectorAddConstant.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/VectorAddConstant1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/VectorAddConstant2.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/VectorAddConstant3.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/VectorAddConstant4.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/VectorAddConstant5.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/VectorAddConstant6.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/SolutionWAWWAR.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/RegisterRename.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/TomasuloStructure.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/TomasuloExample.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/ROBStructure.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/CompareROB.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/ROBExample1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/ROBExample2.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/ADDxception1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/ADDxception2.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/Godson1ROB.png">
+<meta property="article:published_time" content="2020-02-21T07:11:08.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:26:11.916Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="Computer Architecture">
+<meta property="article:tag" content="国科大研究生课程笔记">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/VectorAddConstant.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-DynamicScheduling/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Computer Architecture：动态调度 | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-DynamicScheduling/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Computer Architecture：动态调度
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-02-21 15:11:08" itemprop="dateCreated datePublished" datetime="2020-02-21T15:11:08+08:00">2020-02-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:26:11" itemprop="dateModified" datetime="2020-08-14T17:26:11+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">计算机体系结构</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/02/21/Computer-Architecture/CA-DynamicScheduling/" class="post-meta-item leancloud_visitors" data-flag-title="Computer Architecture：动态调度" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/02/21/Computer-Architecture/CA-DynamicScheduling/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/02/21/Computer-Architecture/CA-DynamicScheduling/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本节主要介绍一些动态调度技术，重点关注 Tomasulo 算法，以及动态流水线中的例外处理，要了解「乱序执行，顺序结束」的原则。</p>
+<a id="more"></a> 
+<h1 id="影响指令流水线的因素"><a href="#影响指令流水线的因素" class="headerlink" title="影响指令流水线的因素"></a>影响指令流水线的因素</h1><h2 id="影响因素"><a href="#影响因素" class="headerlink" title="影响因素"></a>影响因素</h2><ul>
+<li><strong>运行时间 = 程序指令数 * CPI （每条指令时钟周期数）</strong></li>
+<li><strong>Pipeline CPI=Ideal pipeline CPI + Structural stalls + RAW stalls + WAR stalls + WAW stalls + Control stalls</strong>   </li>
+</ul>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>技术</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>循环展开</td>
+<td>Control stalls</td>
+</tr>
+<tr>
+<td>编译相关性分析</td>
+<td>Ideal CPI and data stalls</td>
+</tr>
+<tr>
+<td>软件流水技术</td>
+<td>Ideal CPI and data stalls</td>
+</tr>
+<tr>
+<td>简单流水线</td>
+<td>RAW stalls</td>
+</tr>
+<tr>
+<td>记分板动态调度</td>
+<td>RAW stalls</td>
+</tr>
+<tr>
+<td>寄存器重命名</td>
+<td>WAR and WAW</td>
+</tr>
+<tr>
+<td>动态转移预测</td>
+<td>Control stalls</td>
+</tr>
+<tr>
+<td>多发射</td>
+<td>Ideal CPI</td>
+</tr>
+<tr>
+<td>猜测执行</td>
+<td>All data and control stalls</td>
+</tr>
+<tr>
+<td>非阻塞访存</td>
+<td>RAW stall involving memory</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="程序的相关性"><a href="#程序的相关性" class="headerlink" title="程序的相关性"></a>程序的相关性</h2><p>程序的相关性容易引起流水线堵塞，可以通过软件和硬件的方法避免堵塞或降低堵塞的影响；</p>
+<ul>
+<li>编译调度：如循环展开</li>
+<li>乱序执行：需要等待的指令不影响其他指令</li>
+</ul>
+<ol>
+<li><p><strong>数据相关</strong>：（真相关）：导致 RAW</p>
+<ul>
+<li>定义：指令 j 数据相关于指令 i，指令 j 使用了指令i产生的结果；</li>
+<li>传递性：指令 j 数据相关于指令 k，指令 k 数据相关于指令 i，则指令 j 数据相关于指令 i；</li>
+<li>数据相关的指令不能并行执行；</li>
+<li>寄存器的数据相关比较容易判断；存储器的数据相关不容易判断。</li>
+<li>例子：  <figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">100</span>(<span class="built_in">R4</span>) = <span class="number">20</span>(<span class="built_in">R6</span>)?</span><br><span class="line">//对不同循环体，<span class="number">20</span>(<span class="built_in">R6</span>) = <span class="number">20</span>(<span class="built_in">R6</span>)?</span><br><span class="line"><span class="symbol">Loop:</span> LD F0, <span class="number">0</span>(<span class="built_in">R1</span>)</span><br><span class="line">ADDD F4,F0,F2</span><br><span class="line">SUBI <span class="built_in">R1</span>,<span class="built_in">R1</span>,<span class="number">8</span></span><br><span class="line">BNEZ <span class="built_in">R1</span>,<span class="keyword">Loop</span> //<span class="comment">;delayed branch</span></span><br><span class="line">SD <span class="number">8</span>(<span class="built_in">R1</span>),F4  //<span class="comment">;altered when move past SUBI</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p><strong>名字相关</strong>：会导致 WAW 和 WAR</p>
+<ul>
+<li>定义：两条指令使用相同名字（寄存器或存储器），但不交换数据；<ul>
+<li>类型：<ul>
+<li>逆相关（Antidependence）：指令 j 写指令 i 所读的存储单元且 i 先执行，逆相关会导致流水线 WAR 相关</li>
+<li>输出相关（Output Dependence）：指令 j 与指令 i 写同一个单元且 i 先执行，输出相关会导致流水线 WAW 相关</li>
+</ul>
+</li>
+<li>寄存器的名字相关可以通过寄存器重命名（Register Renaming）解决，存储单元的重命名比较困难；</li>
+<li>例子：<ul>
+<li><code>100(R4) = 20(R6)?</code></li>
+<li>对不同循环体，<code>20(R6) = 20(R6)?</code></li>
+<li>在前述例子中，编译器必须知道 <code>0(R1)!=-8(R1)!=-16(R1)!=-24(R1)</code></li>
+</ul>
+</li>
+<li>RISC 技术极大地简化了指令之间的相关性；</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>控制相关</strong>：条件转移</p>
+</li>
+</ol>
+<h1 id="指令调度技术"><a href="#指令调度技术" class="headerlink" title="指令调度技术"></a>指令调度技术</h1><h2 id="编译器的静态调度"><a href="#编译器的静态调度" class="headerlink" title="编译器的静态调度"></a>编译器的静态调度</h2><ol>
+<li>编译器分析程序中的相关性，并针对目标流水线进行代码优化，以避免程序执行时由于相关引起阻塞；</li>
+<li>特点：<ul>
+<li>相关不一定引起阻塞，只要隔开足够远；</li>
+<li>在一个流水线上引起阻塞，在另一个流水线上不一定引起阻塞，所以编译优化与机器有关；</li>
+</ul>
+</li>
+<li>循环展开技术：<ul>
+<li>硬件流水：并行不同指令；</li>
+<li>软件流水：并行循环体的不同的迭代；</li>
+</ul>
+</li>
+<li>例子：向量的每个元素加常数<br> <img src="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/VectorAddConstant.png" alt="VectorAddConstant"><ul>
+<li><strong>初始</strong>时，每次循环需要 9 拍：<br>  <img src="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/VectorAddConstant1.png" alt="VectorAddConstant1"></li>
+<li><strong>改变指令次序</strong>每次循环需要 6 拍：（注意把 SD 放在 Delay Slot 中，偏移量的变化）<br>  <img src="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/VectorAddConstant2.png" alt="VectorAddConstant2"></li>
+<li><strong>循环展开</strong> 4 次：假设 R1 的值是 4 的倍数（注意把 SD 偏移量的变化）<br>  <img src="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/VectorAddConstant3.png" alt="VectorAddConstant3"></li>
+<li><strong>寄存器重命名</strong>：（每 4个 循环需要 $15 + 4 \times (1+2) = 27$ 拍，每个循环 6.8 拍）<br>  <img src="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/VectorAddConstant4.png" alt="VectorAddConstant4"></li>
+<li><strong>改变指令次序</strong>：<ul>
+<li>注意把 SD 与 SUBI 交换次序时偏移量的变化；</li>
+<li>注意 SD 与 LD 交换次序不会影响正确性；</li>
+<li>每 4 个循环需要 14 拍，每个循环 3.5 拍；<br><img src="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/VectorAddConstant5.png" alt="VectorAddConstant5"></li>
+</ul>
+</li>
+<li><strong>增加发射宽度</strong>：<ul>
+<li>循环展开 5 次 ；</li>
+<li>定点和浮点并行；</li>
+<li>5 个循环需要 12 拍，每个循环 2.4 拍；<br><img src="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/VectorAddConstant6.png" alt="VectorAddConstant6"></li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="软件调度与硬件调度"><a href="#软件调度与硬件调度" class="headerlink" title="软件调度与硬件调度"></a>软件调度与硬件调度</h2><ol>
+<li><p><strong>问题</strong>：既然软件可以在保持程序正确性的前提前改变指令的执行次序来提高性能，硬件能不能做到呢？</p>
+<ul>
+<li>可以做到，但要有特定的机制保证程序行为不被改变</li>
+<li>关键是程序的数据和结构相关性得以保持</li>
+</ul>
+</li>
+<li><p><strong>软件调度与硬件调度的比较</strong>：</p>
+<ul>
+<li>软件调度范围大，可在上万条指令的范围内进行调度；硬件一般只能在百条指令的范围内进行调度；</li>
+<li>硬件调度可以掌握一些软件编译时还不明确的相关性信息，尤其是对访存相关以及控制相关；</li>
+</ul>
+</li>
+</ol>
+<h1 id="动态调度技术"><a href="#动态调度技术" class="headerlink" title="动态调度技术"></a>动态调度技术</h1><h2 id="静态流水线的问题"><a href="#静态流水线的问题" class="headerlink" title="静态流水线的问题"></a>静态流水线的问题</h2><ol>
+<li><p>在译码阶段把指令“隔开”来解决相关:</p>
+<ul>
+<li>只要有一条指令停止，后面指令就不能前进，像是一种译码部件的结构相关</li>
+</ul>
+</li>
+<li><p>对编译要求高，最好是编译把相关指令隔开：</p>
+<ul>
+<li>有些信息在译 1 码时难以确定，如是否发生例外、访存操作需要多少周期等；</li>
+<li>例如：   <figure class="highlight mips"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">DIVD </span>f0,f2,f4</span><br><span class="line"><span class="keyword">ADDD </span>f10,f0,f8</span><br><span class="line"><span class="keyword">SUBD </span>f12,f8,f14</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="动态调度思想"><a href="#动态调度思想" class="headerlink" title="动态调度思想"></a>动态调度思想</h2><ol>
+<li><p>基本思想：</p>
+<ul>
+<li>把相关的解决尽量往后拖延（<strong>Forward 技术？</strong>）</li>
+<li>前面指令的等待不影响后面指令继续前进；</li>
+</ul>
+</li>
+<li><p>把译码分成两个阶段：发射和读操作数：</p>
+<ul>
+<li>发射：指令译码，检查结构相关；</li>
+<li>读操作数：如果操作数准备好就读数，否则等待（<strong>在哪儿等？</strong>） </li>
+<li>当一条指令在读操作数阶段等待时，后面指令的发射可以继续进行；</li>
+</ul>
+</li>
+<li><p>乱序执行的基本做法：</p>
+<ul>
+<li>指令进入是有序的</li>
+<li>执行可以乱序，只要没有相关就可执行，多条指令同时执行</li>
+<li>结束也是有序的（<strong>怎么把乱序变成有序？</strong>）</li>
+</ul>
+</li>
+<li><p>与静态调度相比：</p>
+<ul>
+<li>有些相关编译无法检测、编译器更加简单、程序性能对机器依赖少  <figure class="highlight mips"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">DIVD </span>f0,f2,f4</span><br><span class="line"><span class="keyword">ADDD </span>f10,f0,f8</span><br><span class="line"><span class="keyword">SUBD </span>f8,f8,f14</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="解决-WAW-和-WAR-的办法"><a href="#解决-WAW-和-WAR-的办法" class="headerlink" title="解决 WAW 和 WAR 的办法"></a>解决 WAW 和 WAR 的办法</h2><p>例子：<br><img src="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/SolutionWAWWAR.png" alt="SolutionWAWWAR"></p>
+<p>可能执行次序：（假设只考虑 RAW 相关）</p>
+<ul>
+<li>DIV发射，F1, F2都准备好</li>
+<li>MUL1发射，F6没准备好，所以没有读数据</li>
+<li>ADD发射， F3, F4都准备好</li>
+<li>MUL2发射，F8没有准备好，所以没有读数据</li>
+<li>ADD完成，F0写回</li>
+<li>F6准备好，MUL1读数据</li>
+<li>DIV完成，F0写回</li>
+<li>F8准备好，MUL2读数据</li>
+</ul>
+<p>为了避免 MUL1 读回 ADD 写的 F0 值，MUL2 读回 DIV 写的 F0 值：</p>
+<ul>
+<li><p><strong>做法一：计分板方法</strong></p>
+<ul>
+<li><strong>方法</strong>：控制在 MUL 读 F0 之前 ADD 不能写回，在 DIV 写回之前 ADD 不能写回；</li>
+<li><strong>问题本质</strong>：F0 成为瓶颈，它必须保证 DIV 写、MUL1 读、ADD 写、MUL2 读的串行次序；</li>
+<li><strong>真正相关</strong>：MUL1 用 DIV 的结果，MUL2 用 ADD 的结果，F0 最终的结果为 ADD 的结果；</li>
+<li>在写回寄存器前，forward 到下一条指令直接使用：MUL1 用 DIV 的结果、MUL2 用 ADD 结果不一定通过 F0；</li>
+</ul>
+</li>
+<li><p><strong>做法二</strong>：</p>
+<ul>
+<li><strong>方法</strong>：在 MUL1 的输入端指定只接收 DIV 的输出值，在 MUL2 的输入端指定只接收 ADD 的输出值，相当于 DIV 直接把结果写到 MUL1 的输入端，ADD 直接把结果写到 MUL2 的输入端。（记得 Forward 技术吗？）</li>
+<li><strong>要求</strong>：<ul>
+<li>DIV 的输出连到 MUL1 的输入，ADD 的输出连接到 MUL2 的输入;</li>
+<li>MUL1 和 MUL2 的输入端有寄存器，这些寄存器能够指定接收哪个部件的输出作为自己的值；</li>
+</ul>
+</li>
+<li><strong>为了避免F0的最终值为DIV所写的值：</strong><ul>
+<li>可以在 F0 记录它当前接收哪个功能部件所写的值；</li>
+<li>要求 F0 有一个标志；</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>上述方法要求：</p>
+<ul>
+<li>每个功能部件的输入端有一些寄存器；</li>
+<li>每个寄存器（包括功能部件输入端的寄存器以及通用寄存器）都记录一个功能部件号，指定它当前接收哪个功能部件的值；</li>
+<li>每个功能部件的输出接到每个功能部件的输入；</li>
+</ul>
+</li>
+<li><p><strong>有了上述功能，WAR 和 WAW 相关不用阻塞</strong>；</p>
+</li>
+<li><strong>寄存器重命名技术</strong>：<br>  <img src="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/RegisterRename.png" alt="RegisterRename"></li>
+</ul>
+<h1 id="Tomasulo-算法"><a href="#Tomasulo-算法" class="headerlink" title="Tomasulo 算法"></a>Tomasulo 算法</h1><p><mark><strong>通过寄存器重命名消除WAR和WAW相关</strong></mark></p>
+<h2 id="历史"><a href="#历史" class="headerlink" title="历史"></a>历史</h2><ol>
+<li><p>IBM 360/91中首次使用：</p>
+<ul>
+<li>1966 年，比CDC 6600 晚 3 年 </li>
+<li>Robert Tomasulo 提出</li>
+<li>设计目标：编译器在 360 系列中通用</li>
+</ul>
+</li>
+<li><p>主要思想现代处理器中普遍使用：</p>
+<ul>
+<li>早期 Alpha 21264, HP 8000, MIPS 10000, Pentium II, PowerPC 604, …</li>
+<li>现在 Intel、AMD、IBM 的几乎所有 CPU</li>
+</ul>
+</li>
+</ol>
+<h2 id="Tomasulo-算法结构"><a href="#Tomasulo-算法结构" class="headerlink" title="Tomasulo 算法结构"></a>Tomasulo 算法结构</h2><p><img src="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/TomasuloStructure.png" alt="TomasuloStructure"></p>
+<ol>
+<li><p><strong>保留站内容</strong>：</p>
+<ul>
+<li>Busy: 忙位</li>
+<li>Op：操作码</li>
+<li>Vj, Vk: 源操作数的值</li>
+<li>Qj, Qk: 保存没有准备好的源操作数保留站号（0 表示操作数已经准备好）</li>
+</ul>
+</li>
+<li><p>寄存器增加一个域：</p>
+<ul>
+<li><strong>结果状态域</strong>：空表示寄存器值可用，否则保存产生寄存器结果的保留站号</li>
+</ul>
+</li>
+<li><p><strong>结果总线</strong>：</p>
+<ul>
+<li>除了送回结果值外，还要送回产生该结果的保留站号</li>
+</ul>
+</li>
+</ol>
+<h2 id="Tomasulo-算法的流水阶段"><a href="#Tomasulo-算法的流水阶段" class="headerlink" title="Tomasulo 算法的流水阶段"></a>Tomasulo 算法的流水阶段</h2><ol>
+<li><p><strong>发射</strong>：把操作队列的指令根据操作类型送到保留站（如果保留站有空），发射过程中读寄存器的值和结果状态域。</p>
+</li>
+<li><p><strong>执行</strong>：如果所需的操作数都准备好，则执行，否则侦听结果总线并接收结果总线的值。</p>
+</li>
+<li><p><strong>写回</strong>：把结果送到结果总线，释放保留站。</p>
+</li>
+</ol>
+<h2 id="举例"><a href="#举例" class="headerlink" title="举例"></a>举例</h2><p><img src="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/TomasuloExample.png" alt="TomasuloExample"></p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><ol>
+<li><p>通过动态调度缓解流水线阻塞：</p>
+<ul>
+<li>例如：减少 CACHE 失效对性能的影响</li>
+</ul>
+</li>
+<li><p>保留站：重命名寄存器 + 缓存源操作数</p>
+<ul>
+<li>避免寄存器成为瓶颈</li>
+<li>避免 WAW 和 WAR 阻塞</li>
+</ul>
+</li>
+<li><p>缺点：</p>
+<ul>
+<li>硬件复杂性</li>
+<li>结果总线成为瓶颈，多条结果总线增加硬件复杂度</li>
+</ul>
+</li>
+<li><p>在IBM 360/91 后被广泛使用：</p>
+<ul>
+<li>动态调度、寄存器重命名等思想一直被使用：Pentium II; PowerPC 604; MIPS R10000; HP-PA 8000; Alpha 21264</li>
+</ul>
+</li>
+</ol>
+<h1 id="动态流水线的例外处理"><a href="#动态流水线的例外处理" class="headerlink" title="动态流水线的例外处理"></a>动态流水线的例外处理</h1><h2 id="例外（Exception）与流水线"><a href="#例外（Exception）与流水线" class="headerlink" title="例外（Exception）与流水线"></a>例外（Exception）与流水线</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>例外类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>I/O 请求</td>
+<td>外部中断</td>
+</tr>
+<tr>
+<td>指令例外</td>
+<td>用户请求中断：系统调用、断点、跟踪调试指令</td>
+</tr>
+<tr>
+<td>运算部件</td>
+<td>整数运算溢出、浮点异常</td>
+</tr>
+<tr>
+<td>存储管理部件</td>
+<td>访存地址不对齐、用户访问系统空间、TLB失效、缺页、存储保护错（写只读页）</td>
+</tr>
+<tr>
+<td>保留指令错</td>
+<td>未实现指令</td>
+</tr>
+<tr>
+<td>硬件错</td>
+<td></td>
+</tr>
+<tr>
+<td>………</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="动态流水线的精确例外处理"><a href="#动态流水线的精确例外处理" class="headerlink" title="动态流水线的精确例外处理"></a>动态流水线的精确例外处理</h2><p><strong>精确例外的要求：</strong></p>
+<ul>
+<li>在处理例外时，发生例外指令前面的所有指令都执行完，例外指令后面的所有指令还未执行；</li>
+</ul>
+<p><strong>非精确例外的原因：</strong></p>
+<ul>
+<li>在乱序执行时，前面的指令发生例外时，后面的指令已经执行完并修改了寄存器或存储单元；<ul>
+<li>（记分板和 Tomasulo 算法中都是非精确例外）</li>
+</ul>
+</li>
+<li>只要保证后面指令修改机器状态时，前面的指令都已经不会发生例外即可；</li>
+<li>例子：<pre><code class="lang-mips">  DIVF f0,f2,f4
+  ADDF f10,f10,f8
+  SUBF f12,f12,f14
+</code></pre>
+<ul>
+<li>以上例子，没有任何相关，ADDF 和 SUBF 指令可以比 DIVF 先结束。如果在 ADDF 结束后 DIVF 发生例外，此时无法恢复例外现场；</li>
+</ul>
+</li>
+</ul>
+<h2 id="硬件支持动态流水线的精确例外处理"><a href="#硬件支持动态流水线的精确例外处理" class="headerlink" title="硬件支持动态流水线的精确例外处理"></a>硬件支持动态流水线的精确例外处理</h2><p><strong>实现精确例外处理的一个办法：</strong></p>
+<ul>
+<li>把后面指令对机器状态的修改延迟到前面指令都已经执行完：<ul>
+<li>有些指令在 EX 阶段也修改机器状态，如运算指令修改结果状态</li>
+<li>在执行阶段停止流水线会影响后面的指令执行</li>
+</ul>
+</li>
+</ul>
+<p><strong>具体做法：</strong></p>
+<ul>
+<li>可以用一些缓冲器来临时保存执行结果，当前面所有指令执行完后, 再把保存在缓冲器中的结果写回到寄存器或存储器：<ul>
+<li>在流水线修改机器状态时（在执行或写回阶段）写到缓冲器</li>
+<li>增加提交（Commit）阶段，把缓冲器的内容写回到寄存器或存储器</li>
+<li>提交阶段只有前面指令都结束后才能进行</li>
+<li><strong>有序提交：乱序执行，有序结束</strong></li>
+<li>所用的缓冲器通常被称为 Reorder Buffer（ROB）</li>
+</ul>
+</li>
+<li>猜测执行中也可用上述机制：都是在某些情况不确定的情况下先执行，但留有反悔的余地</li>
+</ul>
+<h2 id="指令重排序缓存-Reorder-Buffer-（ROB）"><a href="#指令重排序缓存-Reorder-Buffer-（ROB）" class="headerlink" title="指令重排序缓存 Reorder Buffer （ROB）"></a>指令重排序缓存 Reorder Buffer （ROB）</h2><ol>
+<li><p><strong>ROB 内容</strong>：目标地址（存数地址或寄存器号）、 值、 操作类型</p>
+</li>
+<li><p>写回时写回到 ROB, 因此后面指令有可能从 ROB 读操作数；</p>
+</li>
+<li><p>使用 ROB 号作为重命名号（原来使用保留站号）， 一条指令的结果寄存器被重命名为其结果 ROB 号 ：</p>
+<ul>
+<li>保留站重命名源寄存器号</li>
+<li>ROB 重命名结果寄存器号</li>
+</ul>
+</li>
+<li><p>提交时把结果写回寄存器或存储器；</p>
+</li>
+<li><p>只要一条指令没有提交, 它就不会对寄存器或存储器的内容进行修改，在一条指令没有提交之前很容易取消该指令（由于前面指令发生了例外或由于猜测执行不正确）；</p>
+</li>
+<li><p>ROB 可以和 Write Buffer 合并；</p>
+</li>
+</ol>
+<p><strong>增加Reorder Buffer的流水线：</strong></p>
+<ul>
+<li>「<strong>发射</strong>」：把操作队列的指令根据操作类型送到保留站（如果<u>保留站以及 ROB 有空</u>），并<u>在 ROB 中指定一项作为临时保存该指令结果</u>之用；发射过程中读寄存器的值和结果状态域，<u>如果结果状态域指出结果寄存器已被重命名到 ROB，则读 ROB</u>。</li>
+<li>「<strong>执行</strong>」：如果所需的操作数都准备好，则执行，否则根据结果 ROB 号侦听结果总线并接收结果总线的值。</li>
+<li>「<strong>写回</strong>」：把结果送到结果总线，释放保留站；<u>ROB 根据结果总线修改相应项</u>。</li>
+<li>「<strong>提交</strong>」：<u>如果队列中第一条指令的结果已经写回且没有发生例外，把该指令的结果从 ROB 写回到寄存器或存储器，释放 ROB 的相应项。如果队列头的指令发生了例外或是猜测错误的转移指令，清除操作队列以及 ROB 等</u>。<br>  <img src="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/ROBStructure.png" alt="ROBStructure"></li>
+</ul>
+<p><strong>对比</strong>：没有 Reorder Buffer 的流水线<br><img src="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/CompareROB.png" alt="CompareROB"></p>
+<p><strong>例子：</strong><br><img src="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/ROBExample1.png" alt="ROBExample1"><br><img src="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/ROBExample2.png" alt="ROBExample2">    </p>
+<h2 id="假设-ADD-发生了溢出例外"><a href="#假设-ADD-发生了溢出例外" class="headerlink" title="假设 ADD 发生了溢出例外"></a>假设 ADD 发生了溢出例外</h2><p><img src="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/ADDxception1.png" alt="ADDxception1"><br><img src="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/ADDxception2.png" alt="ADDxception2"></p>
+<h2 id="龙芯-1-号把-ROB-和队列合并"><a href="#龙芯-1-号把-ROB-和队列合并" class="headerlink" title="龙芯 1 号把 ROB 和队列合并"></a>龙芯 1 号把 ROB 和队列合并</h2><p><img src="http://img.thebetterkong.cn/blog/CA-DynamicScheduling/Godson1ROB.png" alt="Godson1ROB"></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><ul>
+<li>有序进入、乱序执行（允许超车）、有序结束</li>
+<li>主要数据结构：<ul>
+<li>保留站（发射队列）把有序变成乱序，<strong>临时存指令</strong></li>
+<li>重命名寄存器用于保存未提交的临时结果，<strong>临时存数据</strong></li>
+<li>ROB 把乱序重新变成有序</li>
+</ul>
+</li>
+<li>乱序的能力和有关队列大小紧密相关</li>
+<li>现代高性能 CPU 一般都有 100 条以上指令在流水线中乱序执行</li>
+</ul>
+<h1 id="补：Meltdown攻击的基本原理（幽灵、熔断漏洞）"><a href="#补：Meltdown攻击的基本原理（幽灵、熔断漏洞）" class="headerlink" title="补：Meltdown攻击的基本原理（幽灵、熔断漏洞）"></a>补：Meltdown攻击的基本原理（幽灵、熔断漏洞）</h1><ul>
+<li>攻击者在<strong>用户态执行</strong>一条<strong>访问系统空间的load指令，发生例外</strong>，相关例外信息存在 ROB 中，访问数据 X（假设为一个字节）目标寄存器为 R1，重命名到 PR1，返回值存到 PR1，由于提交时会被取消。</li>
+<li>攻击者<strong>读取 R1 并从 PR1 中读到内容 X</strong>，作为下标访问一个事先准备好的<strong>用户态数组 A，A 中被访问的的数据带到 Cache 中，其它数据仍在内存</strong>。</li>
+<li>非法 load 指令成为 ROB 头指令，load 指令及其后续指令被取消，<strong>但 A[x] 内容已经在 Cache</strong>。</li>
+<li>攻击者<strong>访问数组 A 的所有数据并判断其延迟，其中有一个数据在 Cache 中，延迟最短</strong>，假设数组 A 第 10号 元素访问延迟最短，则 X=10。<ul>
+<li>侧信道攻击</li>
+</ul>
+</li>
+<li>Meltdown 攻击确实由乱序执行引起，但很容易规避。<ul>
+<li>Load 操作执行阶段发生例外时，在 ROB 中置例外，但不要把返回值写入寄存器</li>
+</ul>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-DynamicScheduling/" title="Computer Architecture：动态调度">http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-DynamicScheduling/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Computer-Architecture/" rel="tag"><i class="fa fa-tag"></i> Computer Architecture</a>
+              <a href="/tags/%E5%9B%BD%E7%A7%91%E5%A4%A7%E7%A0%94%E7%A9%B6%E7%94%9F%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 国科大研究生课程笔记</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/02/21/Computer-Architecture/CA-StaticPipeline/" rel="prev" title="Computer Architecture：静态流水线">
+      <i class="fa fa-chevron-left"></i> Computer Architecture：静态流水线
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/02/21/Computer-Architecture/CA-MultiDataChannel/" rel="next" title="Computer Architecture：多发数据通路">
+      Computer Architecture：多发数据通路 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#影响指令流水线的因素"><span class="nav-number">1.</span> <span class="nav-text">影响指令流水线的因素</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#影响因素"><span class="nav-number">1.1.</span> <span class="nav-text">影响因素</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#程序的相关性"><span class="nav-number">1.2.</span> <span class="nav-text">程序的相关性</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#指令调度技术"><span class="nav-number">2.</span> <span class="nav-text">指令调度技术</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#编译器的静态调度"><span class="nav-number">2.1.</span> <span class="nav-text">编译器的静态调度</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#软件调度与硬件调度"><span class="nav-number">2.2.</span> <span class="nav-text">软件调度与硬件调度</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#动态调度技术"><span class="nav-number">3.</span> <span class="nav-text">动态调度技术</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#静态流水线的问题"><span class="nav-number">3.1.</span> <span class="nav-text">静态流水线的问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#动态调度思想"><span class="nav-number">3.2.</span> <span class="nav-text">动态调度思想</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#解决-WAW-和-WAR-的办法"><span class="nav-number">3.3.</span> <span class="nav-text">解决 WAW 和 WAR 的办法</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Tomasulo-算法"><span class="nav-number">4.</span> <span class="nav-text">Tomasulo 算法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#历史"><span class="nav-number">4.1.</span> <span class="nav-text">历史</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Tomasulo-算法结构"><span class="nav-number">4.2.</span> <span class="nav-text">Tomasulo 算法结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Tomasulo-算法的流水阶段"><span class="nav-number">4.3.</span> <span class="nav-text">Tomasulo 算法的流水阶段</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#举例"><span class="nav-number">4.4.</span> <span class="nav-text">举例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#小结"><span class="nav-number">4.5.</span> <span class="nav-text">小结</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#动态流水线的例外处理"><span class="nav-number">5.</span> <span class="nav-text">动态流水线的例外处理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#例外（Exception）与流水线"><span class="nav-number">5.1.</span> <span class="nav-text">例外（Exception）与流水线</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#动态流水线的精确例外处理"><span class="nav-number">5.2.</span> <span class="nav-text">动态流水线的精确例外处理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#硬件支持动态流水线的精确例外处理"><span class="nav-number">5.3.</span> <span class="nav-text">硬件支持动态流水线的精确例外处理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#指令重排序缓存-Reorder-Buffer-（ROB）"><span class="nav-number">5.4.</span> <span class="nav-text">指令重排序缓存 Reorder Buffer （ROB）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#假设-ADD-发生了溢出例外"><span class="nav-number">5.5.</span> <span class="nav-text">假设 ADD 发生了溢出例外</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#龙芯-1-号把-ROB-和队列合并"><span class="nav-number">5.6.</span> <span class="nav-text">龙芯 1 号把 ROB 和队列合并</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#补：Meltdown攻击的基本原理（幽灵、熔断漏洞）"><span class="nav-number">7.</span> <span class="nav-text">补：Meltdown攻击的基本原理（幽灵、熔断漏洞）</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

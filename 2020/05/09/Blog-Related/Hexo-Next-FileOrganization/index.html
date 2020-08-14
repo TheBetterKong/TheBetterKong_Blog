@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="最开始接触 Blog，总会遇到各种各样大大小小的问题，但是在网络上查找各种解决办法的时候，往往都是只告诉了你怎么做，却没有说为什么？我们也就机械化的进行ctrl+c，ctrl+v，这是十分不可取的。因此本着「授人以鱼不如授人以渔」的想法，决定对整个  Hexo 和 Next 的文件组织进行一波系统的整理，既便于我们维护管理，也可以更好更官方的进行 Blog 主题优化。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hexo &amp; Next 的配置，做自己的主人">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/05/09/Blog-Related/Hexo-Next-FileOrganization/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="最开始接触 Blog，总会遇到各种各样大大小小的问题，但是在网络上查找各种解决办法的时候，往往都是只告诉了你怎么做，却没有说为什么？我们也就机械化的进行ctrl+c，ctrl+v，这是十分不可取的。因此本着「授人以鱼不如授人以渔」的想法，决定对整个  Hexo 和 Next 的文件组织进行一波系统的整理，既便于我们维护管理，也可以更好更官方的进行 Blog 主题优化。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/Hexo-Next-FileOrganization/head1.png">
+<meta property="article:published_time" content="2020-05-09T08:48:14.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:25:28.114Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="Blog">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/Hexo-Next-FileOrganization/head1.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/05/09/Blog-Related/Hexo-Next-FileOrganization/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Hexo & Next 的配置，做自己的主人 | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/05/09/Blog-Related/Hexo-Next-FileOrganization/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Hexo & Next 的配置，做自己的主人
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-05-09 16:48:14" itemprop="dateCreated datePublished" datetime="2020-05-09T16:48:14+08:00">2020-05-09</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:25:28" itemprop="dateModified" datetime="2020-08-14T17:25:28+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Blog-%E7%9B%B8%E5%85%B3/" itemprop="url" rel="index"><span itemprop="name">Blog 相关</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/05/09/Blog-Related/Hexo-Next-FileOrganization/" class="post-meta-item leancloud_visitors" data-flag-title="Hexo & Next 的配置，做自己的主人" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/05/09/Blog-Related/Hexo-Next-FileOrganization/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/05/09/Blog-Related/Hexo-Next-FileOrganization/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <div align="center"> <img src="http://img.thebetterkong.cn/blog/Hexo-Next-FileOrganization/head1.png" width="100%" alt="header.png" /> </div>    
+
+<p>最开始接触 Blog，总会遇到各种各样大大小小的问题，但是在网络上查找各种解决办法的时候，往往都是只告诉了你怎么做，却没有说为什么？我们也就机械化的进行<kbd>ctrl+c</kbd>，<kbd>ctrl+v</kbd>，这是十分不可取的。因此本着「授人以鱼不如授人以渔」的想法，决定对整个  Hexo 和 Next 的文件组织进行一波系统的整理，既便于我们维护管理，也可以更好<strong>更官方</strong>的进行 Blog 主题优化。</p>
+<a id="more"></a> 
+<h1 id="Hexo-篇"><a href="#Hexo-篇" class="headerlink" title="Hexo 篇"></a>Hexo 篇</h1><h2 id="什么是-Hexo？"><a href="#什么是-Hexo？" class="headerlink" title="什么是 Hexo？"></a>什么是 Hexo？</h2><p>这是官方解释：</p>
+<blockquote>
+<p>Hexo 是一个快速、简洁且高效的博客框架。Hexo 使用 Markdown（或其他渲染引擎）解析文章，在几秒内，即可利用靓丽的主题生成静态网页。   </p>
+</blockquote>
+<p>安装（详细过程这里就不再阐述）：</p>
+<ul>
+<li>安装 <code>Git</code>，分散式版本控制软件</li>
+<li>安装 <code>Node.js</code>，一个基于 Chrome V8 引擎的 JavaScript 运行时</li>
+<li>使用 <code>npm</code> 安装 <code>Hexo</code>，npm 是 node.js 的包管理器</li>
+</ul>
+<h2 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h2><p>这里是从官网上摘录的一些我们日常中经常使用的命令：</p>
+<ul>
+<li><code>hexo init [folder]</code>：新建一个网站。<ul>
+<li>如果没有设置 folder ，Hexo 默认在目前的文件夹建立网站。</li>
+</ul>
+</li>
+<li><code>hexo new [layout] &lt;title&gt;</code>：新建一篇文章；<ul>
+<li>如果没有设置 layout 的话，默认使用 _config.yml 中的 default_layout 参数代替；</li>
+<li>如果标题包含空格的话，请使用引号括起来；</li>
+<li><code>hexo publish [layout] &lt;filename&gt;</code>：发表草稿</li>
+</ul>
+</li>
+<li><code>hexo g</code>：生成静态文件；<ul>
+<li><code>hexo g -f</code>：效果接近 <code>hexo clean &amp;&amp; hexo generate</code></li>
+</ul>
+</li>
+<li><code>hexo d</code>：部署网站<ul>
+<li>常用组合：<code>hexo g -d</code></li>
+</ul>
+</li>
+<li><code>hexo server</code>:启动服务器。<ul>
+<li>默认情况下，访问网址为： <a href="http://localhost:4000/" target="_blank" rel="noopener">http://localhost:4000/</a></li>
+</ul>
+</li>
+<li><code>hexo clean</code>：清除缓存文件 (db.json) 和已生成的静态文件 (public)<ul>
+<li>在某些情况（尤其是更换主题后），如果发现您对站点的更改无论如何也不生效，您可能需要运行该命令</li>
+</ul>
+</li>
+</ul>
+<h2 id="文件组织结构"><a href="#文件组织结构" class="headerlink" title="文件组织结构"></a>文件组织结构</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ hexo init &lt;folder&gt;</span><br><span class="line">$ cd &lt;folder&gt;</span><br><span class="line">$ npm install</span><br></pre></td></tr></table></figure>
+<p>Hexo 在指定文件夹中初始化完毕后，会出现如下文件结构：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">.</span><br><span class="line">├── _config.yml</span><br><span class="line">├── package.json</span><br><span class="line">├── scaffolds</span><br><span class="line">├── source</span><br><span class="line">|   ├── _drafts</span><br><span class="line">|   └── _posts</span><br><span class="line">└── themes</span><br></pre></td></tr></table></figure><br>在后面的实际使用过程中还会创建一些其他文件或文件夹，后面都会进行说明。</p>
+<h3 id="config-yml"><a href="#config-yml" class="headerlink" title="_config.yml"></a>_config.yml</h3><p>网站的配置信息，在此修改大部分的配置参数； </p>
+<ul>
+<li>这里直接查看内容，就能理解大部分的配置内容，如果实有不懂，更建议可查看官方文档，如下；</li>
+</ul>
+<p>详见：『<a href="https://hexo.io/zh-cn/docs/configuration" target="_blank" rel="noopener">配置 | Hexo</a>』</p>
+<h3 id="package-json"><a href="#package-json" class="headerlink" title="package.json"></a>package.json</h3><p>应用程序的信息。可以查看 hexo 的版本以及安装的扩展版本。</p>
+<h3 id="scaffolds"><a href="#scaffolds" class="headerlink" title="scaffolds"></a>scaffolds</h3><p>模版 文件夹。当新建文章时，Hexo 会根据 scaffold 来建立文件。<br>详见：『<a href="https://hexo.io/zh-cn/docs/templates.html" target="_blank" rel="noopener">模版 | Hexo</a>』</p>
+<h3 id="source"><a href="#source" class="headerlink" title="source"></a>source</h3><p>资源 文件夹是存放用户资源的地方。</p>
+<h4 id="posts-文件夹"><a href="#posts-文件夹" class="headerlink" title="_posts 文件夹"></a>_posts 文件夹</h4><p>存放博客文章的地方，其中的 Markdown 文件、Html 文件、org 文件等会被解析并放到 public 文件夹，发布到站点。</p>
+<ul>
+<li>建议在这个文件夹下，<strong>按照文章分类创建子文件夹</strong>（按分类正常命名即可，不要加_(下划线)，便于文章过多时进行管理和维护；</li>
+</ul>
+<h4 id="其他开头命名为-下划线-的-文件-文件夹-和隐藏的文件"><a href="#其他开头命名为-下划线-的-文件-文件夹-和隐藏的文件" class="headerlink" title="其他开头命名为 _ (下划线)的 文件/文件夹 和隐藏的文件"></a>其他开头命名为 _ (下划线)的 文件/文件夹 和隐藏的文件</h4><p>会被忽略；</p>
+<ul>
+<li>建议在 source 目录下：</li>
+<li>创建 _drafts 目录：存放未完成的草稿，其中内容不会发布到网站；<ul>
+<li>可以再在这个目录下创建个子目录 img，便于 blog 草稿书写时利用 <code>./img/picturename.png</code> 引用本地图片，然后可以直接将整个文件夹上传至图床，然后再用匹配，一键替换 <code>./img</code> 为完整的图床 url；</li>
+</ul>
+</li>
+<li>创建 _images 目录：图片一般会用图床，但是这样可以保存文章里的图片备份，后期可以上传到 coding 等平台进行 Blog 备份，避免数据丢失；</li>
+</ul>
+<h4 id="其他文件-文件夹"><a href="#其他文件-文件夹" class="headerlink" title="其他文件/文件夹"></a>其他文件/文件夹</h4><p>会被拷贝到 public 目录并上传到站点；</p>
+<ul>
+<li>如果要添加新的页面（例如：about），执行 <code>hexo new page PageName</code> 命令即会在 source 中自动新建子目录 <code>PageName</code> </li>
+</ul>
+<h3 id="themes"><a href="#themes" class="headerlink" title="themes"></a>themes</h3><p>主题 文件夹。默认安装 landscape 主题，可以安装新主题到 themes 目录，也可以自己新建主题。   </p>
+<p>这也是我们下面要讨论的 Next 主题文件存放的文件夹；</p>
+<h3 id="deploy-git"><a href="#deploy-git" class="headerlink" title=".deploy_git"></a>.deploy_git</h3><p>在部署到 github 后自动创建：</p>
+<ul>
+<li>此目录中的内容 == github 站点中对应 repository 中的内容 == 最近一次上传到站点的public目录中的内容</li>
+</ul>
+<p>因此，该目录的结构和 public 目录基本一致；</p>
+<ul>
+<li>不一致的情况是由于重新生成，但是没有发布站点造成，此时 public 内容新于 .deploy_git 内容；</li>
+</ul>
+<h3 id="node-modules"><a href="#node-modules" class="headerlink" title="node_modules"></a>node_modules</h3><p>存放安装的 Hexo 扩展；</p>
+<ul>
+<li>Hexo 会默认安装一些扩展，在使用过程中自己安装的扩展也会在此新建目录；</li>
+</ul>
+<h3 id="public"><a href="#public" class="headerlink" title="public"></a>public</h3><p>存放生成的静态网页内容；</p>
+<ul>
+<li>执行 <code>hexo g</code> 命令，Hexo 程序会解析 source 、当前使用的 theme，将生成的静态网页内容保存到 piblic；</li>
+<li>执行 <code>hexo d</code> 则将该目录内容复制到 .deploy_git 目录，然后由 Hexo 的部署插件 hexo-deployer-git 根据 _config.yml 里的 deploy 配置，完成上传；</li>
+</ul>
+<h3 id="git-和-gitignore"><a href="#git-和-gitignore" class="headerlink" title=".git 和 .gitignore"></a>.git 和 .gitignore</h3><p>这个主要是用于 Blog 源资源的备份，防止电脑故障后数据丢失，也便于 Blog 的迁移；</p>
+<ul>
+<li>直接在 coding（这个源文件往往比较大，coding速度快） 新建仓库，然后在本地 blog 源文件夹下初始化，生成 .git；</li>
+<li>.gitignore：整个 Blog 源文件夹下，往往有许多文件是不需要我们去备份的，于是，我们就把这些不需要备份的文件/文件夹写到这里；</li>
+</ul>
+<h3 id="db-json"><a href="#db-json" class="headerlink" title="db.json"></a>db.json</h3><blockquote>
+<p>db-json 是完全在 json 中的数据库。数据库，查询和结果都是 json 数据。它在客户端和服务器端均可使用。<br>数据库结构化，表由类型化字段组成，并带有可选验证（模式，长度，范围）<br>该库在浏览器和节点上均可使用。<br>dabase 的 json 代码是人类可读的，并且可以方便地在手边进行编辑。 如果发生任何错误，则在使用该 json 代码实例化新的 Database 对象时将检测到它们。</p>
+</blockquote>
+<h3 id="package-lock-json"><a href="#package-lock-json" class="headerlink" title="package-lock.json"></a>package-lock.json</h3><p>package-lock.json 是在 <code>npm install</code> 时候生成一份文件，用以记录当前状态下实际安装的各个 npm package 的具体来源和版本号；</p>
+<p>以下是引用的知乎@周载南的解释：</p>
+<blockquote>
+<ul>
+<li>因为 npm 是开源世界，各库包的版本语义可能并不相同，有的库包开发者并不遵守严格这一原则：相同大版本号的同一个库包，其接口符合兼容要求。</li>
+<li>这时候用户就很头疼了：在完全相同的一个 node.js 的代码库，在不同时间或者不同 npm 下载源之下，下到的各依赖库包版本可能有所不同，因此其依赖库包行为特征也不同有时候甚至完全不兼容；</li>
+<li>因此 npm 最新的版本就开始提供自动生成 package-lock.json 功能，为的是让开发者知道只要你保存了源文件，到一个新的机器上、或者新的下载源，只要按照这个 package-lock.json 所标示的具体版本下载依赖库包，就能确保所有库包与你上次安装的完全一样。</li>
+</ul>
+</blockquote>
+<p>所以也就是说，原先的 package.json 只能帮助我们锁定大版本号（即：第一位），但是由于有的库包开发者并没有严格遵守规则，从而可能出现大版本号下的小版本不兼容等问题，让我们在更新或者迁移到新机器进行环境安装时出现各式各样的问题，package-lock.json 由此赢然而生，当我们每次安装一个依赖的时候就锁定在你安装的这个版本。</p>
+<h1 id="NexT-篇"><a href="#NexT-篇" class="headerlink" title="NexT 篇"></a>NexT 篇</h1><p>首先要说的是，很多人在网上查找的 NexT 主题安装和配置教程都比较早，他们给出的 NexT 地址是 「 <a href="https://github.com/iissnan/hexo-theme-next" target="_blank" rel="noopener">https://github.com/iissnan/hexo-theme-next</a> 」，但这个项目在 2017 的时候就宣布不再维护了，之后 2018-2019 年将 NexT 的地址变更为：「 <a href="https://github.com/theme-next/hexo-theme-next" target="_blank" rel="noopener">https://github.com/theme-next/hexo-theme-next</a> 」，<strong>2020 年最新的地址为：</strong>「 <a href="https://github.com/next-theme/hexo-theme-next" target="_blank" rel="noopener">https://github.com/next-theme/hexo-theme-next</a> 」     </p>
+<p>经过不断的版本迭代，NexT 目前已经提供了非常丰富的配置来满足使用者的个性化需求，在配置主题时，如果你像我一样对前端不是特别擅长，那么我更<strong>推荐使用官方推荐的方式配置主题，多挖掘博客自带的功能，尽可能少得修改源码</strong>。    </p>
+<p>我使用的 NexT 版本号为 7.8.0，请先到 themes -&gt; Next -&gt; package.json 里查看一下你的 NexT 版本，酌情考虑升级。新版本的官方主题配置内容会比以前会丰富，也更加简单。</p>
+<h2 id="安装和使用"><a href="#安装和使用" class="headerlink" title="安装和使用"></a>安装和使用</h2><p>直接到你的 Blog 的 themes 文件夹下 git clone 整个 NexT 仓库即可；<br>官方给出的教程：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ cd hexo</span><br><span class="line">$ git clone https:&#x2F;&#x2F;github.com&#x2F;next-theme&#x2F;hexo-theme-next themes&#x2F;next</span><br></pre></td></tr></table></figure></p>
+<p>下载后，打开 Hexo 站点配置文件，找到 theme 部分，然后将其值更改为 next（或另一个主题目录名称）；使用 <code>hexo clean</code> 清理缓存，然后 <code>hexo s</code> ，就可以去验证主题了。</p>
+<h2 id="文件组织结构-1"><a href="#文件组织结构-1" class="headerlink" title="文件组织结构"></a>文件组织结构</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">.</span><br><span class="line">├── .github         # git 信息</span><br><span class="line">├── docs            # 官方的一些文档说明信息，不用管</span><br><span class="line">├── languages        # 多语言，我们常关注的是下面几个个</span><br><span class="line">|   ├── default.yml    # 默认语言</span><br><span class="line">|   └── zh-CN.yml      # 简体中文</span><br><span class="line">|   └── zh-HK.yml      # 繁体中文</span><br><span class="line">|   └── zh-TW.yml      # 繁体中文</span><br><span class="line">├── layout             # 存储相关的布局信息</span><br><span class="line">|   ├── _macro        # 可以自己修改的模板，覆盖原有模板</span><br><span class="line">|   |   ├── post.swig    # 文章模板</span><br><span class="line">|   |   ├── sidebar.swig   # 侧边栏模板</span><br><span class="line">|   |   ├── post-collapse.swig    # 没动过，理解为文章崩溃后显示的模板文件</span><br><span class="line">|   ├── _partial       # 有关文章、标题、页面等更加细节的局部布局，如果不是很懂建议不动</span><br><span class="line">|   ├── _script        # 一些脚本的局部布局</span><br><span class="line">|   ├── _third-party   # 第三方模板</span><br><span class="line">|   ├── _layout.swig   # 主页面模板</span><br><span class="line">|   ├── index.swig     # 一些索引模板</span><br><span class="line">|   ├── archive.swig   # 一些解题实现的模板</span><br><span class="line">|   └── page.swig &#x2F; tag.swig &#x2F; post.swig &#x2F; category.swig    # 相应模块的主控制模板</span><br><span class="line">├── scripts            # script 源码</span><br><span class="line">├── source             # 源码资源</span><br><span class="line">|   ├── css            # *.styl 的 css 源码</span><br><span class="line">|   ├── images         #图片</span><br><span class="line">|   ├── js             # javascript 源代码</span><br><span class="line">|   └── lib            # 其他的库文件</span><br><span class="line">└── _config.yml        # 主题配置文件</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>Stylus 比较年轻，是一个 CSS 的预处理框架，2010 年产生，来自 Node.js 社区，主要用来给 Node 项目进行 CSS 预处理支持，可以创建健壮的、动态的、富有表现力的CSS。默认使用 .styl 的作为文件扩展名，支持多样性的 CSS 语法。  </p>
+<p>SWIG 是一种简化脚本语言与 C/C++ 接口的开发工具。SWIG 是一个通过包装和编译 C/C++ 语言程序来达到与脚本语言通讯目的的工具。推荐个学习地址：『<a href="https://myvin.github.io/swig.zh-CN/docs/index.html" target="_blank" rel="noopener">Swig：一个适用于 Node.js 和浏览器的模板引擎</a>』</p>
+</blockquote>
+<p>看了上面的文件结构后，我们大致就知道所需要修改的信息应该在哪部分。通常，<strong>只需要修改 NexT 的 _config.yml 文件即可</strong>，配置初建议把这个文件都过一遍，然后根据自己的需求更改，里面也会有许多网上可能没提到过的配置。<br>记住不要一味的参照网上各式各样的配置教程，许多时候因为版本不同，配置的方式也不同，可能导致修改许多本没必要的位置，加入杂乱的代码等等，长时间后，我们可能自己都忘了曾经修改过啥，这样十分不利于后期的维护，和 NexT 的更新。</p>
+<h2 id="官方配置教程"><a href="#官方配置教程" class="headerlink" title="官方配置教程"></a>官方配置教程</h2><p>详见：『<a href="https://hexo-theme-next.netlify.app/docs/theme-settings/" target="_blank" rel="noopener">官方配置文档</a>』    </p>
+<p>看完官方文档，发现我的 Blog 也还有一些配置的地方，不说了，我先行一步！别光看了，do it，加油！</p>
+<h1 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h1><ul>
+<li><a href="https://hexo.io/zh-cn/docs/" target="_blank" rel="noopener">Hexo 官方文档</a></li>
+<li><a href="https://yuchen-lea.github.io/2016-01-18-hexo-dir-struct/" target="_blank" rel="noopener">hexo目录结构小探</a></li>
+<li><a href="https://hexo-theme-next.netlify.app/" target="_blank" rel="noopener">NexT 官方博客</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/05/09/Blog-Related/Hexo-Next-FileOrganization/" title="Hexo &amp; Next 的配置，做自己的主人">http://www.thebetterkong.cn/2020/05/09/Blog-Related/Hexo-Next-FileOrganization/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Blog/" rel="tag"><i class="fa fa-tag"></i> Blog</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/05/09/Black%20Hole/Begin-KeepGoing/" rel="prev" title="Begin & KeepGoing">
+      <i class="fa fa-chevron-left"></i> Begin & KeepGoing
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/05/13/FPGA-technology/FPGA-CADTools-Placement/" rel="next" title="FPGA-CAD Tools：Placement">
+      FPGA-CAD Tools：Placement <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Hexo-篇"><span class="nav-number">1.</span> <span class="nav-text">Hexo 篇</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#什么是-Hexo？"><span class="nav-number">1.1.</span> <span class="nav-text">什么是 Hexo？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#常用命令"><span class="nav-number">1.2.</span> <span class="nav-text">常用命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#文件组织结构"><span class="nav-number">1.3.</span> <span class="nav-text">文件组织结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#config-yml"><span class="nav-number">1.3.1.</span> <span class="nav-text">_config.yml</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#package-json"><span class="nav-number">1.3.2.</span> <span class="nav-text">package.json</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#scaffolds"><span class="nav-number">1.3.3.</span> <span class="nav-text">scaffolds</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#source"><span class="nav-number">1.3.4.</span> <span class="nav-text">source</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#posts-文件夹"><span class="nav-number">1.3.4.1.</span> <span class="nav-text">_posts 文件夹</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#其他开头命名为-下划线-的-文件-文件夹-和隐藏的文件"><span class="nav-number">1.3.4.2.</span> <span class="nav-text">其他开头命名为 _ (下划线)的 文件&#x2F;文件夹 和隐藏的文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#其他文件-文件夹"><span class="nav-number">1.3.4.3.</span> <span class="nav-text">其他文件&#x2F;文件夹</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#themes"><span class="nav-number">1.3.5.</span> <span class="nav-text">themes</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#deploy-git"><span class="nav-number">1.3.6.</span> <span class="nav-text">.deploy_git</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#node-modules"><span class="nav-number">1.3.7.</span> <span class="nav-text">node_modules</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#public"><span class="nav-number">1.3.8.</span> <span class="nav-text">public</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#git-和-gitignore"><span class="nav-number">1.3.9.</span> <span class="nav-text">.git 和 .gitignore</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#db-json"><span class="nav-number">1.3.10.</span> <span class="nav-text">db.json</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#package-lock-json"><span class="nav-number">1.3.11.</span> <span class="nav-text">package-lock.json</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#NexT-篇"><span class="nav-number">2.</span> <span class="nav-text">NexT 篇</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#安装和使用"><span class="nav-number">2.1.</span> <span class="nav-text">安装和使用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#文件组织结构-1"><span class="nav-number">2.2.</span> <span class="nav-text">文件组织结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#官方配置教程"><span class="nav-number">2.3.</span> <span class="nav-text">官方配置教程</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考链接"><span class="nav-number">3.</span> <span class="nav-text">参考链接</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

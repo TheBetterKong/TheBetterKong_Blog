@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="ALSR是当今现代软件中防止内存相关安全漏洞的第一道防线，它在受保护进程的虚拟地址空间中选择随机位置放置代码或数据，这给攻击者带来了很大的麻烦。本文提出来一种基于代码高效执行的硬件行为（通过页表的方法实现在MMU中虚拟地址到物理地址的快速转换）的AnC攻击，主要描述了基于现代处理器MMU执行的虚实地址转换的EVICT+Time缓存攻击。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《anc_ndss17》阅读笔记">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/03/15/Literature-reading-notes/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="ALSR是当今现代软件中防止内存相关安全漏洞的第一道防线，它在受保护进程的虚拟地址空间中选择随机位置放置代码或数据，这给攻击者带来了很大的麻烦。本文提出来一种基于代码高效执行的硬件行为（通过页表的方法实现在MMU中虚拟地址到物理地址的快速转换）的AnC攻击，主要描述了基于现代处理器MMU执行的虚实地址转换的EVICT+Time缓存攻击。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/Address-translation.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/Storage-organization.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/cache.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/cache-color.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/timer.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/MMU-activities.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/mem-allocation-strategies.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/success-rate.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/Feasibility.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/Noise.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/Generalization.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/Comparison.png">
+<meta property="article:published_time" content="2020-03-15T08:59:25.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:32:37.386Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="Computer Architecture">
+<meta property="article:tag" content="ASLR">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/Address-translation.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/03/15/Literature-reading-notes/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>《anc_ndss17》阅读笔记 | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/03/15/Literature-reading-notes/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          《anc_ndss17》阅读笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-03-15 16:59:25" itemprop="dateCreated datePublished" datetime="2020-03-15T16:59:25+08:00">2020-03-15</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:32:37" itemprop="dateModified" datetime="2020-08-14T17:32:37+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%96%87%E7%8C%AE%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">文献阅读笔记</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/03/15/Literature-reading-notes/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/" class="post-meta-item leancloud_visitors" data-flag-title="《anc_ndss17》阅读笔记" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/03/15/Literature-reading-notes/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/03/15/Literature-reading-notes/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>ALSR是当今现代软件中防止内存相关安全漏洞的第一道防线，它在受保护进程的虚拟地址空间中选择随机位置放置代码或数据，这给攻击者带来了很大的麻烦。本文提出来一种基于代码高效执行的硬件行为（通过页表的方法实现在MMU中虚拟地址到物理地址的快速转换）的<strong>AnC攻击</strong>，主要描述了基于现代处理器MMU执行的虚实地址转换的<strong>EVICT+Time缓存攻击</strong>。</p>
+<a id="more"></a> 
+<p>『<a href="http://www.cs.vu.nl/~herbertb/download/papers/anc_ndss17.pdf" target="_blank" rel="noopener">论文地址</a>』</p>
+<h1 id="文章大纲"><a href="#文章大纲" class="headerlink" title="文章大纲"></a>文章大纲</h1><ul>
+<li>第二部分介绍威胁模型，第三部分介绍背景和方法，主要详细介绍地址转换和存储架构，并提出了一些挑战和应对措施；</li>
+<li>第四至第六节详细讨论了针对每种挑战的解决方案；</li>
+<li>第七部分中，针对在最新Linux操作系统上运行的Chrome和Firefox评估AnC。（与当时最新的derandomization attacks相比，更快，要求也更低）</li>
+<li>第八章讨论对一些高级防御的影响，并在第九章介绍了一些缓解措施；</li>
+<li>最后其他章节做为结束；</li>
+</ul>
+<h1 id="威胁模型"><a href="#威胁模型" class="headerlink" title="威胁模型"></a>威胁模型</h1><ul>
+<li>假设攻击者可以通过诱使受害者访问恶意网站或破坏受信任的网站来在受害者的浏览器中执行JavaScript代码；</li>
+<li>假设在浏览器中启用了所有常见防御措施（例如DEP），则攻击者旨在通过内存破坏漏洞逃脱JavaScript沙盒；</li>
+<li>为了成功攻破JavaScript沙箱，假设攻击者需要首先破解ASLR，并在地址空间中去随机化一些代码或数据指针的位置（这是针对现代防御的一种常见攻击模型）；</li>
+<li>为此，我们假设攻击者不能依赖临时公开的漏洞或特殊应用程序或OS行为。尽管这里主要是针对JavaScript沙箱，但相同的原理也适用于其他沙箱环境（例如：Google的Native Client）；</li>
+</ul>
+<h1 id="攻击相关的背景知识和方法"><a href="#攻击相关的背景知识和方法" class="headerlink" title="攻击相关的背景知识和方法"></a>攻击相关的背景知识和方法</h1><h2 id="虚拟地址转换"><a href="#虚拟地址转换" class="headerlink" title="虚拟地址转换"></a>虚拟地址转换</h2><p><img src="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/Address-translation.png" alt="地址转换">  </p>
+<p>转换过程：</p>
+<ul>
+<li>在x86上架构，CPU的CR3控制寄存器指向页面表层次结构的最高级别，称为4级或PTL4。虚拟地址的高9位索引单个PTL4页面，在这种情况下选择PTE200。</li>
+<li>此PTE（页表项）索引了第3级页面（即PTL3），虚拟地址索引的后9位查找目标PT条目（这次位于偏移300）。</li>
+<li>重复相同的操作，然后，对于PTL2和PTL1的PT页面，MMU最终可以在PTL1上找到PT上0x644b321f4000的对应物理页面。</li>
+</ul>
+<p>注意，每个PTE将位于cache line中，如图中不同的颜色和样式所示。<mark>X86-64上的每个PTE为8 B，因此，每个64 B的cache line存储8个PTE</mark>。</p>
+<h2 id="存储组织"><a href="#存储组织" class="headerlink" title="存储组织"></a>存储组织</h2><p>在最近的英特尔酷睿微体系结构中，MMU在虚拟地址到物理地址转换期间使用此内存层次结构：<br><img src="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/Storage-organization.png" alt="存储组织"></p>
+<p>Knowledge 1：</p>
+<ul>
+<li>在虚拟机上load和store以及取指令的相关地址是从正在执行的进程的核心发出的。</li>
+<li>MMU在访问数据或指令之前使用TLB执行从虚拟地址到物理地址的转换，这是因为存储数据的cache是用物理地址标记的（即：物理标记的缓存）。</li>
+<li>如果虚拟地址在TLB中，则可以继续执行load/store或取指令。 如果虚拟地址不在TLB中，则MMU需要像我们在之前中讨论的地址转换那样遍历PT并填写TLB。</li>
+<li>TLB可能包含用于不同PTL转换的缓存：<ul>
+<li>例如：如果TLB包括用于PTL2的转换缓存，则MMU仅需要遍历PTL1即可找到目标物理地址。</li>
+</ul>
+</li>
+</ul>
+<p>Knowledge 2：</p>
+<ul>
+<li>在PT遍历期间，MMU在各个PTL上读取PT pages使用的都是他们各自的物理地址；</li>
+<li>MMU使用与内核相同的路径来加载数据，以在转换期间加载PTE。</li>
+<li>于是，每次PT遍历后，<mark>在各个PTL上存储了PTE的cache line在L1 data cache（L1D）里都是可获取的</mark>。</li>
+</ul>
+<h2 id="Cache架构"><a href="#Cache架构" class="headerlink" title="Cache架构"></a>Cache架构</h2><p>本块知识可详细参考本人blog里：《计算机体系结构》-高速缓存   </p>
+<p>CPU的cache组织：</p>
+<ul>
+<li>在英特尔酷睿微体系结构中，CPU缓存分为三个级别：<ul>
+<li>靠近CPU的缓存较小且较快，而远离CPU的缓存较慢，但可以存储大量数据</li>
+<li>第一级有两个高速缓存 <strong>L1D</strong> 和 <strong>L1I</strong> ，分别用于高速缓存数据和指令 </li>
+<li>第二级缓存 <strong>L2</strong> 是数据和指令的统一缓存</li>
+<li>L1和L2对于每个内核都是专用的，但是所有内核都共享 <strong>L3（LLC）</strong></li>
+</ul>
+</li>
+</ul>
+<p>Cache的重要属性：包容性</p>
+<ul>
+<li><mark>L2不包括L1，即L1中存在的数据不一定存在于L2中。 但是，L3包含L1和L2，这意味着如果数据存在于L1或L2中，则它也必须存在于L3中</mark></li>
+</ul>
+<p>Cache架构：</p>
+<ul>
+<li>每个分区（常称为：cache set）只能存储物理内存的一个子集；</li>
+<li>根据缓存体系结构，存储位置的物理地址或虚拟地址决定其cache set；</li>
+<li>常将cache set与wayness联系起来：<ul>
+<li>N路关联cache可以在每个cache set中存储n个项目。然后，替换策略决定在cache set未命中的情况下替换n个项目中的哪一个。 </li>
+<li>例如，Intel Skylake处理器上的L2高速缓存为256 KB，具有4路关联，cache line大小为64 B。 这意味着有1024个cache set，${256 KB}\div(4路×64 B)$，物理地址的第6至16位决定了其相应的cache set（低6位决定了cache line内的偏移量）。</li>
+<li><img src="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/cache.png" alt="cache"></li>
+</ul>
+</li>
+</ul>
+<p>在 Intel Core 微体系结构中，处理器的所有内核都共享LLC，但是微体系结构将其划分为多个片，每个片对应一个内核，其中<mark>每个内核对自己的片的访问比对其他内核的访问要快</mark>。</p>
+<ul>
+<li>每个切片都有不同的 cache set；</li>
+<li>不同于靠物理地址的地位来决定其相应 cache set 的L1和L2，它有一个复杂的寻址功能（基于XOR方案），可以为每个物理内存地址确定分片：<ul>
+<li>例如，一个四核 Skylake i7-6700K 处理器具有一个8 MB 16路关联LLC，cache line大小为64 B，该LLC具有4个片，则每个片具有2048个cache set；</li>
+</ul>
+</li>
+</ul>
+<h2 id="Derandomizing-ASLR"><a href="#Derandomizing-ASLR" class="headerlink" title="Derandomizing ASLR"></a>Derandomizing ASLR</h2><p>如前所述，任何导致TLB丢失的内存访问都需要进行PT遍历，（如果尚未存在）PT遍历会从主内存中读取四个PTE，并将它们存储在L1D中的四个不同的 cache line中：</p>
+<ul>
+<li>如果知道了页面中这些 cache line 的偏移量，就相当于已经完成了对每个PTL的虚拟地址的9位中的6位进行了去随机化处理；</li>
+<li>cache line中PTE的偏移量未知，因此最后三位仍将未知；</li>
+</ul>
+<p>综上所述，为了完成对ASLR去随机化处理，我们就需要解决以下三个问题：</p>
+<ol>
+<li>在PT遍历期间从内存中加载了哪些cache line？</li>
+<li>这些cache line属于哪些页面偏移量？</li>
+<li>这些cache line中的目标PTE的偏移量是多少？ </li>
+</ol>
+<h3 id="Q1-识别host-PTEs的cache-line"><a href="#Q1-识别host-PTEs的cache-line" class="headerlink" title="Q1-识别host PTEs的cache line"></a>Q1-识别host PTEs的cache line</h3><p>由于LLC包含L1D，因此，如果四个PTE cache line位于L1D中，它们也将位于LLC中。</p>
+<ul>
+<li>因此，（假设没有L2条目）我们不需要一个计时器来分辨L1D和LLC之间的差异，只需要一个可以通过从LLC而不是从L1D中驱逐目标cache line的计时器来分辨L1D和内存之间的差异。   </li>
+</ul>
+<p>PTE cache line最多可以位于四个不同的cache set中。</p>
+<ul>
+<li>尽管我们无法通过监视（或控制）LLC上各种cache set的状态来直接识别host PTE的cache line，但是由于在受影响的cache set处的PT遍历，我们可以检测到MMU活动。 </li>
+<li>尽管对cache set上的MMU活动的了解比对cache line的了解要粗，但仍然足以识别页面内PTE cache lines的偏移，如之后所述；</li>
+</ul>
+<h3 id="Q2-识别cache-line的页面偏移量"><a href="#Q2-识别cache-line的页面偏移量" class="headerlink" title="Q2-识别cache line的页面偏移量"></a>Q2-识别cache line的页面偏移量</h3><p>理论：给定两个不同的（物理）内存页面，如果它们的第一个cache line（即，前64 B）属于同一cache set，则它们的其他63个cache line也共享（不同的）cache sets；（一个内存页大小为4KB，占用64个cache line）</p>
+<ul>
+<li>依据：要使第一个cache line位于同一cache set中，那么决定cache set的页和片的物理地址的所有位必须相同，并且内存页面内的偏移量将共享低12位。</li>
+<li><img src="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/cache-color.png" alt="cache color"><ul>
+<li>例如，给定8192的唯一的cache set，这意味着对它们所覆盖的cache set而言，共有128（8192/64）个唯一页面颜色。</li>
+</ul>
+</li>
+</ul>
+<p>则，对于AnC攻击来说，给定已识别的具有PT活动的cache set，我们可以直接确定其页面颜色，更重要的是，确定host了PT条目的cache line的偏移量。</p>
+<h3 id="Q3-识别PT条目的cache-line偏移量"><a href="#Q3-识别PT条目的cache-line偏移量" class="headerlink" title="Q3-识别PT条目的cache line偏移量"></a>Q3-识别PT条目的cache line偏移量</h3><p>在这一阶段，我们已经确定了每个PTL的PTE的cache set。为了完全取消给定虚拟地址的ASLR随机化，我们仍然需要识别:</p>
+<ol>
+<li>cache line（位于标识的cache set内部）内的PTE偏移;</li>
+<li>将每个标识的cache set映射到PTL;</li>
+</ol>
+<p>通过访问与 目标虚拟地址v 分开 x bytes 的页面来实现这两个目标：</p>
+<ul>
+<li>例如：与v分开4 KB，8 KB，…，32 KB的页面（在PTL1上与v分开1至8个PTE），如果我们访问它们，可以确保看到显示MMU活动的四个cache set之一发生更改（即，新的cache set将直接跟随先前的cache set）。</li>
+<li>因此，移动的cache set唯一地标识PTL1上host了 PT条目的cache set，并且发生cache set更改的时间点唯一地标识v的PT条目在其cache line内的偏移量，从而对 PTL1中未知的3个最低有效位进行去随机化处理。</li>
+<li>我们可以应用相同的原理来查找其他PT level的PT入口偏移。我们称此技术为<mark>滑动技术</mark>，并在第V-E节中进一步讨论。</li>
+</ul>
+<h2 id="现代系统的ASLR"><a href="#现代系统的ASLR" class="headerlink" title="现代系统的ASLR"></a>现代系统的ASLR</h2><p>现代Linux系统中与位置无关的可执行文件的映射虚拟区域具有28位的ASLR entropy:</p>
+<ul>
+<li>这意味着PTL1，PTL2和PTL3完全有助于创建27位的entropy，但是只有PTL4中PTE偏移量的最后一位对ASLR entropy有贡献。</li>
+<li>如果我们要标识最后一位，因为它落入了PTE偏移的最低3位（即在cache line内），我们需要在PTL4处设置交叉cache set。 <ul>
+<li>PTL4上的每个PTE映射512 GB的虚拟地址空间，因此，我们需要一个跨越4 TB标记的虚拟映射，以便在PTL4上进行cache更改。请注意，PTL4中的cache set更改也会导致其他级别的缓存集也发生更改。将在第六节中描述如何通过利用各种浏览器中的内存分配器的行为来实现这一目标。</li>
+</ul>
+</li>
+</ul>
+<p>请注意，Linux中ASLR的entropy高于其他流行的操作系统，例如Windows 10，后者仅为堆提供24位的entropy，为可执行文件提供17-19位的entropy。</p>
+<ul>
+<li>这意味着在Windows 10上，PTL4对堆区域不构成ASLR。<ul>
+<li>由于PTL3中的每个条目都覆盖1 GB的内存，因此跨越8 GB的映射将导致PTL3的缓存集发生更改，从而导致ASLR的去随机化。</li>
+</ul>
+</li>
+<li>较低的可执行文件的entropy意味着，仅跨两个较低级别（即16 MB）时，就有可能在Windows 10上对可执行文件位置进行随机化处理。因此本文着重讨论Linux下更难的案例。</li>
+</ul>
+<p>这里说明一下：我理解的所谓的entropy也就是ASLR的地址位数</p>
+<h2 id="挑战与方法"><a href="#挑战与方法" class="headerlink" title="挑战与方法"></a>挑战与方法</h2><p>前面已经讨论了现代x86 64处理器上的内存层次结构以及攻击者可以监控MMU活动以耗尽ASLR entropy的方式。 本文的其余部分围绕着成功实施攻击所需克服的三个主要挑战。   </p>
+<p>这三个问题也会在接下来的三个章节里详细描述。</p>
+<h3 id="C1：计时器精度"><a href="#C1：计时器精度" class="headerlink" title="C1：计时器精度"></a>C1：计时器精度</h3><p>在现代浏览器中由MMU执行时，区分内存访问和缓存访问。 为了对抗来自沙盒JavaScript代码的计时攻击，浏览器降低了可访问计时器的精度，以使攻击者很难（即使不是不可能）观察执行特定操作所花费的时间。</p>
+<ul>
+<li>在JavaScript中创建了一个新的合成计时器，以检测内存和缓存访问之间的差异。</li>
+<li>利用的事实：可用的计时器虽然粗略，但却是精确的，并允许使用CPU内核作为计数器来测量每个操作花费的时间。</li>
+<li>接下来的一章中，会详细介绍作者的设计及其对基于浏览器的定时攻击的影响。</li>
+</ul>
+<h3 id="C2：观察MMU的PT遍历对数据缓存状态的影响"><a href="#C2：观察MMU的PT遍历对数据缓存状态的影响" class="headerlink" title="C2：观察MMU的PT遍历对数据缓存状态的影响"></a>C2：观察MMU的PT遍历对数据缓存状态的影响</h3><p>可以通过JavaScript构建缓存逐出集，以使知名的PRIME + PROBE攻击的末级缓存（LLC）进入已知状态。在典型的PRIME + PROBE攻击中，受害者是在内核上运行的进程，而在我们的攻击中，受害者是行为不同的MMU。</p>
+<ul>
+<li>构建了PRIME + PROBE攻击，以观察MMU对商用英特尔处理器中LLC的修改。</li>
+<li>注意到，在每一轮攻击中监视整个LLC的PRIME PROBE其噪声性质使得很难观察到（微弱）MMU信号，而一种更具针对性和低噪声的EVICT + TIME攻击，它可以一次监视一个cache set，这样就可以可靠地检测到MMU信号。</li>
+<li>接下来第二章中，讨论了用于对JavaScript的堆进行非随机化和ASLR代码的攻击的详细信息</li>
+</ul>
+<h3 id="C3：PTE的区分与识别"><a href="#C3：PTE的区分与识别" class="headerlink" title="C3：PTE的区分与识别"></a>C3：PTE的区分与识别</h3><p>即：区分存储在同一cache line中的多个PTEs，并唯一标识属于不同PTL的PTE。 </p>
+<ul>
+<li>需要确保可以分配和访问跨越足够PTL的虚拟连续缓冲区，以完全解除ASLR的随机化。<ul>
+<li>例如，在用于浏览器堆的64位Linux系统ASLR entropy上，JITed代码为28位，在x86 64处理器上，存在4个PT级别，每个级别提供9位entropy（每个PTL分别存储512个PTE）。因此，我们需要一个跨越所有四个PTL的几乎连续的区域，以实现ASLR的完全去随机化。</li>
+</ul>
+</li>
+<li>接下来第三章中，讨论ASLR⊕Cache如何利用Chrome和Firefox的低级内存管理属性来访问这些区域。</li>
+</ul>
+<h1 id="TIMING-BY-COUNTING"><a href="#TIMING-BY-COUNTING" class="headerlink" title="TIMING BY COUNTING"></a>TIMING BY COUNTING</h1><p>可以在浏览器中利用计时侧信道泄漏敏感信息，例如随机指针或鼠标移动。这些攻击依靠精确的JavaScript计时器来区分通过缓存或主存储器满足的访问之间的区别。为了阻止这些攻击，主要的浏览器供应商降低了计时器的精度。根据作者的测量，Firefox和Chrome都将performance.now（）的精度降低到恰好5µs。   </p>
+<p>因此，作者设计了一个小型的微基准测试，以更好地了解目标浏览器中JavaScript计时器（即performance.now（））的质量。</p>
+<ul>
+<li>该微基准测试测量了我们可以在Performance.now（）的两个后续滴答之间的紧密循环中执行一百次的Performance.now（）的次数。</li>
+<li>根据实验结果：Firefox的performance.now（）恰好在5µs时滴答作响，而Chrome大约在5µs的间隔内引入了一些抖动。降低的精度使我们难以区分需要AnC工作的缓存访问或内存访问（数十纳秒的数量级）之间的差异。</li>
+</ul>
+<p><img src="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/timer.png" alt="timer"></p>
+<ul>
+<li>图4.1：如何使用旧计时器来区分缓存访问或内存访问（CT表示缓存时间，MT表示内存时间）；</li>
+<li>图4.2：在低精度计时器下不再可以通过简单地调用计时器来分辨出差异；</li>
+<li>图4.3：共享内存数（SMC）<ul>
+<li>它依靠一种实验性功能，该功能允许在JavaScript的Web worker2之间共享内存。</li>
+<li>SMC构建了一个高分辨率计数器，该计数器可用于在实现AnC的所有浏览器中可靠地实现AnC。</li>
+<li>Firefox和Chrome当前都支持此功能，但是由于其实验性质，需要对其进行显式启用。</li>
+</ul>
+</li>
+<li>图4.4：滴答时间（TTT）<ul>
+<li>它依赖于当前的低精度性能。</li>
+<li>now（）用于构建计时器，该计时器使我们能够测量缓存的引用和内存引用之间的差异，并允许在Firefox等低抖动浏览器中实现AnC。</li>
+</ul>
+</li>
+</ul>
+<p>接下来介绍两种通过计算执行内存引用花费的时间而不是计时来测量执行内存引用花费的时间的技术。这两种技术都依赖于CPU内核比performance.now（）更高的精度这一事实。</p>
+<h2 id="Time-to-Tick（TTT）"><a href="#Time-to-Tick（TTT）" class="headerlink" title="Time to Tick（TTT）"></a>Time to Tick（TTT）</h2><p>不再计算计时器使用内存引用的时间（不再可能），而是计算内存引用发生后计时器tick所花费的时间：</p>
+<ul>
+<li>更准确地说，首先等待performance.now（）tick，然后执行内存引用，然后通过循环计数直到下一次Performance.now（）tick为止。如果内存引用是快速的cache访问，那么与需要通过主内存的内存引用相比，在直到下一次ticks时我们有时间去更多的计数。</li>
+</ul>
+<p>在Performance.now（）没有抖动和有固定时间间隔tick的情况下（例如在Firefox中），TTT的性能很好。但是，TTT也可以用于具有抖动的performance.now（），只要它不会drift即可，但它需要更多的测量值才能消除抖动。</p>
+<h2 id="Shared-Memory-Counter（SMC）"><a href="#Shared-Memory-Counter（SMC）" class="headerlink" title="Shared Memory Counter（SMC）"></a>Shared Memory Counter（SMC）</h2><p>SMC计数器使用专用的JavaScript web worker，在JavaScript主线程和counting web worker之间的共享内存区域进行计数。这意味着在攻击过程中，我们实际上使用了单独的内核进行计数。   </p>
+<p>具体做法：</p>
+<ul>
+<li>想要执行测量的线程（在我们的示例中为主线程）读取计数器并将其存储在c1中，执行内存引用，然后再次读取计数器并将其存储在c2中。</li>
+<li>由于在执行内存引用期间另一个线程正在递增计数器，因此在进行慢速存储器访问的情况下，与进行更快的高速缓存访问的情况相比，我们看到了更大的c2 - c1。</li>
+</ul>
+<h1 id="ANC的实现"><a href="#ANC的实现" class="headerlink" title="ANC的实现"></a>ANC的实现</h1><p>在解决了计时器问题后，回到之前讨论的 Derandomizing ASLR，来进一步实现AnC攻击。    </p>
+<p>接下来：</p>
+<ul>
+<li>在第1小节中，将展示作者如何在访问目标堆以及在目标JIT区域上执行代码时触发MMU遍历。 </li>
+<li>在第2、3、4节中讨论如何识别存储目标虚拟地址的页表项的页偏移。 </li>
+<li>在第5、6节中，将讲解用于观察信号和唯一地识别存储它们的cache line内的页表项的位置的技术。 </li>
+<li>在第7、8节中，讨论了通过激活页表缓存和消除噪声来清理MMU信号的技术。</li>
+</ul>
+<h2 id="触发MMU页表遍历"><a href="#触发MMU页表遍历" class="headerlink" title="触发MMU页表遍历"></a>触发MMU页表遍历</h2><p>为了观察CPU cache上的MMU活动，我们需要确保：</p>
+<ol>
+<li>当我们访问目标时，我们知道缓冲区中页偏移；</li>
+<li>我们能够驱逐TLB以触发MMU在目标内存位置上遍历；</li>
+</ol>
+<p>下面就是讨论如何从堆内存和JIT代码中实现这些目标。</p>
+<ol>
+<li>堆：</li>
+</ol>
+<ul>
+<li>使用ArrayBuffer类型来回退我们试图去随机化的堆内存。<ul>
+<li>ArrayBuffer总是页对齐的，这使我们能够预测目标ArrayBuffer中任何索引的相对页偏移量；</li>
+<li>最近Intel处理器有两个级别的TLB。<mark>第一级包括指令TLB（iTLB）和数据TLB（dTLB），而第二级是更大的unified（统一）的TLB缓存</mark>。</li>
+<li>为了同时flush数据TLB和unified TLB，我们访问TLB驱逐缓冲区中的每个页面，其大小大于unified TLB。</li>
+<li>后面会展示该TLB驱逐缓冲区也可以用于在期望的偏移处驱逐LLC cache set。</li>
+</ul>
+</li>
+</ul>
+<ol>
+<li>代码：</li>
+</ol>
+<ul>
+<li>为了分配足够大的JIT代码区域，在一个asm.js模块中喷射 $2^{17}$ 个JavaScript函数。这里可以通过改变由JIT引擎编译的语句的数量来调整这些函数的大小。</li>
+<li>这些函数的机器码从一个依赖于浏览器但是在页面中已知的偏移开始，并且在内存中彼此跟随，并且由于我们可以在目标浏览器上预测它们（机器码）的大小，我们知道每个函数从asm.js对象开始位置的偏移。</li>
+<li>为了最小化这些函数对cache的影响但不影响它们的大小，我们在所有函数的入口添加一个if语句，以便我们可以不执行函数。为了不遮蔽页表cache line信号，我们的目标是一旦执行就击中单个cache line，但这样做仍然会让函数之间存在大块偏移。</li>
+<li>为了在执行我们的一个函数时触发页表遍历，我们需要去flush iTLB和unified TLB。<ul>
+<li>为了flush iTLB，我们使用一个单独的asm.js对象，并执行一些函数，这些函数跨越了超过iTLB大小的页面。</li>
+<li>为了flush unified TLB，我们使用我们用于堆的相同的TLB驱逐缓冲区。</li>
+</ul>
+</li>
+<li>正如稍后将讨论的，AnC将会在每一轮中观察到一个页偏移量。这允许我们以不会干扰测量中的页偏移的方式为unified TLB驱逐缓冲区选择iTLB驱逐函数和页偏移。</li>
+</ul>
+<h2 id="PRIME-PROBE和MMU信号"><a href="#PRIME-PROBE和MMU信号" class="headerlink" title="PRIME+PROBE和MMU信号"></a>PRIME+PROBE和MMU信号</h2><p>AnC的主要思想是观察MMU的页表遍历对LLC的影响。为此可实现两种攻击：<mark>PRIME+PROBE（灌注+探测）</mark>或 <mark>EVICT+TIME（驱逐+时间）</mark>。    </p>
+<p>要实施 PRIME+PROBE 攻击，需要遵循以下几个步骤：</p>
+<ol>
+<li>为所有可用的页颜色构建最佳LLC驱逐集。<ul>
+<li>最佳驱逐集是一次访问的memory locations的精确数目（取决于LLC set-associativity），确保目标cache line从host了目标cache line的LLC cache set中被驱逐；</li>
+</ul>
+</li>
+<li>通过访问所有驱逐集来prime LLC；</li>
+<li>访问我们想要去随机化的目标虚拟地址，使其页表项进入LLC；</li>
+<li>通过访问所有驱逐集并测试其中哪个执行需要更长时间来probe LLC；</li>
+</ol>
+<p>需要较长时间执行的驱逐集据推测需要从内存中取一个（或者多个）entries，由于在prime阶段，驱逐集中的条目已经被传入LLC，并且唯一的内存引用（除了TLB驱逐集之外）是目标虚拟地址，因此这些“probed”驱逐集合中的四个已经host了目标虚拟地址的页表项。如前所述，这些cache set唯一地标识每个PTL的页表项偏移的高6位。   </p>
+<p>这时，会有两个问题：</p>
+<ol>
+<li>从JavaScript建立最优的LLC驱逐集对 PRIME+PROBE 是必需的，而最近已经被证明这可能需要花费很多时间，特别是在没有精确的计时器时。</li>
+<li>不能可靠的执行 PRIME+PROBE 攻击，因为我们试图测量的目标会在测量中产生噪声（更确切地说，我们需要在访问目标虚拟地址之前flush TLB）。<ul>
+<li>我们可以在priming之前或之后这样做，但是在任一情况下，驱逐TLB将导致MMU执行一些我们不想要的页表遍历：<ul>
+<li>假设我们在prime之前执行TLB驱逐：在执行prime步骤期间访问LLC驱逐集的中间，很有可能会发生许多TLB未命中，导致页表遍历可能在我们不知情的情况下填充已经被primed的cache set，在probe步骤中会产生许多错误信息。</li>
+<li>假设我们在prime之后执行TLB驱逐：类似的情况可能会发生：TLB驱逐集中的一些页面将导致页表遍历，导致填充已经被primed的cache set，并且再次在probe中产生错误信息。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="Cache颜色对AnC来说不重要"><a href="#Cache颜色对AnC来说不重要" class="headerlink" title="Cache颜色对AnC来说不重要"></a>Cache颜色对AnC来说不重要</h2><p>基于cache的侧信道攻击受益于在后端操作之后的缓存状态中可用的整合信息，即：受害者访问过的缓存集。     </p>
+<p>Cache set由：颜色（即页颜色）和页（cache line）偏移量唯一标识。</p>
+<ul>
+<li>例如，具有8192个cache set的LLC中的缓存集可以由（颜色，偏移）元组标识，其中0≤color&lt;128并且0≤offset&lt;64。</li>
+</ul>
+<p>ASLR对页偏移中的secret（即，随机化指针）进行编码。可以为页面的64个cache line偏移量中的每一个构建一个驱逐集，驱逐每个集合的cache line偏移量的所有颜色。</p>
+<ul>
+<li>唯一的问题是：同页表级的页表项可能使用不同的页面颜色，因此，我们就会看到重叠的偏移信号。但是考虑到我们可以相对于目标虚拟地址来控制观察到的虚拟地址，我们可以控制不同页表级内的页表项的偏移，如章节：“Derandomizing ASLR”所述，来解决这个问题。</li>
+</ul>
+<p>下面描述的 EVICT+TIME 攻击不依赖驱逐集的执行时间。</p>
+<ul>
+<li>这意味着我们不需要构建最佳驱逐集。加上ASLR对颜色不可知的事实，我们可以使用任何页面作为驱逐集合的一部分。</li>
+<li>没法使用特定的颜色布局方案来分配页表来避免显示这个信号，因为它们都会出现在我们的驱逐集中。<ul>
+<li>这意味着，在足够大量的内存页的情况下，我们可以在给定页偏移量下从LLC（和L1D和L2）逐出任何页表项，而不依赖于需要很长时间构建的最佳驱逐集。</li>
+</ul>
+</li>
+</ul>
+<h2 id="MMU上的EVICT-TIME攻击"><a href="#MMU上的EVICT-TIME攻击" class="headerlink" title="MMU上的EVICT+TIME攻击"></a>MMU上的EVICT+TIME攻击</h2><p>对加密密钥或窃听的传统侧信道攻击有利于观察整个LLC的状态。这就是为什么诸如 PRIME+PROBE 和 FLUSH+RELOAD 是允许攻击者观察LLC的整个状态的侧信道攻击的原因。    </p>
+<p>与这些攻击相比，EVICT+TIME 只能在每个测量周期获得一个cache set的信息，与 PRIME+PROBE 等攻击相比，减少了带宽。    </p>
+<p>EVICT+TIME 进一步做了假设：</p>
+<ul>
+<li>攻击者可以在受害者执行secret运算时观察受害者的performance。</li>
+<li>虽然这些属性经常使 EVICT+TIME 比其他的缓存攻击差，但是它容易地适用于AnC： <ul>
+<li>AnC不需要高带宽（例如，破解加密密钥），并且它可以监视受害者（即，MMU），因为其执行后台（即，页表遍历）。</li>
+</ul>
+</li>
+</ul>
+<p>要实施 EVICT+TIME 攻击，需要遵循以下几个步骤：</p>
+<ol>
+<li>使用一个足够大的内存页集作为驱逐集。</li>
+<li>对于在64个可能偏移中的偏移t处的目标cache line，通过读取驱逐集里所有内存页中的相同偏移量来驱逐cache line。<ul>
+<li>访问此集合还会flush dTLB和unified TLB。 如果我们是目标代码，通过在偏移量t处执行函数来调用iTLB。</li>
+</ul>
+</li>
+<li>通过（目标为堆的情况下）dereference，或者（目标为代码的情况下）在该位置执行函数，Time访问我们想要的在与t不同的cache line偏移处去随机化的目标虚拟地址。<ul>
+<li>这里触发页表遍历，操作将需要更长还是更短的时间取决于偏移t处是否host了页表项cache line</li>
+</ul>
+</li>
+</ol>
+<p>EVICT+TIME 解决了我们面对 PRIME+PROBE 的问题：</p>
+<ul>
+<li>首先，我们不需要创建最佳的LLC驱逐集，因为我们不依赖驱逐集提供信息；</li>
+<li>其次，LLC驱逐集和TLB驱逐集统一了，减少由于较少的页表遍历产生的噪声。</li>
+<li>更重要的是，这些页表遍历（由于TLB未命中）显着减少了错误信息，因为我们不依赖于probe驱逐集来获得时间信息。</li>
+</ul>
+<p>由于这些改进，当在解引用堆地址和执行JIT函数时，在JavaScript中的所有64个可能的cache line偏移上尝试 EVICT+TIME 时，可以观察到与目标虚拟地址的页表项对应的cache line偏移。接下来，描述如何可以唯一地标识由 EVICT+TIME 标识的cache line内的页表项的偏移量。</p>
+<h2 id="Sliding-PT-Entries"><a href="#Sliding-PT-Entries" class="headerlink" title="Sliding PT Entries"></a>Sliding PT Entries</h2><p>这个阶段，我们已经识别了不同PTL的页表项的（可能重叠的）cache line偏移。但对于ASLR仍然保留两个entropy源：</p>
+<ul>
+<li>不可能区分哪个cache line偏移属于哪个PTL；</li>
+<li>cache line内页表项的偏移量尚未知道；</li>
+</ul>
+<p>我们通过分配一个足够大的缓冲区（在我们的这种情况下是分配一个2G的空间）和访问这个缓冲区中的不同位置来解决这两个熵源，以便对已经分配了缓冲区的虚拟地址去随机化。   </p>
+<p>对PTL1和PTL2去随机化的方法不同于对PTL3和PTL4去随机化的方法。这两种技术：</p>
+<ol>
+<li><p>将PTL1和PTL2去随机化：</p>
+<ul>
+<li>从PTL1上host了目标虚拟地址v的页表项的cache line开始。</li>
+<li>在访问v + i×4KB，for i={1,2，…，8}，观察（可能的）4个cache line之一改变的时刻。</li>
+<li>如果其中一个cache line在i处改变，它立即向我们提供两条信息：<ul>
+<li>改变的cache line正在host PTL1的页表项；</li>
+<li>PTL1的v的页表项偏移是8-i；</li>
+</ul>
+</li>
+<li>下图示例出了改变PTL1处的页表项的cache line时AnC观察到的MMU活动：<ul>
+<li><img src="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/MMU-activities.png" alt="MMU活动"></li>
+</ul>
+</li>
+<li>可以执行相同的技术在PTL2对页表项去随机化，但是现在我们需要每次增加2MB而不是4KB来观察PTL2。</li>
+</ul>
+</li>
+<li><p>将PTL3和PTL4去随机化：</p>
+<ul>
+<li>如在“章节：现代系统的ASLR”讨论：<ul>
+<li>为了使PTL3去随机化，在我们分配的2GB的虚拟地址空间中进行一个的8GB交叉；</li>
+<li>为了对PTL4去随机化，需要在我们分配的空间内进行一个4TB虚拟地址空间交叉。</li>
+</ul>
+</li>
+<li>依赖于“章节：ALLOCATORS AND ANC”讨论的内存分配器在浏览器中的行为，以确保我们的（许多）分配之一满足这个属性。</li>
+<li>但是假设我们在PTL3或PTL4改变了cache line，则我们希望检测和去随机化相对的级别。注意，在PTL4处交叉的cache line将不可避免地导致cache line在PTL3处交叉。</li>
+<li>记住PTL3上的每个页表项都覆盖1GB的虚拟内存。<ul>
+<li>因此，如果在PTL3处的cache line交叉在分配的2GB空间内发生，则当交叉正好在缓冲区的中间时，我们的分配可以覆盖两个或三个PTL3页表项。</li>
+<li>但是完全在中间的交叉是不可能的，我们考虑具有三个页表项的情况：三个页表项中的两个或一个在新的cache line中。<ul>
+<li>在访问分配的第一页，中间页和最后一页时观察PTL3 cache line，我们可以很容易地区分这两种情况，并完全去随机化PTL3。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>仅当PTL3处的cache line位于其相应PT页的最后一个slot中时，才会发生PTL4处的cache line交叉。<ul>
+<li>通过执行类似的技术（即，访问分配中的第一和最后一页），如果观察到页表项cache line PTE2从最后一个slot改变到第一个slot，并且另一个页表项cache line PTE1向前移动一个slot，我们可以得出一个PTL4交叉的结论，并将PTE2唯一地标识为PTL3上的PT条目，并将PTE1唯一地标识为PTL4上的PT条目。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="解决ASLR"><a href="#解决ASLR" class="headerlink" title="解决ASLR"></a>解决ASLR</h2><p>我们创建了一个简单的求解器，以便在2GB分配空间中搜索不同的页面时，对可能的解决方案进行排名。求解器在分配的缓冲区里的第一页给每个PTL假设了512个可能的页表项，并且在每个页表级独立于其他级别对解决方案进行排名。    </p>
+<p>当我们使用我们在“章节： Sliding PT Entries”描述的方法在缓冲区中探索更多页面时，我们的求解程序在其中一个解决方案中获得显着的置信度，或者放弃并开始一个新的2GB分配。如果在这些页表级存在缓存行交叉，则解决方案会始终对PTL1和PTL2以及PTL3和PTL4进行去随机化。</p>
+<h2 id="Evicting-Page-Table-Caches"><a href="#Evicting-Page-Table-Caches" class="headerlink" title="Evicting Page Table Caches"></a>Evicting Page Table Caches</h2><p>如 “章节：内存组织” 所述，一些处理器可以将针对不同页表级的转换结果缓存在其TLB中。AnC需要驱逐这些缓存以便观察来自所有页表级的MMU信号。</p>
+<ul>
+<li>这很简单：我们可以访问一个大于这些缓存大小的缓冲区作为TLB和LLC驱逐的一部分。</li>
+<li>例如，Skylake i7-6700K内核可以缓存32个项用于PTL2查找。假设我们探测在页表页的第i个cache line中是否存在页表活动，在0 + i×64 , 2MB + i×64, 4MB + i×64，…，62MB + i×64处访问64MB（即，32×2MB）buffer将驱逐PTL2页表缓存。<br>虽然我们需要natively实现这种机制去观察所有页表级的信号，我们注意到由于JavaScript  runtime activity，这些页表缓存在我们的测量期间会被自然驱逐。</li>
+</ul>
+<h2 id="处理噪声"><a href="#处理噪声" class="headerlink" title="处理噪声"></a>处理噪声</h2><p>实现侧信道攻击的主要问题是噪声。一些办法：</p>
+<ol>
+<li>随机探测：<ul>
+<li>为了避免硬件预取器引起的错误，我们在我们（仍然）需要探索的可能剩余的偏移量中随机选择t（我们正在驱逐的页面偏移量）。这种随机选择也有助于均匀由系统事件引起的局部噪声。</li>
+</ul>
+</li>
+<li>每个偏移量多次采样：<ul>
+<li>为了增加探测的可靠性，我们对每个偏移量进行多次采样（“回合”），并考虑用于决定缓存与存储器访问的中值。这个简单的策略大大降低了假阳性和假阴性。</li>
+</ul>
+</li>
+</ol>
+<h1 id="ALLOCATORS-AND-ANC"><a href="#ALLOCATORS-AND-ANC" class="headerlink" title="ALLOCATORS AND ANC"></a>ALLOCATORS AND ANC</h1><p>如“章节： Sliding PT Entries”描述的依靠浏览器中内存分配器的行为来获得在虚拟地址空间中跨越PTL3和PTL4的分配。这里简要讨论了Firefox和Chrome中内存分配器的行为以及如何在AnC中利用它们。   </p>
+<p><img src="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/mem-allocation-strategies.png" alt="mem allocation strategies"></p>
+<h2 id="Memory-Allocation-in-Firefox"><a href="#Memory-Allocation-in-Firefox" class="headerlink" title="Memory Allocation in Firefox"></a>Memory Allocation in Firefox</h2><p>在Firefox中，内存分配基于需求分页。来自浏览器堆中JavaScript应用程序的大对象分配由mmap支持，而没有MAP_POPULATE。这意味着仅在touch存储器中的相应页面时才分配存储器。   </p>
+<p>分配机制：</p>
+<ul>
+<li>Firefox使用Linux内核提供的通用mmap，以便使用28位熵将JIT代码和堆的位置随机化。</li>
+<li>mmap的（随机）基地址仅（由操作系统）选择一次，然后Firefox的后续分配从以前的分配向后（向低）虚拟内存增长。</li>
+<li>如果删除了对象，则Firefox将其虚拟内存重新用于后续分配。因此，为了在虚拟地址空间中继续向后移动，JavaScript应用程序应坚持使用其旧的分配。</li>
+</ul>
+<p>现象：</p>
+<ul>
+<li>只要不被touched，JavaScript应用程序就可以为其对象分配TB的（虚拟）内存。 AnC充分利用了这一事实，并分配了2 GB的缓冲区以强制在PTL3处更改cache line（即，剩余1比特的熵），或者，如果请求，则将2 GB的大量对象强制在PTL4处更改cache line（即， 完全非随机化）。</li>
+</ul>
+<p>方法：</p>
+<ul>
+<li>要获得JIT代码指针，依赖于上一步中获得的堆指针。Firefox在JIT和堆之间保留一些虚拟内存。在分配我们的堆之前，我们首先喷射一些JITed对象以耗尽该区域。这样可以确保在堆之前分配最后一个JITed对象。</li>
+<li>但是，Firefox的JavaScript引擎在我们的最后一个JITed对象和堆之间分配了许多其他对象，从而引入了额外的熵。我们可以使用堆指针来预测目标JIT指针的PTL3和PTL4插槽，但是PTL1和PTL2插槽仍然未知。于是，部署AnC的代码版本以查找代码指针的PTL1和PTL2插槽，从而实现完全的随机化。</li>
+</ul>
+<h2 id="Memory-Allocation-in-Chrome"><a href="#Memory-Allocation-in-Chrome" class="headerlink" title="Memory Allocation in Chrome"></a>Memory Allocation in Chrome</h2><p>内存分配策略：</p>
+<ul>
+<li>在Chrome中，内存分配由mmap支持并初始化。这意味着一定大小的每次分配都将消耗相同数量的物理内存（加上几页来支持其PT页）。这禁止我们使用类似于Firefox的多个分配。</li>
+<li>Chrome内部会为mmap选择随机位置，这意味着对于每个新的大对象（即新堆）。这允许硬件提供的36位可用熵中的大约35位（Linux内核始终映射在地址空间的上部）。</li>
+<li>设计了对每个新堆进行随机化的设计，以防止利用常常依赖于可预测的堆重用的“先用后用”漏洞。</li>
+</ul>
+<p>方法：</p>
+<ul>
+<li>AnC利用这一非常的保护来获取穿过PTL3或PTL4缓存行的对象。</li>
+<li>我们首先分配一个缓冲区，然后使用AnC查看是否存在PTL3或PTL4缓存行交叉。如果不是这种情况，我们将删除旧缓冲区，并从新分配开始。</li>
+<li>根据给定的概率p，AnC的第i次分配将交叉PTL3，基于以下公式：使用Bernoulli试验（假设分配2 GB）$\sum_{1}^{i}\frac{1}{4}{\frac{3}{4}}^i \geq p$。</li>
+<li>计算平均值（即p = 0.5），AnC需要大约6.5次分配才能获得PTL3穿越。</li>
+<li>对于PTL4穿越求解相同的方程式，AnC平均需要1421.2分配才能获得穿越。</li>
+<li>在Chrome的综合实验中，我们在1235次试验后观察到了所需的分配。 尽管没有什么可以阻止AnC对PTL4进行去随机化处理，但大量的试验使它对攻击者的吸引力降低了。</li>
+</ul>
+<p>对于堆和JITed对象的分配，此技术的工作原理相同。 AnC的当前版本使用此技术在Chrome上实现了堆指针的非随机化。</p>
+<h1 id="评价"><a href="#评价" class="headerlink" title="评价"></a>评价</h1><h2 id="成功率"><a href="#成功率" class="headerlink" title="成功率"></a>成功率</h2><p><img src="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/success-rate.png" alt="success rate"></p>
+<h2 id="灵活性"><a href="#灵活性" class="headerlink" title="灵活性"></a>灵活性</h2><p><img src="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/Feasibility.png" alt="Feasibility"></p>
+<h2 id="噪声"><a href="#噪声" class="headerlink" title="噪声"></a>噪声</h2><p><img src="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/Noise.png" alt="Noise"><br>这些结果表明，采用我们选择的配置（置信度= 10，舍入= 20），这些技术可以有效地抑制噪声。</p>
+<h2 id="Generalization"><a href="#Generalization" class="headerlink" title="Generalization"></a>Generalization</h2><p><img src="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/Generalization.png" alt="Generalization"></p>
+<h2 id="Comparison"><a href="#Comparison" class="headerlink" title="Comparison"></a>Comparison</h2><p><img src="http://img.thebetterkong.cn/blog/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/Comparison.png" alt="Comparison"></p>
+<h1 id="缓解措施"><a href="#缓解措施" class="headerlink" title="缓解措施"></a>缓解措施</h1><ul>
+<li>检测：可以使用性能计数器检测正在进行的AnC攻击。但是，这些类型的基于异常的防御本质上容易产生false positives 和 false negatives。</li>
+<li>缓存着色：可以对共享LLC进行分区，以将应用程序（例如浏览器）与系统的其余部分隔离，但除了内核帧分配器的复杂性之外，它还对操作系统和应用程序的性能都有影响。</li>
+<li>安全的计时器：降低计时器的准确性会使攻击者更难区分缓存访问和内存访问之间的区别，但是此选项的实施通常很昂贵。此外，还有许多其他可能的来源可以制作新的计时器。先前的工作显示，即使在简单的微内核环境下，也很难甚至不可能全部删除它们。对于更加复杂和功能臃肿的浏览器而言，这甚至更加复杂。</li>
+<li>隔离的缓存：将PT条目缓存在单独的缓存中，而不是在数据缓存中缓存，可以缓解AnC。仅为页表页面使用单独的缓存在硬件上非常昂贵，采用这种解决方案作为对策无法达到ASLR提供低成本第一道防线的目的。</li>
+</ul>
+<p>AnC攻击利用基于缓存的体系结构的基本属性，该基础属性通过将hot对象保留在更快但更小的缓存中来提高性能。即使CPU制造商愿意为PT条目实现完全隔离的缓存，但软件中还有其他缓存可被利用来发起类似于AnC的攻击。例如，操作系统经常根据需要分配和缓存页表页。此优化可能会在适用于AnC式攻击的内存管理操作上产生一个时序侧通道。总而言之，我们认为ASLR在基于缓存的体系结构上的使用从根本上是不安全的，尽管确实存在对策，但它们只能限制但不能消除潜在的问题。</p>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/03/15/Literature-reading-notes/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/" title="《anc_ndss17》阅读笔记">http://www.thebetterkong.cn/2020/03/15/Literature-reading-notes/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Computer-Architecture/" rel="tag"><i class="fa fa-tag"></i> Computer Architecture</a>
+              <a href="/tags/ASLR/" rel="tag"><i class="fa fa-tag"></i> ASLR</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/03/07/Literature-reading-notes/Research-CacheSideChannelAttack-Across-VM-inCloudEnvironment/" rel="prev" title="《云环境中跨虚拟机的Cache侧信道攻击技术研究》阅读笔记">
+      <i class="fa fa-chevron-left"></i> 《云环境中跨虚拟机的Cache侧信道攻击技术研究》阅读笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/03/20/FPGA-technology/FPGA-Background/" rel="next" title="FPGA-Background">
+      FPGA-Background <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#文章大纲"><span class="nav-number">1.</span> <span class="nav-text">文章大纲</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#威胁模型"><span class="nav-number">2.</span> <span class="nav-text">威胁模型</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#攻击相关的背景知识和方法"><span class="nav-number">3.</span> <span class="nav-text">攻击相关的背景知识和方法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#虚拟地址转换"><span class="nav-number">3.1.</span> <span class="nav-text">虚拟地址转换</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#存储组织"><span class="nav-number">3.2.</span> <span class="nav-text">存储组织</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Cache架构"><span class="nav-number">3.3.</span> <span class="nav-text">Cache架构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Derandomizing-ASLR"><span class="nav-number">3.4.</span> <span class="nav-text">Derandomizing ASLR</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Q1-识别host-PTEs的cache-line"><span class="nav-number">3.4.1.</span> <span class="nav-text">Q1-识别host PTEs的cache line</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Q2-识别cache-line的页面偏移量"><span class="nav-number">3.4.2.</span> <span class="nav-text">Q2-识别cache line的页面偏移量</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Q3-识别PT条目的cache-line偏移量"><span class="nav-number">3.4.3.</span> <span class="nav-text">Q3-识别PT条目的cache line偏移量</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#现代系统的ASLR"><span class="nav-number">3.5.</span> <span class="nav-text">现代系统的ASLR</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#挑战与方法"><span class="nav-number">3.6.</span> <span class="nav-text">挑战与方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#C1：计时器精度"><span class="nav-number">3.6.1.</span> <span class="nav-text">C1：计时器精度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#C2：观察MMU的PT遍历对数据缓存状态的影响"><span class="nav-number">3.6.2.</span> <span class="nav-text">C2：观察MMU的PT遍历对数据缓存状态的影响</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#C3：PTE的区分与识别"><span class="nav-number">3.6.3.</span> <span class="nav-text">C3：PTE的区分与识别</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#TIMING-BY-COUNTING"><span class="nav-number">4.</span> <span class="nav-text">TIMING BY COUNTING</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Time-to-Tick（TTT）"><span class="nav-number">4.1.</span> <span class="nav-text">Time to Tick（TTT）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Shared-Memory-Counter（SMC）"><span class="nav-number">4.2.</span> <span class="nav-text">Shared Memory Counter（SMC）</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ANC的实现"><span class="nav-number">5.</span> <span class="nav-text">ANC的实现</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#触发MMU页表遍历"><span class="nav-number">5.1.</span> <span class="nav-text">触发MMU页表遍历</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PRIME-PROBE和MMU信号"><span class="nav-number">5.2.</span> <span class="nav-text">PRIME+PROBE和MMU信号</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Cache颜色对AnC来说不重要"><span class="nav-number">5.3.</span> <span class="nav-text">Cache颜色对AnC来说不重要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MMU上的EVICT-TIME攻击"><span class="nav-number">5.4.</span> <span class="nav-text">MMU上的EVICT+TIME攻击</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Sliding-PT-Entries"><span class="nav-number">5.5.</span> <span class="nav-text">Sliding PT Entries</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#解决ASLR"><span class="nav-number">5.6.</span> <span class="nav-text">解决ASLR</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Evicting-Page-Table-Caches"><span class="nav-number">5.7.</span> <span class="nav-text">Evicting Page Table Caches</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#处理噪声"><span class="nav-number">5.8.</span> <span class="nav-text">处理噪声</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ALLOCATORS-AND-ANC"><span class="nav-number">6.</span> <span class="nav-text">ALLOCATORS AND ANC</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Memory-Allocation-in-Firefox"><span class="nav-number">6.1.</span> <span class="nav-text">Memory Allocation in Firefox</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Memory-Allocation-in-Chrome"><span class="nav-number">6.2.</span> <span class="nav-text">Memory Allocation in Chrome</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#评价"><span class="nav-number">7.</span> <span class="nav-text">评价</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#成功率"><span class="nav-number">7.1.</span> <span class="nav-text">成功率</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#灵活性"><span class="nav-number">7.2.</span> <span class="nav-text">灵活性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#噪声"><span class="nav-number">7.3.</span> <span class="nav-text">噪声</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Generalization"><span class="nav-number">7.4.</span> <span class="nav-text">Generalization</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Comparison"><span class="nav-number">7.5.</span> <span class="nav-text">Comparison</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#缓解措施"><span class="nav-number">8.</span> <span class="nav-text">缓解措施</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

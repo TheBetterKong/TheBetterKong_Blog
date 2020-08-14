@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="主要介绍 FPGA 技术里综合部分，涉及：HLS、LS、Mapping、Packing，以及它们相应的算法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="FPGA-CAD Tools：Synthesis">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/04/13/FPGA-technology/FPGA-CADTools-Synthesis/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="主要介绍 FPGA 技术里综合部分，涉及：HLS、LS、Mapping、Packing，以及它们相应的算法。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/FullFlow.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/VerilogHDL.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/LogicGranularity.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/LSExample.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/LogicDSynthesisombinedCircuit.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/LogicSynthesisSequentialCircuit.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/PrimeTermGeneration.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/PrimeTermTable.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/DominatedColumns.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/Quine-McCluskey.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/mapping1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/mapping2.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/AreaDelay.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/DAGRepresentation.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/K-feasibleCuts.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/Example3-feasibleCut.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/Subnetwork.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/PseudoCode.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/Collapsing.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/Max-flow.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/Splitting.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/ComputeLabels.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/LabelingExample.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/MappingPseudoCode.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/MappingExample.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/PackingStructure.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/PackingFile.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/FPGAPackExample.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/ReduceExternalConnections.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/RegisterAndLUT.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/VPackPseudoCode.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/ExampleTiming.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/SlackComputation.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/BaseCriticalityAssignment.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/Tie-breakerMechanism.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/CriticalityTie-breaker.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/Attraction.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/Packing-Virtex5FPGA.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/PackingForVirtex5Cost.png">
+<meta property="article:published_time" content="2020-04-13T07:18:36.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:30:20.068Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="国科大研究生课程笔记">
+<meta property="article:tag" content="FPGA">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/FullFlow.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/04/13/FPGA-technology/FPGA-CADTools-Synthesis/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>FPGA-CAD Tools：Synthesis | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/04/13/FPGA-technology/FPGA-CADTools-Synthesis/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          FPGA-CAD Tools：Synthesis
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-04-13 15:18:36" itemprop="dateCreated datePublished" datetime="2020-04-13T15:18:36+08:00">2020-04-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:30:20" itemprop="dateModified" datetime="2020-08-14T17:30:20+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%8F%AF%E7%BC%96%E7%A8%8B%E9%80%BB%E8%BE%91%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1%E4%B8%8E-FPGA-%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">可编程逻辑系统设计与 FPGA 技术</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/04/13/FPGA-technology/FPGA-CADTools-Synthesis/" class="post-meta-item leancloud_visitors" data-flag-title="FPGA-CAD Tools：Synthesis" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/04/13/FPGA-technology/FPGA-CADTools-Synthesis/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/04/13/FPGA-technology/FPGA-CADTools-Synthesis/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>主要介绍 FPGA 技术里综合部分，涉及：HLS、LS、Mapping、Packing，以及它们相应的算法。</p>
+<a id="more"></a> 
+<h1 id="概述：FPGA-CAD-Tools"><a href="#概述：FPGA-CAD-Tools" class="headerlink" title="概述：FPGA CAD Tools"></a>概述：FPGA CAD Tools</h1><h2 id="完整的-FPGA-CAD-流程图"><a href="#完整的-FPGA-CAD-流程图" class="headerlink" title="完整的 FPGA CAD 流程图"></a>完整的 FPGA CAD 流程图</h2><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/FullFlow.png" alt="FullFlow"></p>
+<h2 id="CAD-和-EDA"><a href="#CAD-和-EDA" class="headerlink" title="CAD 和 EDA"></a>CAD 和 EDA</h2><p>『计算机辅助设计(CAD)』是使用计算机系统来帮助设计的创建、修改、分析或优化。</p>
+<ul>
+<li>在电子工程领域，也称为『电子设计自动化(EDA)』；</li>
+<li>1981年标志着 EDA 作为一个独立行业的开始；</li>
+</ul>
+<h2 id="FPGA-CAD-Tools"><a href="#FPGA-CAD-Tools" class="headerlink" title="FPGA CAD Tools"></a>FPGA CAD Tools</h2><p>因为摩尔定律，工艺越来越先进，设计越来越复杂，这给 FPGA 的设计带来了巨大挑战，因此，FPGA 的 CAD 工具也就在 FPGA 的开发过程中起到了关键性的作用。   </p>
+<p>按需进行分类：</p>
+<ul>
+<li>对于制造商/对于客户/对于研究人员；</li>
+<li>工业用途（Virtuoso、Precision、ModelSim…）/学术用途（VTR、JHDL…）；</li>
+</ul>
+<h1 id="概述：FPGA-Synthesis"><a href="#概述：FPGA-Synthesis" class="headerlink" title="概述：FPGA Synthesis"></a>概述：FPGA Synthesis</h1><h2 id="Input-to-Synthesis"><a href="#Input-to-Synthesis" class="headerlink" title="Input to Synthesis"></a>Input to Synthesis</h2><p><strong>Hardware Description Language (HDL)：</strong></p>
+<ul>
+<li><code>HDL</code> 是一种专用语言，用于描述电子电路（最常见的是数字逻辑电路）的结构和行为；（例如：Verilog / VHDL）</li>
+<li>Verilog 简洁大方（与 VHDL 相比），易于学习（类似于 C 语言），因此在数字电路设计中得到了广泛的应用；</li>
+<li>Verilog 设计可能是『多层次』描述的组合，电子工程师经常在各个层次上工作，但必须确保其可综合性；</li>
+<li>三种类型的 Verilog HDL：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/VerilogHDL.png" alt="VerilogHDL">  </li>
+</ul>
+<p><strong>High Level Language (HLL)：</strong></p>
+<ul>
+<li><code>HLL</code> 是具有更高抽象级别（比 HDL）更高，并且更关注行为和算法而不是硬件组件的任何编程语言。 （例如：C / System C）</li>
+</ul>
+<h2 id="Output-from-Synthesis"><a href="#Output-from-Synthesis" class="headerlink" title="Output from Synthesis"></a>Output from Synthesis</h2><p><strong>五个电路抽象级别：</strong>  </p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Levels</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Behavioral Level</td>
+<td>模拟硬件所需功能、行为或算法的设计抽象（逻辑不一定是可综合的）</td>
+</tr>
+<tr>
+<td>Register Transfer Level (RTL)</td>
+<td>根据硬件寄存器之间的数字信号流以及对这些信号执行的逻辑运算，对同步数字电路建模的设计抽象（完全逻辑可综合）</td>
+</tr>
+<tr>
+<td>Gate Level</td>
+<td>逻辑门的设计实现</td>
+</tr>
+<tr>
+<td>Cell Level</td>
+<td>逻辑单元的设计实现，通常是在 FPGA 中通过 LUT 实现</td>
+</tr>
+<tr>
+<td>Cluster Level</td>
+<td>逻辑集群的设计实现，通常是在 FPGA 中通过 CLB 实现</td>
+</tr>
+</tbody>
+</table>
+</div>
+<ul>
+<li>从上往下，不断综合，越来越细，项目时间和实现难度也越来越高；</li>
+<li>FPGA 用户通常在 <code>行为级别/RTL/门级</code> 来设计电路，而在 <code>单元/集群级</code> 的设计只能由 CAD 工具完成；</li>
+</ul>
+<p><strong>网表 Netlist：</strong></p>
+<ul>
+<li>网表描述了电子电路的连通性，它通常只提供实例（电子组件），网络（互连）以及某些属性；</li>
+<li>可以处于不同的抽象级别：<ul>
+<li>在综合的每个步骤之后，网表将从一个抽象级别转换为另一个抽象级别，然后最终可以在FPGA上实现；</li>
+</ul>
+</li>
+<li>具有多种格式标准：<ul>
+<li><code>EDIF / BLIF</code> 是行业或学术界常用的流行格式；<ul>
+<li>Electronic Design Interchange Format（EDIF，电子设计交换格式）与供应商无关，因此可以在共同的基础上代表不同的专有电子设计。（工业用途）；</li>
+<li>Berkeley Logic Interchange Format（BLIF，伯克利逻辑交换格式）由加利福尼亚大学伯克利分校开发。（学术用途）已被最流行的学术 FPGA CAD 工具 - VTR 所使用；</li>
+</ul>
+</li>
+<li><code>VQM</code> 是 Quartus 中使用的 Intel / Altera 定义的格式；</li>
+<li><code>XDL</code> 是 ISE 中使用的 Xilinx 定义的格式；</li>
+</ul>
+</li>
+</ul>
+<h2 id="什么是-FPGA-综合？"><a href="#什么是-FPGA-综合？" class="headerlink" title="什么是 FPGA 综合？"></a>什么是 FPGA 综合？</h2><p><strong>定义</strong>：根据可以放置和布线的逻辑集群，从『电路描述』转换为『设计实现』的过程。     </p>
+<p>通常，此复杂过程包括<strong>四个阶段：</strong>    </p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Num</th>
+<th>阶段</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Stage0</td>
+<td>High Level Synthesis</td>
+<td>技术独立<br>（与FPGA架构无关）</td>
+</tr>
+<tr>
+<td>Stage1</td>
+<td>Logic Synthesis</td>
+<td>技术独立<br>（与FPGA架构无关）</td>
+</tr>
+<tr>
+<td>Stage2</td>
+<td>Mapping</td>
+<td>技术依赖<br>（与FPGA体系结构相关）</td>
+</tr>
+<tr>
+<td>Stage3</td>
+<td>Packing</td>
+<td>技术依赖<br>（与FPGA体系结构相关）</td>
+</tr>
+</tbody>
+</table>
+</div>
+<ul>
+<li>注意：阶段 0 ~ 2 也存在于 ASIC CAD 流程中，而第 3 阶段特定于 FPGA CAD；</li>
+</ul>
+<p><strong>Synthesis vs. Compilation（编译）：</strong>  </p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Compiler</th>
+<th>Synthesis tool</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-以正式定义的程序语言识别所有可能的构造；<br>-将它们翻译成执行过程的机器语言表示；</td>
+<td>-识别硬件描述语言的目标相关子集；<br>-映射到具体的硬件资源集合；<br>-设计流程中的迭代工具</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Synthesis（综合） vs. Simulation（仿真）：</strong></p>
+<ul>
+<li>在像 Verilog 和 VHDL 这样的 HDL 中，并不是所有可被仿真的东西都是可被综合的；</li>
+<li>仿真和综合的语义是不同的，仿真语义基于程序的顺序执行，并带有一些并发同步过程的观念。而并不是所有的这样的程序都是可以综合的，指定HDL的可合成子集并不容易；</li>
+</ul>
+<h2 id="综合过程的颗粒度分析"><a href="#综合过程的颗粒度分析" class="headerlink" title="综合过程的颗粒度分析"></a>综合过程的颗粒度分析</h2><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/LogicGranularity.png" alt="LogicGranularity"></p>
+<ul>
+<li>由最开始的 HLS 粗颗粒度（coarse）描述，逐步综合磨碎（Grind）成门级网表，此时颗粒度就很小，以门为单位（fine）；</li>
+<li>然后，进一步综合，mapping 后，成为了 LUT 网表，再经过 packing，颗粒度不断增大（Bind）；</li>
+</ul>
+<h1 id="技术独立的综合：HLS、LS"><a href="#技术独立的综合：HLS、LS" class="headerlink" title="技术独立的综合：HLS、LS"></a>技术独立的综合：HLS、LS</h1><p>这些技术独立程序不仅用于FPGA，而且用于所有 IC（集成电路设计）领域。</p>
+<h2 id="High-Level-Synthesis-HLS"><a href="#High-Level-Synthesis-HLS" class="headerlink" title="High Level Synthesis (HLS)"></a>High Level Synthesis (HLS)</h2><p>解释所需行为的『算法描述』并『创建实现该行为的数字硬件』的过程。   </p>
+<ul>
+<li><code>HLL ---&gt; HDL</code>，例如：C —-&gt; Verilog</li>
+</ul>
+<p>HLS 的作用：</p>
+<ol>
+<li>基于 C 语言的规范：<u>加速</u>仿真和早期误差检测；</li>
+<li>创建 RTL：<u>缩短</u>了以前的手动过程，避免了翻译错误；</li>
+<li>架构优化：<u>自动</u>优化 RTL 架构，从而可以快速轻松地评估多个架构</li>
+</ol>
+<p>在 FPGA 实现所需的开发时间超出了典型软件开发工作的范围，使用 HLS 有时候能大大缩短软件开发的时间。虽然有时，HLS 会带来一定的性能下降，但是它所带来的好处远超于性能的下降，而且 HLS 还处于不断的发展当中。</p>
+<h2 id="Logic-Synthesis（LS）"><a href="#Logic-Synthesis（LS）" class="headerlink" title="Logic Synthesis（LS）"></a>Logic Synthesis（LS）</h2><p>通常在寄存器传输级别（RTL）处，所需『电路的抽象形式』『通过逻辑门转换为设计实现』的过程。     </p>
+<ul>
+<li><code>HDL ---&gt; Netlist</code>，例如：Verilog —-&gt; BLIF</li>
+</ul>
+<p>例子：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/LSExample.png" alt="LSExample">           </p>
+<h2 id="Logic-Synthesis-Explained"><a href="#Logic-Synthesis-Explained" class="headerlink" title="Logic Synthesis Explained"></a>Logic Synthesis Explained</h2><p><strong>逻辑综合中一些常规和临时（特殊情况）方法：</strong></p>
+<ul>
+<li>『实例化』：维护原始模块（AND，OR等）和用户定义模块的库</li>
+<li>『“宏扩展” /替换』：大量的语言运算符（+，-，布尔运算符等）和构造（if-else，case）扩展为特殊电路</li>
+<li>『推论』：在语言描述中检测到特殊模式并对其进行特殊处理（例如，从变量声明和读/写语句推导存储块，从“ always @（posege clk）”块中进行 FSM 检测和生成）</li>
+<li>『逻辑优化』：布尔运算通过逻辑最小化技术进行分组和优化</li>
+<li>『结构重组』：先进的技术，包括共享操作，重新计时电路（移动FF）以及其他</li>
+</ul>
+<p><strong>将『非可合成代码』转换为『可合成代码』示例：</strong></p>
+<ul>
+<li>最基本的不可合成代码是延迟语句；</li>
+<li>FPGA 没有时间概念，因此不可能告诉 FPGA 等待 10 纳秒；</li>
+<li>取而代之，需要使用时钟和触发器来实现目标；</li>
+</ul>
+<p><strong>『循环语句中不可合成代码』的示例：</strong></p>
+<ul>
+<li>新的数字设计人员经常滥用的另一段代码是循环语句，例如：while，for，repeat等；</li>
+<li>不能像使用 C 之类的软件语言那样实际使用可合成代码中的循环；</li>
+<li>这是新硬件开发人员面临的一个巨大问题；</li>
+<li>他们在 C 语言中见过数百次循环，因此他们认为在 Verilog 和 VHDL 中它们是相同的；</li>
+<li>这里要明确：循环在硬件中的行为不同于在软件中的行为；</li>
+<li>在您了解循环语句如何工作之前，请勿使用它们。</li>
+</ul>
+<p><strong>组合电路的逻辑综合：</strong><br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/LogicDSynthesisombinedCircuit.png" alt="LogicDSynthesisombinedCircuit">     </p>
+<p><strong>时序电路的逻辑综合：</strong><br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/LogicSynthesisSequentialCircuit.png" alt="LogicSynthesisSequentialCircuit"></p>
+<p><strong>技术独立综合的优化：</strong></p>
+<ul>
+<li><u>两级布尔最小化</u>:基于一个假设，减少方程中乘积项的数量和减少每个乘积项的大小将导致更小/更快实现；</li>
+<li><u>优化有限状态机</u>:寻找等效的FSM；<ul>
+<li>例如，在给定相同输入序列的情况下产生相同输出的 FSMs 具有更少的状态；</li>
+</ul>
+</li>
+<li><u>选择状态机状态编码</u>：最小化实现面积 = 状态存储的大小 + 实现下一个状态和输出功能的逻辑的大小</li>
+<li>这些操作都没有完全脱离目标技术。但是经验表明，在开始依赖技术之前尽可能减小问题的规模是有利的，在某些地方(例如，存储元件的大小与逻辑门的大小之比)，我们的假设在几代技术中都是有效的。</li>
+</ul>
+<p><strong>两级布尔最小化：</strong></p>
+<ul>
+<li>多输出布尔函数的两级表示：<ul>
+<li>乘积和</li>
+</ul>
+</li>
+<li>优化标准：<ul>
+<li>product terms（乘积项）的数目：优化 FLUT</li>
+<li>literals（文字）的数目：优化 LUT</li>
+</ul>
+</li>
+<li>给定一个函数的最小化步骤：<ul>
+<li>生成函数的一组 prime（主要）乘积项；</li>
+<li>选择最少的 prime 项来覆盖该功能；</li>
+</ul>
+</li>
+<li>最先进的逻辑最小化算法都是基于 Quine-McCluskey 方法，并且遵循上面两个步骤；<blockquote>
+<ol>
+<li><strong>Prime term generation：</strong><br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/PrimeTermGeneration.png" alt="PrimeTermGeneration"></li>
+<li><strong>Prime term table：</strong><br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/PrimeTermTable.png" alt="PrimeTermTable"><br>举例 C 的两种情况：“0111”可被 B 覆盖，“1111”可被 E 覆盖；</li>
+<li><strong>Dominated columns：</strong><br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/DominatedColumns.png" alt="DominatedColumns"></li>
+<li><strong>The Quine-McCluskey Method：</strong><br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/Quine-McCluskey.png" alt="Quine-McCluskey"></li>
+</ol>
+</blockquote>
+</li>
+</ul>
+<h1 id="技术不独立的综合：Mapping"><a href="#技术不独立的综合：Mapping" class="headerlink" title="技术不独立的综合：Mapping"></a>技术不独立的综合：Mapping</h1><h2 id="总体认识"><a href="#总体认识" class="headerlink" title="总体认识"></a>总体认识</h2><p>一种从库（通常为LUT）中选择『一组逻辑 cells』以实现『逻辑门级网表』，同时优化面积、延迟或二者结合的过程;<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/mapping1.png" alt="mapping1">      </p>
+<p>在VTR中将『门级 BLIF』转换为『单元级 BLIF』;<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/mapping2.png" alt="mapping2">   </p>
+<ul>
+<li>Why？<ul>
+<li>使电路网表适合当前 FPGA 架构定义的逻辑单元（通常基于 LUT）；</li>
+</ul>
+</li>
+<li>目标：<ul>
+<li>面积：最大限度地减少LUT的总数；</li>
+<li>延迟：最小化网表的逻辑深度；</li>
+</ul>
+</li>
+<li>约束：<ul>
+<li>FPGA 上 LUT 的输入数；</li>
+</ul>
+</li>
+<li>方法：<ul>
+<li>Map 算法；</li>
+<li>将网表转换为图形，然后可以将其转换为数学模型，以便在软件中进行处理；</li>
+</ul>
+</li>
+</ul>
+<h2 id="Area-Delay-Trade-off"><a href="#Area-Delay-Trade-off" class="headerlink" title="Area/Delay Trade-off"></a>Area/Delay Trade-off</h2><p>减少 LUT（面积）可能会增加深度（延迟）；<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/AreaDelay.png" alt="AreaDelay"></p>
+<h2 id="DAG-表示"><a href="#DAG-表示" class="headerlink" title="DAG 表示"></a>DAG 表示</h2><blockquote>
+<p>DAG：有向无环图；    </p>
+</blockquote>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/DAGRepresentation.png" alt="DAGRepresentation">    </p>
+<p>由于LUT是可配置的且基于真值表，因此我们无需担心映射过程中每个门的逻辑功能。    </p>
+<p>术语：</p>
+<ul>
+<li>『Vertex/Edge』（顶点/边）：每个门都是一个顶点，每个连接都是一个边</li>
+<li>『Primary Input』（PI，主要输入）：没有传入边的节点</li>
+<li>『Primary Output』（PO，主要输出）：没有传出边的节点</li>
+<li>『Topological Ordering』（拓扑排序）：$\{a,b,c,d,e,f,g,h,i,j,k,l\}$<ul>
+<li>顶点的线性顺序，使得从顶点 u 到顶点 v 的每个有向边（u，v），u 都在 v 之前</li>
+</ul>
+</li>
+</ul>
+<h2 id="相关概念"><a href="#相关概念" class="headerlink" title="相关概念"></a>相关概念</h2><h3 id="K-feasible-Cuts"><a href="#K-feasible-Cuts" class="headerlink" title="K-feasible Cuts"></a>K-feasible Cuts</h3><p>具有 K 个输入节点的 cone（圆锥体）（多个输入一个输出的结构）是 K-feasible（可行）的，并且可以用 K-LUT 实现。     </p>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/K-feasibleCuts.png" alt="K-feasibleCuts">      </p>
+<p>注意：切割的输入数量必须小于或等于当前技术中指定的 LUT 输入的输入数量；</p>
+<h3 id="Edge-Cut-Size-和-Height"><a href="#Edge-Cut-Size-和-Height" class="headerlink" title="Edge Cut Size 和 Height"></a>Edge Cut Size 和 Height</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/Example3-feasibleCut.png" alt="Example3-feasibleCut"><br><strong>Edge Cut Size</strong>：横切的等效前边的总和，即横切处的输入数；</p>
+<ul>
+<li>例如：上图中：n(edge cut size) = 3<br><strong>Height</strong>：X 中最大的标签，指示最大延迟。</li>
+<li>$h(X,\overline{X})=max\{l(x):x \in X\}$</li>
+<li>例如：上图中：$h(height) = 2$</li>
+</ul>
+<h2 id="Phase1：FlowMap-Labelling"><a href="#Phase1：FlowMap-Labelling" class="headerlink" title="Phase1：FlowMap_Labelling"></a>Phase1：FlowMap_Labelling</h2><p><code>Pre-mapping process</code>：根据一组特定规则为DAG中的每个节点计算标签。  </p>
+<h3 id="First-know"><a href="#First-know" class="headerlink" title="First know"></a>First know</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/Subnetwork.png" alt="Subnetwork">     </p>
+<p>『Subnetwork of a Node（节点的子网）』：虚线网络中的圆锥网络 $Ct$ 是专用于节点 t 的子网；    </p>
+<p>『Label』：在任何  K-feasible 解决方案中，节点的最小可能深度；</p>
+<ul>
+<li>$l(t)$ 是节点 t 的标签；</li>
+<li>按照拓扑顺序标记每个节点；</li>
+<li>根据节点的前任节点计算节点的标签；</li>
+<li>label 代表了深度，同 label 一般可以放在同一个 LUT 中；</li>
+</ul>
+<p>『引理』：令 $l(t)$ 为节点 t 的标签，则 $l(t) = p$ 或 $l(t) = p + 1$;</p>
+<ul>
+<li>p 是 $input(t)$ 中的最大标签;（$input(t)$：所有输入到节点 t 的节点）</li>
+<li>任何节点的标签不能小于其前身;</li>
+</ul>
+<h3 id="伪代码描述"><a href="#伪代码描述" class="headerlink" title="伪代码描述"></a>伪代码描述</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/PseudoCode.png" alt="PseudoCode"></p>
+<h3 id="过程-1：初始化"><a href="#过程-1：初始化" class="headerlink" title="过程 1：初始化"></a>过程 1：初始化</h3><p>『对于给定的节点 t，其子网被转换为 DAG 网络 $N_t$』：</p>
+<ul>
+<li>插入一个源节点 s，其输出连接到 $N_t$ 的所有输入；</li>
+<li>标记 $PI$，$l(PI) = 0$； </li>
+</ul>
+<h3 id="过程-2：Collapsing"><a href="#过程-2：Collapsing" class="headerlink" title="过程 2：Collapsing"></a>过程 2：Collapsing</h3><p>将 $N_t$ 中共享 max-label p 的所有节点与节点 t 合并为一个新节点 t’。然后，这样的新网络称为 $N_t$’;    </p>
+<p>『引理』：当且仅当 $N_t$’ 有 K-feasible cut 时，$N_t$ 才在 p-1 高度处有 K-feasible cut。      </p>
+<p>例子：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/Collapsing.png" alt="Collapsing"></p>
+<h3 id="补充：Max-flow-Min-cut-Theorem"><a href="#补充：Max-flow-Min-cut-Theorem" class="headerlink" title="补充：Max-flow Min-cut Theorem"></a>补充：Max-flow Min-cut Theorem</h3><p>解决问题：怎样去知道在 $N_t$’ 里是否存在一个 K-feasible cut？    </p>
+<p><code>Max-flow Min-cut Theorem</code>: </p>
+<ul>
+<li>Min cut = Max flow，即：在任何网络中，最大流量的值等于最小切割能力的值；</li>
+<li>流量相当于 K（K输入到切割）；</li>
+</ul>
+<p>示例：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/Max-flow.png" alt="Max-flow"></p>
+<h3 id="过程-3：Splitting"><a href="#过程-3：Splitting" class="headerlink" title="过程 3：Splitting"></a>过程 3：Splitting</h3><p>将节点拆分开，来建立边容量，即：将 $N_t$’ 转换为 $N_t^”$；      </p>
+<p>方法：</p>
+<ul>
+<li>对于 $N_t$’ 中的每个节点 v（s 和 t’ 除外）：<ul>
+<li>将 v 拆为：v1 和 v2；</li>
+<li>通过边（v1，v2）连接它们；</li>
+</ul>
+</li>
+<li>设置容量值：<ul>
+<li>对于桥接边：$1$</li>
+<li>对于非桥接边：$\infty$</li>
+</ul>
+</li>
+</ul>
+<p>确保如果 $N_t^”$ 里存在一个 $capacity &lt; K$ 的切割，则：仅桥接边穿过切口；</p>
+<ul>
+<li>『引理』：如果 $N_t^”$ 有 $cut \ size \leq K$ 的切割，则 $N_t$’ 有  K-feasible cut。</li>
+</ul>
+<p>示例：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/Splitting.png" alt="Splitting"></p>
+<h3 id="过程-4-：计算label"><a href="#过程-4-：计算label" class="headerlink" title="过程 4 ：计算label"></a>过程 4 ：计算label</h3><p>检查 $N_t$ 中是否存在 p 的高度处的 K-feasible 切割 $(X，X_b)$ ：</p>
+<ul>
+<li>如果是：$l(t) \leftarrow p$;</li>
+<li>如果否：$l(t) \leftarrow p+1$;</li>
+</ul>
+<p>其中：</p>
+<ul>
+<li>p 是 $input(t)$ 中的最大标签；</li>
+<li>K 是初始指定，由 FPGA 的 LUT 的输入位数决定；</li>
+</ul>
+<p>举例：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/ComputeLabels.png" alt="ComputeLabels"></p>
+<h3 id="算法例子"><a href="#算法例子" class="headerlink" title="算法例子"></a>算法例子</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/LabelingExample.png" alt="LabelingExample"></p>
+<h2 id="Phase2：FlowMap-Mapping"><a href="#Phase2：FlowMap-Mapping" class="headerlink" title="Phase2：FlowMap_Mapping"></a>Phase2：FlowMap_Mapping</h2><p><code>Finding an “LUT-netlist”</code>：根据先前计算的节点标签生成K-LUT映射解决方案。</p>
+<h3 id="伪代码描述-1"><a href="#伪代码描述-1" class="headerlink" title="伪代码描述"></a>伪代码描述</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/MappingPseudoCode.png" alt="MappingPseudoCode"></p>
+<h3 id="算法例子-1"><a href="#算法例子-1" class="headerlink" title="算法例子"></a>算法例子</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/MappingExample.png" alt="MappingExample"></p>
+<ul>
+<li>从 11 个减少为了 7 个；</li>
+</ul>
+<h1 id="技术不独立的综合：Packing"><a href="#技术不独立的综合：Packing" class="headerlink" title="技术不独立的综合：Packing"></a>技术不独立的综合：Packing</h1><h2 id="总体认识-1"><a href="#总体认识-1" class="headerlink" title="总体认识"></a>总体认识</h2><p>将<strong>经过 mapped 的电路</strong>的元素打包到可用的 FPGA 硬件<strong>逻辑集群</strong>资源（通常为 CLB 或硬 IP 块）中的过程；<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/PackingStructure.png" alt="PackingStructure">        </p>
+<p>NET 是 VTR（最流行的学术 FPGA CAD 工具）中使用的网表格式：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/PackingFile.png" alt="PackingFile"></p>
+<ul>
+<li>why？<ul>
+<li>降低布局和路线的复杂性（集群数 &lt; LUT 数）；</li>
+</ul>
+</li>
+<li>目标：<ul>
+<li>减少逻辑集群号。 （面积）</li>
+<li>减少群集之间的连接。 （可路由性/延迟）</li>
+<li>减少关键路径上的连接。 （延迟）</li>
+</ul>
+</li>
+<li>约束：<ul>
+<li>集群容量 / 集群输入数 / 集群时钟数 / LUT 输入数 / 承载…<ul>
+<li>BLE 的数量必须小于群集大小 N；</li>
+<li>在群集外部生成并用作群集内 BLE 的输入的不同输入的数量必须小于或等于群集输入的数量；</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>方法：<ul>
+<li>Packing algorithms</li>
+</ul>
+</li>
+</ul>
+<h2 id="算法模型"><a href="#算法模型" class="headerlink" title="算法模型"></a>算法模型</h2><p>Pack 方案：贪婪</p>
+<ul>
+<li>步骤 1：分析目标和约束</li>
+<li>步骤 2：定义标准（贪婪策略）</li>
+<li>步骤 3：根据条件对所有候选人（LUT）进行排序</li>
+<li>步骤 4：按照上述顺序一次尝试一次候选人</li>
+<li>步骤 5：如果该候选人在所有限制条件下都能帮助实现目标，则接受该目标，否则，拒绝该目标并尝试下一个</li>
+<li>步骤 6：继续尝试，直到所有候选人都精疲力尽</li>
+</ul>
+<p>一个简单的 Packing 问题：</p>
+<ul>
+<li>一包的最大负荷为 L = 150kg。 现在，我有 7 个项目，每个项目都无法拆分。</li>
+<li>尽力将这些物品装满包装，并最大程度地提高总价值。</li>
+</ul>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>item</th>
+<th>A</th>
+<th>B</th>
+<th>C</th>
+<th>D</th>
+<th>E</th>
+<th>F</th>
+<th>G</th>
+<th>$\sum$</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>weight</td>
+<td>35kg</td>
+<td>30kg</td>
+<td>6kg</td>
+<td>50kg</td>
+<td>40kg</td>
+<td>10kg</td>
+<td>25kg</td>
+<td>196kg</td>
+</tr>
+<tr>
+<td>value</td>
+<td>$10</td>
+<td>$40</td>
+<td>$30</td>
+<td>$50</td>
+<td>$35</td>
+<td>$40</td>
+<td>$30</td>
+<td>$235</td>
+</tr>
+<tr>
+<td>value/weight</td>
+<td>0.3</td>
+<td>1.3</td>
+<td>5</td>
+<td>1</td>
+<td>0.9</td>
+<td>4</td>
+<td>1.2</td>
+</tr>
+</tbody>
+</table>
+</div>
+<ul>
+<li>Packing 策略：<ul>
+<li>步骤1：分析目标和约束。<ul>
+<li>目标：$\sum v$ 最大化</li>
+<li>限制条件：$\sum w \leq L（L = 150）$</li>
+</ul>
+</li>
+<li>步骤2：选择一个条件。<ul>
+<li>准则1：每次都选择价值最大的项目</li>
+<li>准则2：每次都选择重量最大的物品</li>
+<li>准则3：<strong>每次选择具有最大价值 / 重量的物品</strong></li>
+</ul>
+</li>
+<li>步骤3：按值 / 重量对所有项目进行排序;</li>
+<li>步骤4：根据上述顺序一次尝试一项;</li>
+<li>第5步：如果该物品适合放在包装中，则将其放入，否则，请拒绝并尝试下一个。</li>
+<li>步骤6：继续尝试，直到尝试所有项目。</li>
+</ul>
+</li>
+</ul>
+<p>一个 FPGA packing 问题：</p>
+<ul>
+<li>典型的 CLB 具有 2 个和 4 个 IN 引脚的容量。 我们需要将 3 个 BLE / LUT（每个都有4个输入）打包到 2 个 CLB 中，并优化 FPGA 的面积和可布线性。<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/FPGAPackExample.png" alt="FPGAPackExample"></li>
+<li>FPGA packing 策略：<ul>
+<li>步骤 1：分析目标和约束<ul>
+<li>目的：减少逻辑集群数量 / 减少集群间连接</li>
+<li>约束：每个 CLB 中的 BLE 数量 $ \leq 2$ / 集群输入数量 $\leq 4$</li>
+</ul>
+</li>
+<li>步骤 2：选择条件<ul>
+<li>标准：<strong>每次选择具有公共输入的 BLE</strong></li>
+</ul>
+</li>
+<li>步骤 3：按公共输入对所有 BLE 排序</li>
+<li>步骤 4：按照上述顺序一次尝试 BLE</li>
+<li>步骤 5：如果此 BLE 适合群集，请吸收它，否则，拒绝它并尝试下一个</li>
+<li>步骤 6：迭代排序其余的 BLE，并继续尝试直到当前群集已满或所有 BLE 用尽</li>
+</ul>
+</li>
+</ul>
+<h2 id="Pack-Algorithm-VPack"><a href="#Pack-Algorithm-VPack" class="headerlink" title="Pack Algorithm: VPack"></a>Pack Algorithm: VPack</h2><h3 id="目标"><a href="#目标" class="headerlink" title="目标"></a>目标</h3><p>包装每个群集以达到最佳容量：</p>
+<ul>
+<li>减少集群数量</li>
+</ul>
+<p>最小化每个集群的输入数量：</p>
+<ul>
+<li>减少外部连接的数量（通常来说，集群间延迟大于集群内延迟）<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/ReduceExternalConnections.png" alt="ReduceExternalConnections"></li>
+</ul>
+<h3 id="计算流程"><a href="#计算流程" class="headerlink" title="计算流程"></a>计算流程</h3><p><strong>Stage 0</strong>：将寄存器和 LUT 打包到一个 BLE 中；</p>
+<ul>
+<li>这称为「预打包」，它可以识别与“打包模式”匹配的网表子图；</li>
+<li>「压缩模式」将 LUT 和触发器原子对在压缩期间视为一个不可拆分的单元；<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/RegisterAndLUT.png" alt="RegisterAndLUT"></li>
+</ul>
+<p><strong>Stage 1</strong>：通过选择 seed（种子） BLE 从新集群开始</p>
+<ul>
+<li>将被使用输入最多的未集群的 BLE 作为“种子”；</li>
+<li>然后，将此“种子”放入群集 C；</li>
+</ul>
+<p><strong>Stage 2</strong>：添加与当前集群共享最多输入的 BLE</p>
+<ul>
+<li>根据 B 对 C 的吸引力，选择一个新的 BLE，B 装入 C；</li>
+<li>吸引力取决于 B 和 C 共有的输入和输出的数量：$Attraction(B)=|Nets(B) \cap Nest(C)|$</li>
+</ul>
+<p><strong>Stage 3</strong>：继续添加，直到集群已满或输入引脚全部占用</p>
+<ul>
+<li>每个群集达到其容量后，打包将在新群集上开始；</li>
+</ul>
+<p><strong>Stage 4</strong>：如果集群中未使用某些 BLE，则 Hill climbing（爬山）</p>
+<ul>
+<li>即使集群的输入计数暂时溢出，也要添加另一个 BLE</li>
+<li>如果最终没有减少输入数量，请从爬坡之前选择最佳选择</li>
+</ul>
+<p><strong>最后</strong>：当不再有未聚类的 BLE 时，该过程终止</p>
+<h3 id="伪代码"><a href="#伪代码" class="headerlink" title="伪代码"></a>伪代码</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/VPackPseudoCode.png" alt="VPackPseudoCode"></p>
+<h2 id="Pack-Algorithm-T-VPack"><a href="#Pack-Algorithm-T-VPack" class="headerlink" title="Pack Algorithm: T-VPack"></a>Pack Algorithm: T-VPack</h2><h3 id="目标-1"><a href="#目标-1" class="headerlink" title="目标"></a>目标</h3><p>这里的 T 就是 timing；   </p>
+<p>减少关键路径上的外部连接（集群之间的连接）数量；</p>
+<ul>
+<li>外部连接比内部连接（集群中的连接）具有更高的延迟；</li>
+<li>通过减少关键路径上的外部网络数量，可以减少电路延迟；</li>
+</ul>
+<p>算法的第一阶段涉及计算<strong>关键路径</strong>上的哪些连接，然后沿着关键路径依次将 BLE 打包到逻辑集群中，并重新计算以确定哪些 BLE 变得关键；</p>
+<h3 id="Timing"><a href="#Timing" class="headerlink" title="Timing"></a>Timing</h3><h4 id="基础概念"><a href="#基础概念" class="headerlink" title="基础概念"></a>基础概念</h4><p>针对同一节点来说：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/ExampleTiming.png" alt="ExampleTiming"></p>
+<ul>
+<li>「Arrival Time」：信号到达的时间</li>
+<li>「Required Time」：要求数据稳定的时间（必须满足设置要求）</li>
+<li>「Slack」：到达时间与所需时间之间的时差</li>
+</ul>
+<h4 id="时间分析"><a href="#时间分析" class="headerlink" title="时间分析"></a>时间分析</h4><p>时序电路中：Slack = Required Time – Arrival Time    </p>
+<ul>
+<li>如果 Slack 为负，则路径违反了两个顺序元素之间的设置关系；</li>
+<li>换句话说，Slack 定义为在不增加整个电路延迟的情况下可以添加到连接的延迟量；</li>
+</ul>
+<p>注意：我们在这里讨论同一节点的松弛。对于不同的节点，必须考虑传播延迟。（将在以后讨论）</p>
+<h4 id="Slack-计算"><a href="#Slack-计算" class="headerlink" title="Slack 计算"></a>Slack 计算</h4><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/SlackComputation.png" alt="SlackComputation"></p>
+<h4 id="Delay-Models"><a href="#Delay-Models" class="headerlink" title="Delay Models"></a>Delay Models</h4><p>在算法中，为了上述概念计算的方便，这里设置了一些模型，所以我们所求的延迟都是相对值：</p>
+<ol>
+<li>逻辑延迟：<ul>
+<li>通过 BLE 延迟；</li>
+<li>从时序模型获得（设置为 0.1）；</li>
+</ul>
+</li>
+<li>IntraClusterConnectionDelay（逻辑集群内部延迟）：<ul>
+<li>同一集群内BLE之间的延迟；</li>
+<li>从时序模型获得（设置为 0.1）；</li>
+</ul>
+</li>
+<li>InterClusterConnectionDelay（逻辑集群外部延迟）：<ul>
+<li>不同集群中的 BLE 之间的延迟；</li>
+<li>放置和布线后获得（设置为 1.0，将导致不准确）；</li>
+</ul>
+</li>
+</ol>
+<h3 id="关键度-Criticalities"><a href="#关键度-Criticalities" class="headerlink" title="关键度 Criticalities"></a>关键度 Criticalities</h3><p>对于 VPack 的时序驱动版本（即：T-VPack），cost function 现在还从 connection critical 中考虑了 timing critical。</p>
+<p><strong>「Connection Criticality」</strong>：</p>
+<ul>
+<li>计算公式：$ConnectionCriticality(i) = 1 - \frac{slack(i)}{MaxSlack}$</li>
+<li>它的取值范围为：(0,1)</li>
+<li>slack 越小， criticality 越大；</li>
+<li>MaxSlack 是整个电路中所有点对点连接中最大的 slack；</li>
+<li>衡量了整个电路中某个连接的关键度；</li>
+</ul>
+<p><strong>「BaseBLECriticality(B)」</strong>：</p>
+<ul>
+<li>每个 unclustered 的 BLE B 的 base criticality 定义为：<ul>
+<li>将 B 与当前正在打包的群集 C 中的 BLE 相连接，所有可能的连接中最大的 Connection_Criticality 值；</li>
+</ul>
+</li>
+<li>如果 B 与 C 没有任何连接，则 base criticality = 0；<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/BaseCriticalityAssignment.png" alt="BaseCriticalityAssignment"></li>
+</ul>
+<h3 id="Criticality-Tie-breaker"><a href="#Criticality-Tie-breaker" class="headerlink" title="Criticality Tie-breaker"></a>Criticality Tie-breaker</h3><h4 id="Tie-breaker-Mechanism"><a href="#Tie-breaker-Mechanism" class="headerlink" title="Tie-breaker Mechanism"></a>Tie-breaker Mechanism</h4><p>选择要吸收到集群中的 BLE 时，多个 BLE 具有相同的基本临界值的可能性很大：</p>
+<ul>
+<li>使用 tie-breaker mechanism（决胜局机制）选择最适合打包的 BLE；</li>
+<li>该机制基于以最有效地减少关键路径上剩余的 BLE 数量的方式，将 BLE 打包在一起；</li>
+</ul>
+<p>举例：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/Tie-breakerMechanism.png" alt="Tie-breakerMechanism"></p>
+<ul>
+<li>加粗的黑线表示关键路径，方框里面数字表示 BLE 所在的关键路径数；</li>
+<li>在这种情况下，吸收 BLE H，I 和 J 比吸收 BLE A，D 和 F 更有益；</li>
+<li>可以看到，吸收 H，I 和 J 影响七个 BLE（A，B，C，D，E，F 和 G）的关键性，而吸收 A，D 和 F 仅影响三个 BLE 的关键性 BLE（H，I 和 J）；</li>
+<li>显然，最好对 BLE 进行群集，以降低大多数其他 BLE 的关键性；</li>
+</ul>
+<h4 id="运用至-Criticality"><a href="#运用至-Criticality" class="headerlink" title="运用至 Criticality"></a>运用至 Criticality</h4><p><strong>「InputPathsAffected」</strong>：</p>
+<ul>
+<li>电路中的源与当前标记为BLE之间的关键路径数；</li>
+<li>计算：$InputPathsAffected(B)=\sum_{\forall D \in critical \ inputs(B)}InputPathsAffected(D)$</li>
+<li>关键输入（B）指的是 BLE 驱动关键路径上 B 输入的连接；</li>
+</ul>
+<p><strong>「OutputPathsAffected」</strong>：</p>
+<ul>
+<li>电路中的接收器与当前标记的 BLE 之间的关键路径数；</li>
+<li>计算：$OutputPathsAffected(B)=\sum_{\forall D \in critical \ outputs(B)}OutputPathsAffected(D)$</li>
+<li>关键输出（B）是指由关键路径上的 B 输出驱动的 BLE；</li>
+</ul>
+<p><strong>「TotalPathsAffected」</strong>：</p>
+<ul>
+<li>$TotalPathsAffected(B)=InputPathsAffected(B)+OutputPathsAffected(B)$</li>
+</ul>
+<p>例子：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/CriticalityTie-breaker.png" alt="CriticalityTie-breaker"></p>
+<h3 id="标准-Criteria"><a href="#标准-Criteria" class="headerlink" title="标准 Criteria"></a>标准 Criteria</h3><p>更新 <strong>「Criticality(B)」</strong>:</p>
+<ul>
+<li>$Criticality(B) = BaseBLECriticality(B) + \epsilon \cdot TotalPathsAffected(B)$</li>
+<li>其中 ε 是一个非常小的值，可确保 TotalPathsAffected 值仅充当平局机制；</li>
+</ul>
+<p>吸引力 <strong>「Attraction」</strong>：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/Attraction.png" alt="Attraction"></p>
+<ul>
+<li>G 是归一化因子，设置为任何 BLE 可以连接的最大网络数；</li>
+<li>如果 λ = 0，则我们仅专注于与集群共享输入引脚（即：VPack）；</li>
+<li>如果 λ = 1，则我们仅专注于最小化关键路径，而无需担心共享输入的数量；</li>
+<li>λ 由实验确定，并根据经验设置为 0.75；</li>
+</ul>
+<h2 id="分析对比"><a href="#分析对比" class="headerlink" title="分析对比"></a>分析对比</h2><ul>
+<li>T-VPack 算法不管是在面积还是延迟，还是面积与延迟的乘积上，性能都要优于 VPack；</li>
+<li>对 T-VPack 算法来说，随着 cluster size 的增大，external 逐渐减少，internal 逐渐增加，一般的商用 FPGA 都选择 8-10；</li>
+</ul>
+<h2 id="运用举例"><a href="#运用举例" class="headerlink" title="运用举例"></a>运用举例</h2><p>结构图：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/Packing-Virtex5FPGA.png" alt="Packing-Virtex5FPGA"></p>
+<p>特点：</p>
+<ul>
+<li>O6 直接驱动 SLICE 输出 A，而 O5 必须在到达 SLICE 输出 AMUX 之前通过附加的多路复用器，这会使输出 O5 慢于输出 O6；</li>
+<li>因此，为了获得高性能，不应在时序关键的组合路径中使用 O5；</li>
+<li><strong>如果要保持高速性能，在将 LUT 打包到 Virtex-5 SLICE 中时，必须考虑 O5 的相对慢度</strong>；</li>
+</ul>
+<p>Packing 方法：</p>
+<ul>
+<li>除了开放第二个 LUT 输出之外，还更改了成本函数以鼓励双输出 LUT 打包，并增加了逻辑密度，从而减少了所用 6-LUT 的总数：<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/PackingForVirtex5Cost.png" alt="PackingForVirtex5Cost"><ul>
+<li>其中，$L_i$ 是占用 $LUT_i$ 的程度，它有三种不同的取值：<ul>
+<li>$L_i = 1$，如果 O5 和 O6 输出都被使用；</li>
+<li>$L_i = 2$，如果仅有 O6 输出被使用；</li>
+<li>$L_i = 3$，如果仅有 O5 输出被使用；</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>注意：<ul>
+<li>对于将两个 LUT 封装在单个双输出 6-LUT 中的情况，Li 是最小的成本；</li>
+<li>下一个最小的成本分配给单个 LUT 放置在 6-LUT 插槽中的情况，LUT 使用 O6 输出；</li>
+<li>回想一下，O6 是更快的 LUT 输出；</li>
+<li>最后，最高成本与使用缓慢的 O5 LUT 输出的 6-LUT 插槽中的单个 LUT 的场景相关；</li>
+</ul>
+</li>
+</ul>
+<p>提高 SLICE 利用率：</p>
+<ul>
+<li>前面给出的成本函数的目的是为了减少所使用的 6-LUT 的总数，该目标本身将有助于减少所使用的 SLICE 的总数。这里还扩展了成本功能，以更直接地减少 SLICE 数量：<ul>
+<li>$Cost = a\cdot W + b\cdot T+ c\cdot L + d\cdot S$，其中：a,b,c,d 是 scalers；</li>
+</ul>
+</li>
+<li>为了计算 S，令 $SL = {SLICE_1 … SLICE_m}$ 代表设备中所有 SLICE 的集合，包括已使用和未使用的 SLICE：<ul>
+<li>$S = \sum_{SLICE_i \in SL}S_i$<ul>
+<li>其中 $S_i$ 表示 $SLICE_i$ 的 LUT 利用率。 </li>
+</ul>
+</li>
+<li>分别计算 6-LUT 的两个子 LUT：<ul>
+<li>$S_i=\begin{cases}0,\quad N_i=0 \\\\1-\frac{N_i}{8},\quad N_i \geq 0\end{cases}$</li>
+<li>$N_i$ 代表当前包装中 $SLICE_i$ 中已使用的 LUT 的数量（$N_i$ 最多为 8）；</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/04/13/FPGA-technology/FPGA-CADTools-Synthesis/" title="FPGA-CAD Tools：Synthesis">http://www.thebetterkong.cn/2020/04/13/FPGA-technology/FPGA-CADTools-Synthesis/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%9B%BD%E7%A7%91%E5%A4%A7%E7%A0%94%E7%A9%B6%E7%94%9F%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 国科大研究生课程笔记</a>
+              <a href="/tags/FPGA/" rel="tag"><i class="fa fa-tag"></i> FPGA</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/10/FPGA-technology/FPGA-ClockNetwork/" rel="prev" title="FPGA-Clock Network">
+      <i class="fa fa-chevron-left"></i> FPGA-Clock Network
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/04/18/Math-Basic-Notes/Random-Mathematics/" rel="next" title="概率论笔记">
+      概率论笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#概述：FPGA-CAD-Tools"><span class="nav-number">1.</span> <span class="nav-text">概述：FPGA CAD Tools</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#完整的-FPGA-CAD-流程图"><span class="nav-number">1.1.</span> <span class="nav-text">完整的 FPGA CAD 流程图</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CAD-和-EDA"><span class="nav-number">1.2.</span> <span class="nav-text">CAD 和 EDA</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#FPGA-CAD-Tools"><span class="nav-number">1.3.</span> <span class="nav-text">FPGA CAD Tools</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#概述：FPGA-Synthesis"><span class="nav-number">2.</span> <span class="nav-text">概述：FPGA Synthesis</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Input-to-Synthesis"><span class="nav-number">2.1.</span> <span class="nav-text">Input to Synthesis</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Output-from-Synthesis"><span class="nav-number">2.2.</span> <span class="nav-text">Output from Synthesis</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#什么是-FPGA-综合？"><span class="nav-number">2.3.</span> <span class="nav-text">什么是 FPGA 综合？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#综合过程的颗粒度分析"><span class="nav-number">2.4.</span> <span class="nav-text">综合过程的颗粒度分析</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#技术独立的综合：HLS、LS"><span class="nav-number">3.</span> <span class="nav-text">技术独立的综合：HLS、LS</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#High-Level-Synthesis-HLS"><span class="nav-number">3.1.</span> <span class="nav-text">High Level Synthesis (HLS)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Logic-Synthesis（LS）"><span class="nav-number">3.2.</span> <span class="nav-text">Logic Synthesis（LS）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Logic-Synthesis-Explained"><span class="nav-number">3.3.</span> <span class="nav-text">Logic Synthesis Explained</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#技术不独立的综合：Mapping"><span class="nav-number">4.</span> <span class="nav-text">技术不独立的综合：Mapping</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#总体认识"><span class="nav-number">4.1.</span> <span class="nav-text">总体认识</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Area-Delay-Trade-off"><span class="nav-number">4.2.</span> <span class="nav-text">Area&#x2F;Delay Trade-off</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DAG-表示"><span class="nav-number">4.3.</span> <span class="nav-text">DAG 表示</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#相关概念"><span class="nav-number">4.4.</span> <span class="nav-text">相关概念</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#K-feasible-Cuts"><span class="nav-number">4.4.1.</span> <span class="nav-text">K-feasible Cuts</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Edge-Cut-Size-和-Height"><span class="nav-number">4.4.2.</span> <span class="nav-text">Edge Cut Size 和 Height</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Phase1：FlowMap-Labelling"><span class="nav-number">4.5.</span> <span class="nav-text">Phase1：FlowMap_Labelling</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#First-know"><span class="nav-number">4.5.1.</span> <span class="nav-text">First know</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#伪代码描述"><span class="nav-number">4.5.2.</span> <span class="nav-text">伪代码描述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#过程-1：初始化"><span class="nav-number">4.5.3.</span> <span class="nav-text">过程 1：初始化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#过程-2：Collapsing"><span class="nav-number">4.5.4.</span> <span class="nav-text">过程 2：Collapsing</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#补充：Max-flow-Min-cut-Theorem"><span class="nav-number">4.5.5.</span> <span class="nav-text">补充：Max-flow Min-cut Theorem</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#过程-3：Splitting"><span class="nav-number">4.5.6.</span> <span class="nav-text">过程 3：Splitting</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#过程-4-：计算label"><span class="nav-number">4.5.7.</span> <span class="nav-text">过程 4 ：计算label</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#算法例子"><span class="nav-number">4.5.8.</span> <span class="nav-text">算法例子</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Phase2：FlowMap-Mapping"><span class="nav-number">4.6.</span> <span class="nav-text">Phase2：FlowMap_Mapping</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#伪代码描述-1"><span class="nav-number">4.6.1.</span> <span class="nav-text">伪代码描述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#算法例子-1"><span class="nav-number">4.6.2.</span> <span class="nav-text">算法例子</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#技术不独立的综合：Packing"><span class="nav-number">5.</span> <span class="nav-text">技术不独立的综合：Packing</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#总体认识-1"><span class="nav-number">5.1.</span> <span class="nav-text">总体认识</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#算法模型"><span class="nav-number">5.2.</span> <span class="nav-text">算法模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pack-Algorithm-VPack"><span class="nav-number">5.3.</span> <span class="nav-text">Pack Algorithm: VPack</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#目标"><span class="nav-number">5.3.1.</span> <span class="nav-text">目标</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#计算流程"><span class="nav-number">5.3.2.</span> <span class="nav-text">计算流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#伪代码"><span class="nav-number">5.3.3.</span> <span class="nav-text">伪代码</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pack-Algorithm-T-VPack"><span class="nav-number">5.4.</span> <span class="nav-text">Pack Algorithm: T-VPack</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#目标-1"><span class="nav-number">5.4.1.</span> <span class="nav-text">目标</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Timing"><span class="nav-number">5.4.2.</span> <span class="nav-text">Timing</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#基础概念"><span class="nav-number">5.4.2.1.</span> <span class="nav-text">基础概念</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#时间分析"><span class="nav-number">5.4.2.2.</span> <span class="nav-text">时间分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Slack-计算"><span class="nav-number">5.4.2.3.</span> <span class="nav-text">Slack 计算</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Delay-Models"><span class="nav-number">5.4.2.4.</span> <span class="nav-text">Delay Models</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#关键度-Criticalities"><span class="nav-number">5.4.3.</span> <span class="nav-text">关键度 Criticalities</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Criticality-Tie-breaker"><span class="nav-number">5.4.4.</span> <span class="nav-text">Criticality Tie-breaker</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Tie-breaker-Mechanism"><span class="nav-number">5.4.4.1.</span> <span class="nav-text">Tie-breaker Mechanism</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#运用至-Criticality"><span class="nav-number">5.4.4.2.</span> <span class="nav-text">运用至 Criticality</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#标准-Criteria"><span class="nav-number">5.4.5.</span> <span class="nav-text">标准 Criteria</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#分析对比"><span class="nav-number">5.5.</span> <span class="nav-text">分析对比</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#运用举例"><span class="nav-number">5.6.</span> <span class="nav-text">运用举例</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

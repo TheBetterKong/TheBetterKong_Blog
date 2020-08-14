@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="讲述 FPGA  能实现自由编程的主要原因；">
+<meta property="og:type" content="article">
+<meta property="og:title" content="FPGA-ProgrammingTechnologies">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/03/26/FPGA-technology/FPGA-ProgrammingTechnologies/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="讲述 FPGA  能实现自由编程的主要原因；">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/FlashBaseSwitch.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/CRAM.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/ConfigurationMemoryArray.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/Model1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/Model2.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/Model3.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/Model4.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/SIPO.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/BitstreamFrames.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/P1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/P2.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/P3.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/P4.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/StaticPartialReconfiguration.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/DynamicPartialReconfiguration.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/ConceptDynamicPartialReconfiguration.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/Comparison.png">
+<meta property="article:published_time" content="2020-03-26T07:46:14.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:31:37.023Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="国科大研究生课程笔记">
+<meta property="article:tag" content="FPGA">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/FlashBaseSwitch.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/03/26/FPGA-technology/FPGA-ProgrammingTechnologies/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>FPGA-ProgrammingTechnologies | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/03/26/FPGA-technology/FPGA-ProgrammingTechnologies/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          FPGA-ProgrammingTechnologies
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-03-26 15:46:14" itemprop="dateCreated datePublished" datetime="2020-03-26T15:46:14+08:00">2020-03-26</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:31:37" itemprop="dateModified" datetime="2020-08-14T17:31:37+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%8F%AF%E7%BC%96%E7%A8%8B%E9%80%BB%E8%BE%91%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1%E4%B8%8E-FPGA-%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">可编程逻辑系统设计与 FPGA 技术</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/03/26/FPGA-technology/FPGA-ProgrammingTechnologies/" class="post-meta-item leancloud_visitors" data-flag-title="FPGA-ProgrammingTechnologies" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/03/26/FPGA-technology/FPGA-ProgrammingTechnologies/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/03/26/FPGA-technology/FPGA-ProgrammingTechnologies/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>讲述 FPGA  能实现自由编程的主要原因；</p>
+<a id="more"></a> 
+<h1 id="How-to-Program-an-FPGA"><a href="#How-to-Program-an-FPGA" class="headerlink" title="How to Program an FPGA?"></a>How to Program an FPGA?</h1><h2 id="Anti-fuse-based"><a href="#Anti-fuse-based" class="headerlink" title="Anti-fuse based"></a>Anti-fuse based</h2><p>Anti-fuse：</p>
+<ul>
+<li>反熔丝技术是基于在正常情况下表现出很高电阻的结构，但是可以被“烧坏”（实际上，连接起来）以产生低电阻连接；</li>
+<li>可编程性体现在：可从高阻抗状态到低阻抗或“熔丝”状态；</li>
+</ul>
+<p>处理：</p>
+<ul>
+<li>在 FPGA 中利用反熔丝配置逻辑和路由；</li>
+<li>在防熔丝的两个节点之间施加高电流密度，形成金属层之间的连接；</li>
+<li>需要特殊处理以实现可靠的防熔丝；</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>设备为一次性可编程（OTP），导通后不可再恢复；</li>
+</ul>
+<p>优点：</p>
+<ul>
+<li>关闭电源后保留配置，可靠性高；</li>
+<li>与基于SRAM的FPGA相比，对SEU（单事件扰乱）效应的敏感度更低；</li>
+</ul>
+<p>两种突出的方法是：</p>
+<ol>
+<li>Poly to Diffusion (Dielectric)，即：聚对扩散（电介质）<ul>
+<li>结构简单，但占面积大；</li>
+</ul>
+</li>
+<li>Metal to Metal (Via Link)，即：金属对金属（通过连接）<ul>
+<li>直接金属对金属消除聚和金属之间的连接或扩散到金属，从而减少寄生电容和互连空间要求；</li>
+<li>电阻低；</li>
+<li>目前使用的比较多；</li>
+</ul>
+</li>
+</ol>
+<h2 id="Flash-E2PROM-based"><a href="#Flash-E2PROM-based" class="headerlink" title="Flash/E2PROM based"></a>Flash/E2PROM based</h2><p>在 FPGA 里用 flash memory 配置逻辑和路由；    </p>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/FlashBaseSwitch.png" alt="FlashBaseSwitch">   </p>
+<p>特点：</p>
+<ul>
+<li>使用 floating gate 存储编程信息；</li>
+<li>两个晶体管共用 floating gate：<ul>
+<li>感应晶体管：写入并验证 floating gate 电压</li>
+<li>开关晶体管：连接或分离布线网络</li>
+</ul>
+</li>
+</ul>
+<p>VS. SRAM：</p>
+<ul>
+<li>可通过写入 floating gate 电压来重新配置；</li>
+<li>断电时能保留其配置；</li>
+<li>需要支持 floating gate 的技术，且其擦写次数有限，不像 SRAM 无限；</li>
+<li>与基于 SRAM 的相比，消耗的面积更小；</li>
+</ul>
+<p>虽然它看起来有许多的优点，但是受其工艺的限制，它只能在特殊芯片的特殊位置上使用，导致其应用受限，目前大多数 FPGA 还是基于 SRAM 的；</p>
+<h2 id="SRAM-based"><a href="#SRAM-based" class="headerlink" title="SRAM-based"></a>SRAM-based</h2><p>cell 由两个交叉耦合的反向器构成，采用标准 CMOS 工艺；   </p>
+<p>结构特点：<br>  <img src="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/CRAM.png" alt="CRAM"></p>
+<p>配置内存阵列：<br>  <img src="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/ConfigurationMemoryArray.png" alt="ConfigurationMemoryArray"></p>
+<h2 id="Comparisons"><a href="#Comparisons" class="headerlink" title="Comparisons"></a>Comparisons</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>SRAM</th>
+<th>Flash</th>
+<th>Anti-fuse</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Volatile?（挥发性，断电数据还在？）</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Reprogrammable?</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Are(storage element size)</td>
+<td>High(6 transistors)</td>
+<td>Moderate(1 transistor)</td>
+<td>Low(0 transistor)</td>
+</tr>
+<tr>
+<td>manufacturing process(制造工艺)</td>
+<td>Stadard CMOS</td>
+<td>Flash Process</td>
+<td>Anti-fuse needs special development</td>
+</tr>
+<tr>
+<td>In-system programmable?</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Switch resistance电阻</td>
+<td>~500-1000Ω</td>
+<td>~500-1000Ω</td>
+<td>20-100Ω</td>
+</tr>
+<tr>
+<td>Switch capacitance电容</td>
+<td>~1-2fF</td>
+<td>~1-2fF</td>
+<td>&lt;1fF</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Programming yield编程配置成功率|100%|100%|&gt;90%|</p>
+<h1 id="Bit-stream-Configuration"><a href="#Bit-stream-Configuration" class="headerlink" title="Bit-stream Configuration"></a>Bit-stream Configuration</h1><p>FPGA 配置：将数据（位流）加载到 FPGA，来启用 FPGA 功能的过程；    </p>
+<p>配置发生时间：</p>
+<ul>
+<li>FPGA 上电时；</li>
+<li>FPGA 中断时；</li>
+</ul>
+<h2 id="Configuration-Mode"><a href="#Configuration-Mode" class="headerlink" title="Configuration Mode"></a>Configuration Mode</h2><p>配置模式：定义 FPGA 如何与数据源交互的细节</p>
+<ul>
+<li>Master serial mode（主-串）</li>
+<li>Slave serial mode（从-串）</li>
+<li>Parallel mode（并行）</li>
+<li>JTAG (Joint Test Action Group) Mode（一种标准）<ul>
+<li>JTAG接口：TDI（input）, TDO（output）, TCK（clk）, TMS（控制）</li>
+</ul>
+</li>
+</ul>
+<p>有了这些配置模型，只需要将数据按照对应模型的方式，通过 download cable（下载电缆），下载至 FPGA 即可；   </p>
+<p>下面将分别介绍这四种 model；</p>
+<h3 id="Master-serial-mode（主-串）"><a href="#Master-serial-mode（主-串）" class="headerlink" title="Master serial mode（主-串）"></a>Master serial mode（主-串）</h3><p>  <img src="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/Model1.png" alt="model1"></p>
+<ul>
+<li>FPGA驱动配置时钟（CCLK，配置时钟）；</li>
+<li>FPGA提供所有控制逻辑；</li>
+</ul>
+<h3 id="Slave-serial-mode（从-串）"><a href="#Slave-serial-mode（从-串）" class="headerlink" title="Slave serial mode（从-串）"></a>Slave serial mode（从-串）</h3><p>  <img src="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/Model2.png" alt="model2"></p>
+<ul>
+<li>生成CCLK所需的外部控制逻辑;</li>
+</ul>
+<h3 id="Parallel-mode（并行）"><a href="#Parallel-mode（并行）" class="headerlink" title="Parallel mode（并行）"></a>Parallel mode（并行）</h3><p>  <img src="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/Model3.png" alt="model3"></p>
+<ul>
+<li>CCLK 由外部逻辑驱动</li>
+<li>每个 CCLK 按字节加载数据</li>
+</ul>
+<h3 id="JTAG-Mode（一种标准）"><a href="#JTAG-Mode（一种标准）" class="headerlink" title="JTAG Mode（一种标准）"></a>JTAG Mode（一种标准）</h3><p>  <img src="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/Model4.png" alt="model4"></p>
+<ul>
+<li>控制信号和数据显示在边界扫描引脚（TDI、TMS、TCK）上</li>
+<li>数据每 TCK 加载 1 位</li>
+</ul>
+<h2 id="Configuration-Process"><a href="#Configuration-Process" class="headerlink" title="Configuration Process"></a>Configuration Process</h2><p>4 个配置阶段：</p>
+<ol>
+<li>Configuration memory clear</li>
+<li>Initialization</li>
+<li>Load configuration data</li>
+<li>Start-up</li>
+</ol>
+<p>配置数据流入串行输入/并行输出的移位寄存器链：<br>  <img src="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/SIPO.png" alt="SIPO">      </p>
+<p>比特流和帧：<br>  <img src="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/BitstreamFrames.png" alt="BitstreamFrames"></p>
+<ul>
+<li>通过在 CRAM 中写入位来重新编程 FPGAs；</li>
+<li>以小块 “frams” 组织起结构；</li>
+<li>编写 tiles 的列/行程序需要多个帧合并起来；</li>
+<li>包含路由和逻辑 tile 配置<ul>
+<li>例如，Virtex 6 帧大小：81×32 位（81 字）</li>
+<li>Virtex6 的典型比特流在 43Mb 到 190Mb 之间</li>
+</ul>
+</li>
+</ul>
+<p>配置时间取决于，配置频率和配置 bitstream 的长度；</p>
+<h3 id="Configuration-memory-clear"><a href="#Configuration-memory-clear" class="headerlink" title="Configuration memory clear"></a>Configuration memory clear</h3><p>  <img src="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/P1.png" alt="P1"></p>
+<ul>
+<li>在此过程中禁用了非配置 I/O 管脚</li>
+<li>配置 SRAM（CRAM）逐行清除</li>
+<li>继续初始化</li>
+</ul>
+<h3 id="Initialization"><a href="#Initialization" class="headerlink" title="Initialization"></a>Initialization</h3><p>  <img src="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/P2.png" alt="P2"></p>
+<ul>
+<li>INIT pin 被释放</li>
+<li>Mode pins 采样</li>
+<li>继续加载配置数据</li>
+</ul>
+<h3 id="Load-configuration-data"><a href="#Load-configuration-data" class="headerlink" title="Load configuration data"></a>Load configuration data</h3><p>  <img src="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/P3.png" alt="P3"></p>
+<ul>
+<li>FPGA 开始接收数据</li>
+<li>校验：在数据帧传输期间检查 CRC（循环冗余码）</li>
+<li>如果通过 CRC 检查，则继续启动</li>
+</ul>
+<h3 id="Start-up"><a href="#Start-up" class="headerlink" title="Start-up"></a>Start-up</h3><p>  <img src="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/P4.png" alt="P4"></p>
+<ul>
+<li>从配置过渡到正常运行</li>
+<li>默认顺序为：<ul>
+<li>释放 DONE pin</li>
+<li>All I/O pins 激活</li>
+<li>释放 Global write enable</li>
+<li>释放 Global reset</li>
+</ul>
+</li>
+<li>FPGA 可操作</li>
+</ul>
+<h1 id="Partial-Re-onfiguration-for-real-time-update"><a href="#Partial-Re-onfiguration-for-real-time-update" class="headerlink" title="Partial Re-onfiguration for real time update"></a>Partial Re-onfiguration for real time update</h1><p>认识 partial reconfiguration：</p>
+<ul>
+<li>通过下载部分位文件动态修改逻辑块的能力，而其余的逻辑继续运行而不中断；</li>
+<li>允许设计人员动态更改功能，无需完全重新配置和重新建立链接，显著增强了 FPGAs 提供的灵活性；</li>
+</ul>
+<p>优势：</p>
+<ul>
+<li>允许在单个 FPGA 上使用多个应用程序；</li>
+<li>在不影响芯片其他区域工作的情况下修复“损坏”的芯片模块；</li>
+<li>节省重新配置时间，加快系统启动速度；</li>
+</ul>
+<p>两组 partial reconfiguration：</p>
+<ol>
+<li>Static partial reconfiguration<ul>
+<li>设备在重新配置过程中不活动<br><img src="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/StaticPartialReconfiguration.png" alt="StaticPartialReconfiguration"></li>
+</ul>
+</li>
+<li>Dynamic partial reconfiguration<ul>
+<li>在剩下的 FPGA 仍在运行时更改设备的一部分</li>
+<li><img src="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/DynamicPartialReconfiguration.png" alt="DynamicPartialReconfiguration"></li>
+</ul>
+</li>
+</ol>
+<p>动态部分重构的概念:<br>  <img src="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/ConceptDynamicPartialReconfiguration.png" alt="ConceptDynamicPartialReconfiguration"></p>
+<ul>
+<li>可以实现快速的功能切换</li>
+</ul>
+<p>要确定可重构区域，不是所有的都可以 reconfiguration；</p>
+<p>Module-based PR：</p>
+<ul>
+<li>将每个可重构模块作为一个单独的项目来实现；</li>
+<li>将每个 PR 模块限制在给定的分区中；</li>
+<li>最初加载全比特流，按需加载完整PR模块的部分比特流；</li>
+<li>PR区域平面图；</li>
+</ul>
+<p>Difference-based PR：</p>
+<ul>
+<li>计算可重构模块的比特流差分，得到差分部分比特流；</li>
+<li>仅包含有关当前设计结构（和 FPGA 的新内容）之间差异的信息；</li>
+<li>在诸如更改查找表（LUT）公式或专用内存块内容之类的小更改中很有用；</li>
+</ul>
+<p>PR Specific Design Flow Comparison：<br>  <img src="http://img.thebetterkong.cn/blog/FPGA-ProgrammingTechnologies/Comparison.png" alt="Comparison"></p>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/03/26/FPGA-technology/FPGA-ProgrammingTechnologies/" title="FPGA-ProgrammingTechnologies">http://www.thebetterkong.cn/2020/03/26/FPGA-technology/FPGA-ProgrammingTechnologies/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%9B%BD%E7%A7%91%E5%A4%A7%E7%A0%94%E7%A9%B6%E7%94%9F%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 国科大研究生课程笔记</a>
+              <a href="/tags/FPGA/" rel="tag"><i class="fa fa-tag"></i> FPGA</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/03/25/FPGA-technology/FPGA-HardBlocks/" rel="prev" title="FPGA-Hard Blocks">
+      <i class="fa fa-chevron-left"></i> FPGA-Hard Blocks
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/03/29/FPGA-technology/FPGA-RoutingArchitecture/" rel="next" title="FPGA-Routing Architecture">
+      FPGA-Routing Architecture <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#How-to-Program-an-FPGA"><span class="nav-number">1.</span> <span class="nav-text">How to Program an FPGA?</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Anti-fuse-based"><span class="nav-number">1.1.</span> <span class="nav-text">Anti-fuse based</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Flash-E2PROM-based"><span class="nav-number">1.2.</span> <span class="nav-text">Flash&#x2F;E2PROM based</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SRAM-based"><span class="nav-number">1.3.</span> <span class="nav-text">SRAM-based</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Comparisons"><span class="nav-number">1.4.</span> <span class="nav-text">Comparisons</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Bit-stream-Configuration"><span class="nav-number">2.</span> <span class="nav-text">Bit-stream Configuration</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Configuration-Mode"><span class="nav-number">2.1.</span> <span class="nav-text">Configuration Mode</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Master-serial-mode（主-串）"><span class="nav-number">2.1.1.</span> <span class="nav-text">Master serial mode（主-串）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Slave-serial-mode（从-串）"><span class="nav-number">2.1.2.</span> <span class="nav-text">Slave serial mode（从-串）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Parallel-mode（并行）"><span class="nav-number">2.1.3.</span> <span class="nav-text">Parallel mode（并行）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#JTAG-Mode（一种标准）"><span class="nav-number">2.1.4.</span> <span class="nav-text">JTAG Mode（一种标准）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Configuration-Process"><span class="nav-number">2.2.</span> <span class="nav-text">Configuration Process</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Configuration-memory-clear"><span class="nav-number">2.2.1.</span> <span class="nav-text">Configuration memory clear</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Initialization"><span class="nav-number">2.2.2.</span> <span class="nav-text">Initialization</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Load-configuration-data"><span class="nav-number">2.2.3.</span> <span class="nav-text">Load configuration data</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Start-up"><span class="nav-number">2.2.4.</span> <span class="nav-text">Start-up</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Partial-Re-onfiguration-for-real-time-update"><span class="nav-number">3.</span> <span class="nav-text">Partial Re-onfiguration for real time update</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="2018年1月3日正式披露两类处理器安全漏洞：  Spectre 幽灵：推测执行，基本涵盖了所有使用乱序执行的高性能处理器； Meltdown 熔断：乱序执行，Intel 内部实现的问题，并不是所有处理器都有；">
+<meta property="og:type" content="article">
+<meta property="og:title" content="概述：幽灵漏洞&amp;熔断漏洞">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/03/20/Computer-architecture-security/Overview_Spectre&Meltdown/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="2018年1月3日正式披露两类处理器安全漏洞：  Spectre 幽灵：推测执行，基本涵盖了所有使用乱序执行的高性能处理器； Meltdown 熔断：乱序执行，Intel 内部实现的问题，并不是所有处理器都有；">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/Overview_Spectre%26Meltdown/header.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/Overview_Spectre%26Meltdown/Speculative-execution.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/Overview_Spectre%26Meltdown/SgxPectre.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/Overview_Spectre%26Meltdown/SpectrePrime.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/Overview_Spectre%26Meltdown/Entries-in-Page-Dictory-and-Page-Table.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/Overview_Spectre%26Meltdown/summary.png">
+<meta property="article:published_time" content="2020-03-20T07:03:42.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:27:38.279Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="国科大研究生课程笔记">
+<meta property="article:tag" content="Spectre">
+<meta property="article:tag" content="Meltdown">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/Overview_Spectre%26Meltdown/header.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/03/20/Computer-architecture-security/Overview_Spectre&Meltdown/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>概述：幽灵漏洞&熔断漏洞 | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/03/20/Computer-architecture-security/Overview_Spectre&Meltdown/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          概述：幽灵漏洞&熔断漏洞
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-03-20 15:03:42" itemprop="dateCreated datePublished" datetime="2020-03-20T15:03:42+08:00">2020-03-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:27:38" itemprop="dateModified" datetime="2020-08-14T17:27:38+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%AE%89%E5%85%A8/" itemprop="url" rel="index"><span itemprop="name">计算机体系结构安全</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/03/20/Computer-architecture-security/Overview_Spectre&Meltdown/" class="post-meta-item leancloud_visitors" data-flag-title="概述：幽灵漏洞&熔断漏洞" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/03/20/Computer-architecture-security/Overview_Spectre&Meltdown/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/03/20/Computer-architecture-security/Overview_Spectre&Meltdown/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <div align="center"> <img src="http://img.thebetterkong.cn/blog/Overview_Spectre%26Meltdown/header.png" width="100%" alt="header.png" /> </div>   
+
+<p>2018年1月3日正式披露两类处理器安全漏洞：</p>
+<ul>
+<li><strong><code>Spectre 幽灵</code></strong>：推测执行，基本涵盖了所有使用乱序执行的高性能处理器；</li>
+<li><strong><code>Meltdown 熔断</code></strong>：乱序执行，Intel 内部实现的问题，并不是所有处理器都有；</li>
+</ul>
+<a id="more"></a> 
+<h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>最核心的性能技术出现问题，攻击者可利用这两个漏洞实现『跨权限』、『跨进程』的非法数据访问，这样就打破了传统操作系统设计的安全底线（逻辑隔离、权限隔离）。   </p>
+<p>从 <code>IoT（物联网：Internet of Things）</code> 至 <code>PC 端</code>，再至 <code>云端</code>，无一例外地受到这两类漏洞的影响，在工业界引起了一片哗然！潘多拉魔盒被打开，一年多的时间里，几乎每隔一两个月都会出现各式各样的新的变种。直至现在，人们依然认为以 Spectre 为代表的漏洞，在处理器里依然存在很大的安全隐患。</p>
+<h1 id="问题：为什么需要乱序执行与推测执行？"><a href="#问题：为什么需要乱序执行与推测执行？" class="headerlink" title="问题：为什么需要乱序执行与推测执行？"></a>问题：为什么需要乱序执行与推测执行？</h1><p>首先，从体系结构的角度来看，我们知道程序中存在三大依赖关系：</p>
+<ul>
+<li>数据依赖：<ul>
+<li>假相关（WAW 和 WAR）：重命名</li>
+<li>真相关（RAW）：</li>
+</ul>
+</li>
+<li>控制依赖：<ul>
+<li>在复杂的流水线中，分支指令在取指后，到知道『怎么跳？』『往哪跳？』需要花费很大的周期数，这期间如果不进行相关操作，会存在大量的 bubble，严重影响性能。</li>
+<li>推测执行</li>
+</ul>
+</li>
+<li>资源依赖：超标量流水线、乱序执行</li>
+</ul>
+<p>提升处理器性能的指标：</p>
+<ul>
+<li>指令级并行性：这里就会大量的用到推测执行和乱序执行</li>
+<li>数据级并行性</li>
+<li>线程级并行性</li>
+</ul>
+<h2 id="推测执行"><a href="#推测执行" class="headerlink" title="推测执行"></a>推测执行</h2><p>类型：</p>
+<ul>
+<li>分支指令的跳转方向及是否跳转</li>
+<li>ret 指令的跳转方向<ul>
+<li>种类一：return 指令的返回地址在 reg 里，这样指令执行时可以直接读返回地址，比较理想；</li>
+<li>种类二：return 指令的返回地址需要从栈里弹出，这时可能发生 cache miss，需要花费几百个 cycle，导致性能爆降；</li>
+</ul>
+</li>
+<li>访存指令是否存在内存一致性</li>
+</ul>
+<p>实现机制：<br><img src="http://img.thebetterkong.cn/blog/Overview_Spectre%26Meltdown/Speculative-execution.png" alt="推测执行"></p>
+<ul>
+<li>BTB：跳转目标</li>
+<li>BHT：是否跳转<ul>
+<li>Local History</li>
+<li>Global History</li>
+</ul>
+</li>
+<li>RSB（return stack buffer）：call压栈，res出栈</li>
+<li>内存消歧：发现预测错误后，重新执行访存指令</li>
+<li>对于每条分支指令，记录指令执行前的状态（checkpoint），如寄存器映射表</li>
+</ul>
+<p>详见：转移猜测-CA</p>
+<h2 id="乱序执行"><a href="#乱序执行" class="headerlink" title="乱序执行"></a>乱序执行</h2><p>实现机制：</p>
+<ul>
+<li>顺序进入、乱序执行、顺序提交</li>
+<li>并行执行不存在依赖关系的指令</li>
+<li>提升指令级并行性</li>
+</ul>
+<p>乱序执行对例外的处理：</p>
+<ul>
+<li>ROB</li>
+<li>处理器不仅记录前向的寄存器映射关系，还记录后向，在发生例外后，一条条的将状态恢复</li>
+</ul>
+<p>详见：动态调度-CA</p>
+<h2 id="瞬态指令"><a href="#瞬态指令" class="headerlink" title="瞬态指令"></a>瞬态指令</h2><p>定义：执行但未提交的指令    </p>
+<p>出现原因：错误预测、例外、中断等</p>
+<p>特点：</p>
+<ul>
+<li>不影响体系结构的状态：<ul>
+<li>寄存器映射关系</li>
+<li>各个指令队列中的状态位</li>
+</ul>
+</li>
+<li>不影响程序的正确性</li>
+<li>影响微体系结构状态：<ul>
+<li>缓存内容</li>
+<li>TLB内容</li>
+</ul>
+</li>
+</ul>
+<h1 id="安全角度看问题"><a href="#安全角度看问题" class="headerlink" title="安全角度看问题"></a>安全角度看问题</h1><p>最核心的就是看：<mark>微体系结构状态的变化是否能被感知</mark>，所谓的侧信道。</p>
+<ul>
+<li>功耗侧信道：不同功能单元执行</li>
+<li>时间侧信道：恢复状态等需要时间</li>
+<li>缓存侧信道：缓存内容的改变<ul>
+<li>FLUSH + RELOAD</li>
+<li>PRIME + PROBE</li>
+<li>EVICT + TIME</li>
+<li>EVICT + RELOAD</li>
+<li>FLUSH + FLUSH</li>
+</ul>
+</li>
+</ul>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>攻击种类</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FLUSH + RELOAD</td>
+<td>1. Flush a cache line. <br> 2. Executing victim process.<br>3. Judge whether the cache line is reloaded back to cache by victim</td>
+</tr>
+<tr>
+<td>Prime + Probe</td>
+<td>1. Prime a cache line.<br>2. Executing victim process.<br>3.Probe the cache line to judge whether it is evicted out by victim.</td>
+</tr>
+<tr>
+<td>Evict + Time</td>
+<td>1. Measure the execution time of victim.<br>2. Evict a cache line out.<br>3. Re-execute victim process to justify whether it is affected by this cache line.</td>
+</tr>
+<tr>
+<td>Evict + Reload</td>
+<td>Alternative to Flush + Reload</td>
+</tr>
+<tr>
+<td>Flush + Flush</td>
+<td>1. Measure the time to flush a cache line.<br>2. Executing victim process.<br>3. Reflush the cache line to judge wheher victim touch the line.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>微体系结构状态的变化能被感知，因此，我们就可以观测瞬态指令引入所带来的变化。</p>
+<h1 id="Spectre类"><a href="#Spectre类" class="headerlink" title="Spectre类"></a>Spectre类</h1><p>推测执行无处不在，现在的幽灵攻击主要是针对 cache 的侧信道攻击，但是还有类似寄存器、TLB等等所有共享的硬件资源都有可能存在侧信道信息泄露。</p>
+<h2 id="分支预测错误-amp-FLUSH-RELOAD"><a href="#分支预测错误-amp-FLUSH-RELOAD" class="headerlink" title="分支预测错误 &amp; FLUSH+RELOAD"></a>分支预测错误 &amp; FLUSH+RELOAD</h2><p>受害者程序：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (x &lt; array1_size)&#123;      <span class="comment">// 数组边界判断 -- 如果发生分支预测错误</span></span><br><span class="line">    a = array1[x];         <span class="comment">// 越界访问敏感数据   |</span></span><br><span class="line">    b = a * <span class="number">512</span>;           <span class="comment">//                   | -&gt; 推测窗口内</span></span><br><span class="line">    c = array2[b];         <span class="comment">// 与敏感数据相关区域 |</span></span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    …</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>攻击过程：</p>
+<ul>
+<li>攻击者针对这段代码，可以先构造符合 <code>if</code> 的条件，让程序一直跳转执行。</li>
+<li>然后，突然构造一个不合法的 x 值（x 就是攻击者要访问的敏感数据的地址，x 非常大，出现越界访问），按照之前的训练结果，程序会预测 <code>符合 if 条件</code> 跳转去执行。</li>
+<li>这样，就导致越界访问 <code>array1</code> 拿到 a 值，然后，将 <code>b = a * 512</code> 作为 index 去访问 b。</li>
+<li>之后，就能通过构造 <code>FLUSH + RELOAD</code> 攻击知道 <code>array2</code> 里面哪一个地址被访问到，进而知道 b 值，也就知道了 a 的值。这里的 a 就是敏感地址 x 所指向的数据。</li>
+</ul>
+<p>原理：</p>
+<ul>
+<li>上述过程，利用推测执行，使得非法的 x 访问了 <code>array1</code>。这种访问之后，指令并没有真正的提交，也就不会影响程序的语义。但是，我们在 recover 时，因为没有恢复 cache 微结构的状态，使得攻击者可以通过 <code>FLUSH + RELOAD</code> 来访问 <code>array2</code> 获取 b 的值，进而反推 a 的值。也就导致了侧信道的信息泄露。</li>
+</ul>
+<p>上述攻击过程，我们有三大前提条件：</p>
+<ol>
+<li>构造 <code>FLUSH + RELOAD</code> 条件：攻击者可以访问 <code>array2[b]</code> 区域，并将 <code>array2[b]</code> 移出缓存；</li>
+<li>能否主动诱使错误推测地执行这段代码？<ul>
+<li>分支预测器所有线程共享</li>
+<li>部分信息导致不能精确预测</li>
+<li>给攻击者一个机会</li>
+</ul>
+</li>
+<li><code>x</code> 或者 <code>array1_size</code> 这两个变量，至少有一个要被构造成 cache miss 的状态，<code>array1[x]</code> 要 cache hit：来保证条件判断语句 <code>x &lt; array1_size</code> 需要较长的时间去执行，进而保证推测执行到足够的指令（上述程序的2，3，4条指令都被执行到）。</li>
+</ol>
+<p>攻击变种：</p>
+<ul>
+<li>Spectre V1 - Bounds Check Bypass， BCB</li>
+<li>Spectre V2 - Branch Target Injection， BTI</li>
+<li>Spectre V3 - Return Stack Buffer， RSB<ul>
+<li>rsb数量有限（在RSB空时，用BTB预测结果）；</li>
+<li>在上下文切换，会推测写返回地址，再跳转去执行；</li>
+<li>这样，攻击者就能通过恶意训练，使程序跳转到任意的攻击者想去执行的代码区域去执行；</li>
+</ul>
+</li>
+</ul>
+<h2 id="SgxPectre"><a href="#SgxPectre" class="headerlink" title="SgxPectre"></a>SgxPectre</h2><p>Intel Software Guard Extentions；详细参考：SGX技术的分析和研究     </p>
+<p>核心设计：为敏感程序创建 enclave，不能被外部访问，可以访问外部数据；</p>
+<ul>
+<li>但是与外部共享RSB与BTB</li>
+</ul>
+<p>攻击过程：<br><img src="http://img.thebetterkong.cn/blog/Overview_Spectre%26Meltdown/SgxPectre.png" alt="SgxPectre"></p>
+<h2 id="SpectrePrime"><a href="#SpectrePrime" class="headerlink" title="SpectrePrime"></a>SpectrePrime</h2><p>采用 <code>PRIME + PROBE</code> 缓存侧信道方法，利用<code>多核一致性协议（MetaData：MSI / MESI / MOESI）</code>，两个核共享数据（S状态），一个线程对其写（M状态），另外一个核转为（I状态）。这样，就能推测出来线程执行时，访问了哪些数据。    </p>
+<p><img src="http://img.thebetterkong.cn/blog/Overview_Spectre%26Meltdown/SpectrePrime.png" alt="SpectrePrime"></p>
+<h2 id="Store-To-Load"><a href="#Store-To-Load" class="headerlink" title="Store To Load"></a>Store To Load</h2><p><code>load Speculation</code>：预测执行 load 指令，能将性能提高 10% 左右</p>
+<ul>
+<li>在先有一个 store 操作，后面一个 load 操作时，如果 store 操作的地址还不知道，怎么办？</li>
+<li>通常，我认为在 store 一个值到某个地址时，程序是不会立马又去 load 这个地址的值，也即 store 后面跟 load 时，默认为这两个地址不同。</li>
+<li>这样，就可以在即使前面 store 指令的地址没被解析的情况下，依然能预测先执行后面的 load 指令。</li>
+</ul>
+<p>内存消歧：对是否存在内存一致性（consistency）要求进行预测</p>
+<ul>
+<li>正确：提升吞吐率</li>
+<li>错误：重新执行读取操作</li>
+</ul>
+<p><code>V4 Speculative Store Bypass，SSB</code>：    </p>
+<ul>
+<li>攻击者恶意训练内存消歧模块：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">01: 88040F      mov [rdi+rcx],al         | rdi+rcx 与 rsi+rcx</span><br><span class="line">02: 4C0FB6040E  movzx r8,byte [rsi+rcx]  | 指向同一个位置</span><br><span class="line">03: 49C1E00C    shl r8,byte 0xc</span><br><span class="line">04: 428B0402    mov eax,[rdx+r8]</span><br></pre></td></tr></table></figure></li>
+<li>处理器会预测 01 和 02 这两句代码的 rdi+rcx 指向不同的位置。</li>
+</ul>
+<h2 id="其他Spectre类变种"><a href="#其他Spectre类变种" class="headerlink" title="其他Spectre类变种"></a>其他Spectre类变种</h2><ol>
+<li>V1.1 Bounds Check Bypass Store， BCBS<ul>
+<li>推测的写操作可以前递给后续的读取操作</li>
+<li>进而可以用来改变程序的控制流</li>
+</ul>
+</li>
+<li>NetSpectre<ul>
+<li>对远程处理器进行推测执行侧信道的攻击</li>
+<li>可以利用特定执行单元的使用情况观测执行时间变化</li>
+</ul>
+</li>
+<li>Spoiler<ul>
+<li>利用STL预测错误会处理时间较长</li>
+<li>在20位低地址相同时，便进行预测</li>
+<li>推出8位虚拟地址与物理地址的映射关系</li>
+</ul>
+</li>
+</ol>
+<h1 id="Meltdown"><a href="#Meltdown" class="headerlink" title="Meltdown"></a>Meltdown</h1><p>基于的 Intel 处理器理论基础：</p>
+<ul>
+<li>内核空间都被映射到每个用户进程的虚拟地址空间</li>
+<li>在页表项中标识位来区分访问权限</li>
+<li>TLB 进行权限检查，若不满足页面访问权限，将产生例外</li>
+<li>Intel 处理器为追求性能？它采取延后处理该例外（在 ROB 里重新提交指令时，才处理）</li>
+</ul>
+<p><img src="http://img.thebetterkong.cn/blog/Overview_Spectre%26Meltdown/Entries-in-Page-Dictory-and-Page-Table.png" alt="Entries in Page Dictory and Page Table"></p>
+<h2 id="L1TF"><a href="#L1TF" class="headerlink" title="L1TF"></a>L1TF</h2><p><code>Terminal Fault</code>：在发现访问地址的 PTE 中 Present 位（pte在不在缓存中）为0时，会导致运行程序的地址转换过程直接终止，地址转换不会完成。    </p>
+<p>Intel认为大部分页的Present位都是有效的，延后Present位的判断：</p>
+<ul>
+<li>预测虚实地址转换PTW的结果</li>
+<li>在Retire阶段判断Present位</li>
+</ul>
+<p>变版：</p>
+<ul>
+<li>L1TF-SGX</li>
+<li>L1TF-OS/SGX</li>
+<li>L1TF-VMM</li>
+</ul>
+<h2 id="其他Meltdown类变种"><a href="#其他Meltdown类变种" class="headerlink" title="其他Meltdown类变种"></a>其他Meltdown类变种</h2><ol>
+<li>V3a Rogue System Register Read， RSRR:<ul>
+<li>读取系统寄存器：拿系统寄存器的值（未知，这个值本身不能读，但是，由于延后处理，所以可以实现）作为 index 去访问一个在 cache 里全部 flush 了的 array，利用这种侧信道的方式，读取系统寄存器的值。</li>
+</ul>
+</li>
+<li>LazyFP:<ul>
+<li>上下文切换时，由于 FPU 及 SIMD 寄存器保存起来较为耗时</li>
+<li>处理器将保存操作延后处理，在此之前会将 FPU 及 SIMD 单元设置为不可用</li>
+<li>后续指令访问相关寄存器时将产生例外，这个例外被滞后处理</li>
+</ul>
+</li>
+<li>MeltdownPrime:<ul>
+<li>利用缓存一致性协议，在多核环境中触发信息泄露</li>
+</ul>
+</li>
+</ol>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><div align="center"> <img src="http://img.thebetterkong.cn/blog/Overview_Spectre%26Meltdown/summary.png" width="100%" alt="summary.png" /> </div>        
+
+<ul>
+<li>红色部分为变种</li>
+<li>蓝色部分为分类</li>
+<li>浅黄色部分无法攻击</li>
+</ul>
+<p>Spectre:</p>
+<ul>
+<li>训练目标：PHT/BTB/RSB/STL</li>
+<li>依据恶意训练方式不同再进行分类</li>
+</ul>
+<p>Meltdown:</p>
+<ul>
+<li>判断不同的例外处理是否被延后处理</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/03/20/Computer-architecture-security/Overview_Spectre&Meltdown/" title="概述：幽灵漏洞&amp;熔断漏洞">http://www.thebetterkong.cn/2020/03/20/Computer-architecture-security/Overview_Spectre&Meltdown/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%9B%BD%E7%A7%91%E5%A4%A7%E7%A0%94%E7%A9%B6%E7%94%9F%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 国科大研究生课程笔记</a>
+              <a href="/tags/Spectre/" rel="tag"><i class="fa fa-tag"></i> Spectre</a>
+              <a href="/tags/Meltdown/" rel="tag"><i class="fa fa-tag"></i> Meltdown</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/03/20/FPGA-technology/FPGA-Background/" rel="prev" title="FPGA-Background">
+      <i class="fa fa-chevron-left"></i> FPGA-Background
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/03/21/FPGA-technology/FPGA-Architecture/" rel="next" title="FPGA-Architecture">
+      FPGA-Architecture <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#问题：为什么需要乱序执行与推测执行？"><span class="nav-number">2.</span> <span class="nav-text">问题：为什么需要乱序执行与推测执行？</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#推测执行"><span class="nav-number">2.1.</span> <span class="nav-text">推测执行</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#乱序执行"><span class="nav-number">2.2.</span> <span class="nav-text">乱序执行</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#瞬态指令"><span class="nav-number">2.3.</span> <span class="nav-text">瞬态指令</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#安全角度看问题"><span class="nav-number">3.</span> <span class="nav-text">安全角度看问题</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Spectre类"><span class="nav-number">4.</span> <span class="nav-text">Spectre类</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#分支预测错误-amp-FLUSH-RELOAD"><span class="nav-number">4.1.</span> <span class="nav-text">分支预测错误 &amp; FLUSH+RELOAD</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SgxPectre"><span class="nav-number">4.2.</span> <span class="nav-text">SgxPectre</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SpectrePrime"><span class="nav-number">4.3.</span> <span class="nav-text">SpectrePrime</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Store-To-Load"><span class="nav-number">4.4.</span> <span class="nav-text">Store To Load</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#其他Spectre类变种"><span class="nav-number">4.5.</span> <span class="nav-text">其他Spectre类变种</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Meltdown"><span class="nav-number">5.</span> <span class="nav-text">Meltdown</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#L1TF"><span class="nav-number">5.1.</span> <span class="nav-text">L1TF</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#其他Meltdown类变种"><span class="nav-number">5.2.</span> <span class="nav-text">其他Meltdown类变种</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

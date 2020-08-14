@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本文是一篇综述性质的文章，主要介绍了cache侧信道和它所带来的信息泄露问题（秘钥），介绍了跨虚拟机的cache侧信道攻击，并与传统cache侧信道攻击进行对比，给出了跨虚拟机访问驱动cache侧信道攻击的通用模型。介绍了虚拟机同驻的相关问题，分析其检测的各种方法和评价原则。最后，也重点介绍了当前用于跨虚拟机cache侧信道信息探测的主要方法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《云环境中跨虚拟机的Cache侧信道攻击技术研究》阅读笔记">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/03/07/Literature-reading-notes/Research-CacheSideChannelAttack-Across-VM-inCloudEnvironment/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="本文是一篇综述性质的文章，主要介绍了cache侧信道和它所带来的信息泄露问题（秘钥），介绍了跨虚拟机的cache侧信道攻击，并与传统cache侧信道攻击进行对比，给出了跨虚拟机访问驱动cache侧信道攻击的通用模型。介绍了虚拟机同驻的相关问题，分析其检测的各种方法和评价原则。最后，也重点介绍了当前用于跨虚拟机cache侧信道信息探测的主要方法。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Algorithm-exe-data-dependent.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Square-multiplication-algorithm.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Information-disclosure-cache%20contention.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Information-leakage-data-reuse.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/share-cache-between-vm.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Cache-data-sharing-Cache-Consistency-Protocol.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Diff-tradprocesses-crossvirtualmachineaccess.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/model-CrossVirtualMachine-CacheSideChannelAttacks.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/ConfusionMatrix-dichotomy-problem-co-resident-detection.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Comparison-vm-coexistence-detection-methods.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Prime-Probe-method.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/3-types-addresses-vm-systems.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Flush-Reload-method.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Comparison-Prime-Probe-Flush-Reload.png">
+<meta property="article:published_time" content="2020-03-07T10:10:25.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:32:56.742Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="Computer Architecture">
+<meta property="article:tag" content="Cache侧信道攻击">
+<meta property="article:tag" content="云计算">
+<meta property="article:tag" content="跨虚拟机">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Algorithm-exe-data-dependent.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/03/07/Literature-reading-notes/Research-CacheSideChannelAttack-Across-VM-inCloudEnvironment/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>《云环境中跨虚拟机的Cache侧信道攻击技术研究》阅读笔记 | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/03/07/Literature-reading-notes/Research-CacheSideChannelAttack-Across-VM-inCloudEnvironment/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          《云环境中跨虚拟机的Cache侧信道攻击技术研究》阅读笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-03-07 18:10:25" itemprop="dateCreated datePublished" datetime="2020-03-07T18:10:25+08:00">2020-03-07</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:32:56" itemprop="dateModified" datetime="2020-08-14T17:32:56+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%96%87%E7%8C%AE%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">文献阅读笔记</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/03/07/Literature-reading-notes/Research-CacheSideChannelAttack-Across-VM-inCloudEnvironment/" class="post-meta-item leancloud_visitors" data-flag-title="《云环境中跨虚拟机的Cache侧信道攻击技术研究》阅读笔记" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/03/07/Literature-reading-notes/Research-CacheSideChannelAttack-Across-VM-inCloudEnvironment/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/03/07/Literature-reading-notes/Research-CacheSideChannelAttack-Across-VM-inCloudEnvironment/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本文是一篇综述性质的文章，主要介绍了cache侧信道和它所带来的信息泄露问题（秘钥），介绍了跨虚拟机的cache侧信道攻击，并与传统cache侧信道攻击进行对比，给出了跨虚拟机访问驱动cache侧信道攻击的通用模型。介绍了虚拟机同驻的相关问题，分析其检测的各种方法和评价原则。最后，也重点介绍了当前用于跨虚拟机cache侧信道信息探测的主要方法。</p>
+<a id="more"></a> 
+<h1 id="背景介绍"><a href="#背景介绍" class="headerlink" title="背景介绍"></a>背景介绍</h1><h2 id="基础概念"><a href="#基础概念" class="headerlink" title="基础概念"></a>基础概念</h2><ul>
+<li><strong>虚拟机同驻</strong>：云计算环境中，不同租户的虚拟机可能运行于同一台物理主机之上。同驻的虚拟机之间共享物理主机的计算资源，并依赖于虚拟机监控器进行系统资源的分配与调度</li>
+<li><strong>跨虚拟机的侧信道攻击</strong>：恶意租户通过探测共享资源的状态信息，建立泄漏模型，便可绕过虚拟化提供的隔离性，窃取其它同驻虚拟机的隐私信息</li>
+<li><strong>侧信道信息(Side—Channel Information，SCI)</strong>：通过非直接传输途径泄露出来的物理状态信息被研究人员称为侧信道信息    </li>
+<li><strong>侧信道攻击</strong>：攻击者通过测量采集密码算法执行期间产生的侧信道信息，再结合密码算法的具体实现，来进行密钥的分析与破解</li>
+</ul>
+<h2 id="云计算"><a href="#云计算" class="headerlink" title="云计算"></a>云计算</h2><p>云计算通过网络以按需、易扩展的方式为用户提供各种虚拟的IT资源和应用服务，支持用户在任意位置、使用多种终端进行访问。   </p>
+<p>然而，在已经实现的云计算服务中，安全和隐私问题已经成为阻碍云计算推广和普及的主要因素之一。    </p>
+<p>基于虚拟化环境提供的逻辑隔离，采用访问控制、入侵检测等方法可以增强云计算环境的安全性；但是，隐私泄露问题依然存在，因为底层共享的硬件资源容易引发侧信道攻击(Side—Channel—Attacks，SCA)的威胁。   </p>
+<p>同驻虚拟机之间对于CPU、Cache及内存等底层物理资源的共享和争用则天然地为Cache侧信道信息泄露提供了泄露通道。跨虚拟机Cache侧信道攻击已成为云计算环境中威胁用户隐私安全的重要挑战。   </p>
+<p>云计算包含3种不同的服务类型：</p>
+<ul>
+<li>基础设施即服务(Infrastructure as a Service，IaaS)</li>
+<li>平台即服务(Platform as a Service，PaaS)</li>
+<li>软件即服务 (Software as a Service，SaaS)</li>
+</ul>
+<p>目前，云环境中有关跨虚拟机Cache侧信道攻击的研究工作，基本都是围绕IaaS云平台展开。因此，将Cache侧信道攻击扩展到IaaS层之上的PaaS或SaaS，甚至轻量级虚拟化方案Docker中，也具有重要意义。</p>
+<h2 id="现有举措"><a href="#现有举措" class="headerlink" title="现有举措"></a>现有举措</h2><ul>
+<li>2010年，Intel公司发布了第1款支持AES—NI指令集的处理器，用于防御针对AES的Cache侧信道攻击．<ul>
+<li>AES—NI指令集在处理器芯片的定制硬件上执行AES加密／解密操作，由于不需要在内存中建立查找表，其指令在运行时都不会访问内存，因此，可有效防御针对AES的Cache侧信道攻击． </li>
+</ul>
+</li>
+<li>公有云平台Amazon EC2提供的Virtual Private Cloud (VPC)服务允许租户额外付费的选择“专用硬件模式”创建虚拟机实例，并承诺租户可以独占使用某个物理平台上的硬件资源</li>
+<li>SecludlT公司的云基础设施自动检测软件Elastic Detector则宣称可以检测发现云环境中访问驱动的侧信道攻击。</li>
+</ul>
+<h1 id="Cache侧信道信息泄露分析"><a href="#Cache侧信道信息泄露分析" class="headerlink" title="Cache侧信道信息泄露分析"></a>Cache侧信道信息泄露分析</h1><p>Cache 是攻击者构建侧信道时最常用的一类共享资源，因为：</p>
+<ul>
+<li>CPU Cache 是最常用的共享资源，只要程序运行，就离不开 CPU ，也就离不开 CPU Cache ；</li>
+<li>Cache 在系统中位于较低的层级，且缺乏有效的访问控制机制，利用其构建侧信道可<br>以绕过许多高层的隔离机制，比如虚拟化环境提供的逻辑隔离等；</li>
+<li>Cache 拥有一个系统上数据访问和计算操作最细粒度且详细的状态信息，可以为攻击者提供丰富的信息；</li>
+<li>不同的 Cache 行为(命中或失效)具有不同的时间特征，可以通过采集 Cache 时间特征得到 Cache 侧信道信息，而 Cache 时间特征的采集方法比较简单；</li>
+<li>Cache 的操作和刷新频率较高，可以提供细粒度的观察结果；</li>
+</ul>
+<h2 id="Cache侧信道信息"><a href="#Cache侧信道信息" class="headerlink" title="Cache侧信道信息"></a>Cache侧信道信息</h2><p>Cache 侧信道信息：是指系统中由 Cache 行为产生的物理状态信息，包括访问时间、功率、电磁辐射等。</p>
+<p>攻击运用原理：</p>
+<ul>
+<li>通常，CPU访问内存中的数据或指令时，根据涉及到的目标数据或指令当前是否位于Cache中，将导致不同的Cache行为，包括Cache命中和Cache失效。</li>
+<li>而不同Cache行为产生的Cache侧信道信息是可区分的（访问时间、功耗不同等）。</li>
+<li>因此，如果能够观察或测量到算法执行期问产生的Cache侧信道信息，攻击者就可以推断对应的Cache行为（程序执行期间的内存访问信息，包括访问了哪些内存位置的数据，使用了哪些内存页面，或者执行了哪些指令序列等），并进一步得到内存访问的一些关键信息。</li>
+</ul>
+<p>能获取的信息类型：</p>
+<ol>
+<li><p>内存访问的部分地址信息：</p>
+<ul>
+<li>Cache是物理标记的，数据在Cache中的位置由其物理内存地址决定。</li>
+<li>因此，Cache可能泄露内存访问的部分地址信息。</li>
+<li>例如：目标程序执行期间，攻击者根据访问指定的Cache组产生的侧信道信息，可以推断目标程序是否使用了该Cache组；如果使用了，再根据Cache与内存地址之间的映射关系，就可以得到目标程序执行期间内存访问的部分地址信息。</li>
+</ul>
+</li>
+<li><p>历史内存访问的数据信息或指令信息：</p>
+<ul>
+<li>CPU访问指定的数据或指令时，根据其当前是否被缓存于Cache中，将产生不同的侧信道信息：<ul>
+<li>具体地，当访问一个数据块或指令块时，如果其已经被缓存于Cache中，将发生Cache命中；那么，相对Cache失效来说，将产生较短的访问时间．因此，一个数据块或指令块的访问时问将泄露其是否已被缓存于Cache中这一信息；</li>
+</ul>
+</li>
+<li>进一步地，这将泄露历史内存访问的数据信息或指令信息：<ul>
+<li>例如，目标程序执行期间，攻击者访问指定的数据块或指令块，根据访问时间就可以判断它们是否已被缓存，进一步地可以推断目标程序执行期间是否访问过这些数据或指令。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="Cache侧信道信息与密钥之间的相关性"><a href="#Cache侧信道信息与密钥之间的相关性" class="headerlink" title="Cache侧信道信息与密钥之间的相关性"></a>Cache侧信道信息与密钥之间的相关性</h2><p>研究理论基础：算法执行具有数据依赖性    </p>
+<ul>
+<li><img src="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Algorithm-exe-data-dependent.png" alt="算法执行具有数据依赖性"></li>
+<li>(a)输入依赖的指令执行:如果A和B的运行时间存在可观察的差异，攻击者就可以根据采集到的时间信息判断执行了哪一分支，进而确定z的取值。</li>
+<li>(b)输入依赖的数据访问:如果攻击者能够确认用户访问了m 还是11，就可以确定Y的取值。</li>
+<li>(c)输入依赖的执行时间:由于循环次数由输入参数决定，而循环次数又直接影响算法的执行时间，因此，算法执行时间将泄露输入参数z的取值信息。</li>
+</ul>
+<p>密码算法的执行通常具有密钥依赖特性，主要包括：</p>
+<ul>
+<li>密钥依赖的数据访问模式</li>
+<li>密钥依赖的指令执行序列</li>
+</ul>
+<p>因此，攻击者可以利用密码算法执行中产生的侧信道信息推断其执行特征，再根据执行特征以及具体的依赖关系来反向推测密码算法使用的密钥。  </p>
+<p>举例：</p>
+<ul>
+<li>现代分组密码算法：<ul>
+<li>在实现中通常使用查找表来提高性能，且查表索引通常是密钥相关的，因此，分组密码算法的执行通常具有密钥依赖的数据访问模式。</li>
+<li>如果攻击者能够获取密码算法查表访问的Cache组地址集合，并将其转换为查表索引，再结合 明文或密文就可以进行密钥分析，推断出密码算法使用的部分或全部密钥。</li>
+</ul>
+</li>
+<li>现代公钥密码算法：<ul>
+<li>在加密／解密过程中所要执行的指令序列，由于密钥各二进制位取值不同一般具有很大区别，因此，公钥密码算法的执行通常具有密钥依赖的指令执行序列。</li>
+<li>比如：模幂运算是RSA加解密的核心算法，其中一种简单的实现方式为平方一乘算法，即将模幂运算分解为一系列平方、乘法以及取模运算。</li>
+<li>如下图所示，采用平方一乘算法，当指数e的二进制表示中的某一位为1时将比为0时多执行两步运算。那么，如果攻击者能够确定算法运行期间执行的指令序列，就可以推测指数e的取值，并进一步破解密钥。</li>
+<li><img src="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Square-multiplication-algorithm.png" alt="平方-乘算法"></li>
+</ul>
+</li>
+</ul>
+<h2 id="Cache侧信道信息泄露来源"><a href="#Cache侧信道信息泄露来源" class="headerlink" title="Cache侧信道信息泄露来源"></a>Cache侧信道信息泄露来源</h2><p>主要是由于共享Cache导致的信息泄露（主要分为两类）：</p>
+<ul>
+<li>在云计算环境中，被分配到同一个物理 CPU 上运行的多个虚拟机之间共享硬件Cache，虽然 Cache 中的数据是受存储器保护的，攻击者无法直接获取。</li>
+<li>但是，这些虚拟机在Cache中的数据可能被映射到同一个或多个Cache组甚至Cache行中，这为攻击者提供了一个观察被攻击虚拟机Cache行为的侧信道：<ul>
+<li>攻击者访问其私有数据或执行私有指令时产生的侧信道信息，可以用来推测其它虚拟机的Cache行为。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Cache争用产生的信息泄露"><a href="#Cache争用产生的信息泄露" class="headerlink" title="Cache争用产生的信息泄露"></a>Cache争用产生的信息泄露</h3><p><img src="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Information-disclosure-cache%20contention.png" alt="cache争用产生的信息泄露"></p>
+<blockquote>
+<p>每个小方块:表示Cache行大小的数据块，是Cache与内存之间进行数据传输与分配的基本单位；<br>图中左边:表示Cache，每行表示一个Cache组，每个Cache组有w个Cache行，总共有S个Cache组；<br>右边:表示内存，每行表示映射到同一Cache组中的所有内存块，即对应于左边同一高度的Cache组。</p>
+</blockquote>
+<ul>
+<li>通常，Cache失效表明发生了Cache争用。如图所示，虚拟机VMl的内存数据A1，A2与虚拟机VM2的内存数据B1，B2，B3被映射到同一个Cache组中。</li>
+<li>假设VM2在较短的时间内连续两次访问B1、B2和B3，如果第2次访问B1时发生了Cache失效，则可以判断在VM2的两次访问之间有其它的虚拟机(VMl)使用了相同的Cache组，导致VM2的B1已被驱逐出Cache。</li>
+</ul>
+<p>运用实例：</p>
+<ul>
+<li>《Hey，you，get off of my cloud：Exploring information leakage in third—party compute clouds》</li>
+<li>《Cross-VM side channels and their use to extract private keys》</li>
+<li>《Last—level cache side—channel attacks are practical》<ul>
+<li>Prime-Probe攻击：是Cache争用产生信息泄露的一个典型应用．Prime—Probe攻击中，攻击者利用进程或虚拟机之间的外部Cache访问冲突，在密码进程运行前后分别访问同样的数据来填充Cache。并根据第2次访问各个Cache组时发生了Cache命中(没有争用)还是Cache失效(存在争用)，来推测密码进程运行期间访问的Cache组地址集合，再在此基础之上进行密钥分析。</li>
+</ul>
+</li>
+</ul>
+<h3 id="数据重用产生的信息泄露"><a href="#数据重用产生的信息泄露" class="headerlink" title="数据重用产生的信息泄露"></a>数据重用产生的信息泄露</h3><p>Cache命中信息能够记录CPU对Cache的历史访问情况．Cache命中表明存在相同数据的重复使用，即CPU曾经访问过相同的数据:<br><img src="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Information-leakage-data-reuse.png" alt="数据重用产生的信息泄露"> </p>
+<ul>
+<li>如图所示:假设虚拟机VMl和VM2共享部分内存页面，VM2访问页面A1、A2时,发现Al，A2已经位于Cache中，则可以推断有其它的虚拟机(VMl)在之前使用了A1、A2。</li>
+</ul>
+<p>实例：</p>
+<ul>
+<li>《Flush+Reload：A high resolution， low noise，L3 cache side—channel attack》<ul>
+<li>Yarom等人提出的Flush—Reload攻击方法：是数据重用产生信息泄露的一个典型例子，其假设攻击者和攻击目标共享内存页面。在密码进程执行前将指定地址的一个或多个共享内存块驱逐出 Cache，并在加密完成后立即访问这些内存块。然后根据访问时是否发生了Cache命中来推测密码进程执行期间是否使用了其中的一些内存块，进一步地可以推测密码进程执行了哪些加密指令等。</li>
+</ul>
+</li>
+</ul>
+<h2 id="Cache侧信道信息泄露方式"><a href="#Cache侧信道信息泄露方式" class="headerlink" title="Cache侧信道信息泄露方式"></a>Cache侧信道信息泄露方式</h2><p><img src="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/share-cache-between-vm.png" alt="虚拟机间共享cache的方式"></p>
+<h3 id="分时共享"><a href="#分时共享" class="headerlink" title="分时共享"></a>分时共享</h3><ul>
+<li>当攻击虚拟机和目标虚拟机被分配到同一个CPU核心上运行时。它们之间分时复用该物理CPU核心，并由虚拟机监控器(Virtual Machine Monitor，VMM)负责调度、切换运行的虚拟机。</li>
+<li>这种情况下，攻击虚拟机和目标虚拟机可以共享该CPU的全部多级Cache，但是只能分时共享．并不能同时对Cache进行访问。</li>
+<li>VMM每次切换运行的虚拟机时，并不会清空该CPU Cache中的数据，因此，下一个运行的虚拟机可以探测得到上一个运行的虚拟机的Cache访问信息。</li>
+<li>通常，攻击者需要寻找并利用虚拟机调度算法的漏洞，来抢占目标虚拟机的调度，才能保证攻击虚拟机能够紧随目标虚拟机之后被调度运行；这样．才能在虚拟机切换后探测目标虚拟机之前的Cache访问信息。 </li>
+<li>《Cross-VM side channels and their use to extract private keys》</li>
+</ul>
+<h3 id="同时共享"><a href="#同时共享" class="headerlink" title="同时共享"></a>同时共享</h3><ul>
+<li>当攻击虚拟机和目标虚拟机被分配到同一个CPU的不同核心上运行时，它们之间可以并行运行。</li>
+<li>攻击虚拟机和目标虚拟机只能共享该CPU的末级Cache(Iast Ievel Cache，LCC)，并不能共享各个核心私有的L1 Cache 或L2 Cache。但是，由于它们之间可以同时对LLC 进行访问。因此，攻击者可以同步地在目标虚拟机运行期间探LLC来得到其Cache访问信息。</li>
+<li>《Last—level cache side—channel attacks are practical》</li>
+<li>《S$A：A shared cache attack that works across cores and defies VM sandboxing— and its application to AES》</li>
+</ul>
+<h3 id="通过Cache一致性协议共享Cache数据"><a href="#通过Cache一致性协议共享Cache数据" class="headerlink" title="通过Cache一致性协议共享Cache数据"></a>通过Cache一致性协议共享Cache数据</h3><p><img src="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Cache-data-sharing-Cache-Consistency-Protocol.png" alt="通过Cache一致性协议共享Cache数据"></p>
+<ul>
+<li>在多处理器系统中，如果多个CPU访问了同样的一块内存数据，那么，这块内存数据可能在不同CPU的多个Cache中都存有副本。Cache一致性协议就是用来解决内存数据与它的多个Cache副本之间的内容一致性问题。即使攻击虚拟机和目标虚拟机被分配到不同的CPU之上运行时。虽然它们之间并不物理上共享Cache；但是．由于Cache一致性协议，它们也可能会共享一部分Cache数据(同一内存数据在不同Cache中的副本)，因此，Cache一致性协议也可以看作逻辑上共享Cache的一种方式。</li>
+<li>当一个处理器发生Cache失效时，失效的数据是否缓存于另一个处理器Cache中，将产生从另一个处理器Cache读取数据和直接从内存读取数据两种可能，这将导致可区分的Cache访问时间差异．因此，攻击者也可以利用Cache一致性协议来探测目标虚拟机是否使用了指定的内存数据。</li>
+<li>《Cross proeessor cache attacks》</li>
+</ul>
+<h1 id="跨虚拟机Cache侧信道攻击概述"><a href="#跨虚拟机Cache侧信道攻击概述" class="headerlink" title="跨虚拟机Cache侧信道攻击概述"></a>跨虚拟机Cache侧信道攻击概述</h1><h2 id="传统缓存侧信道攻击"><a href="#传统缓存侧信道攻击" class="headerlink" title="传统缓存侧信道攻击"></a>传统缓存侧信道攻击</h2><p>最初，Cache侧信道攻击的相关研究工作都是围绕单机环境展开，以数据缓存、指令缓存等作为研究对象；   </p>
+<p>根据采集信息不同，可将传统Cache侧信道攻击分为</p>
+<ul>
+<li>时序驱动攻击：需要采集密码算法一次加密／解密的<strong>整体时间</strong>，并利用统计分析方法推测密钥．</li>
+<li>访问驱动攻击：需要通过间谍进程采集密码算法一次加密／解密过程中<strong>访问的Cache组地址集合</strong>，再利用直接分析或排除分析方法推测密钥．</li>
+<li>踪迹驱动攻击：需要采集密码算法一次加密／解密过程中所有Cache访问的命中和失效序列，再结合明文或密文推测密钥．</li>
+</ul>
+<p>传统Cache侧信道攻击方法大多存在先决成立的假设条件：</p>
+<ul>
+<li>时序驱动攻击：需要能够获得目标系统的详细配置参数并重建相同的本地对照环境； </li>
+<li>访问驱动攻击：需要能够侵入目标机器并植入间谍进程；</li>
+<li>踪迹驱动攻击：通过计时手段很难实现，需要物理上接触目标机器并精确采集其功率消耗或电磁辐射信息等。</li>
+</ul>
+<h2 id="跨虚拟机Cache侧信道攻击的起源"><a href="#跨虚拟机Cache侧信道攻击的起源" class="headerlink" title="跨虚拟机Cache侧信道攻击的起源"></a>跨虚拟机Cache侧信道攻击的起源</h2><p>跨虚拟机时序驱动攻击：</p>
+<ul>
+<li>传统时序驱动攻击可以分为远程攻击和本地攻击两种：<ul>
+<li>远程攻击：属于非入侵式攻击，攻击者通过网络远程采集计时信息，由于网络传输时延和抖动时延的存在，很难采集到精确的计时信息，而不精确的计时信息对攻击成功率影响较大，因此，远程攻击在真实网络环境下的适用性不强．</li>
+<li>本地攻击：属于入侵式攻击，攻击者需要在攻击目标的操作系统中植入间谍进程来采集计时信息，虽然可以完全消除网络传输时延和抖动时延带来的影响，但是也降低了本地攻击在现实环境中的可行性． </li>
+</ul>
+</li>
+<li>由于发生在两个虚拟机操作系统之问，跨虚拟机时序驱动攻击本质上仍属于远程攻击：<ul>
+<li>当攻击者的虚拟机和攻击目标的虚拟机不同驻时，攻击场景与传统远程时序驱动攻击完全一样，因此，跨虚拟机时序驱动攻击通常发生在同驻的虚拟机之间。</li>
+<li>由于同驻虚拟机之间一般通过宿主机的本地通信信道进行数据交换，因此，跨虚拟机时序驱动攻击采集的计时信息比较精确。</li>
+</ul>
+</li>
+<li>跨虚拟机时序驱动攻击与传统时序驱动攻击并无明显区别． </li>
+</ul>
+<p>跨虚拟机访问驱动攻击：</p>
+<ul>
+<li>与传统访问驱动攻击方法类似，跨虚拟机访问驱动攻击通过监测宿主机的Cache或共享内存，并利用计时手段采集目标进程运行期间通过Cache泄露出来的侧信道信息，再结合其具体实现进行分析，即可能推测得到其它同驻虚拟机的隐私信息。</li>
+<li>跨虚拟机访问驱动攻击与传统访问驱动攻击的不同： </li>
+<li><img src="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Diff-tradprocesses-crossvirtualmachineaccess.png" alt="传统进程与跨虚拟机访问驱动的区别"></li>
+</ul>
+<h2 id="跨虚拟机Cache侧信道攻击的研究进展"><a href="#跨虚拟机Cache侧信道攻击的研究进展" class="headerlink" title="跨虚拟机Cache侧信道攻击的研究进展"></a>跨虚拟机Cache侧信道攻击的研究进展</h2><p>跨虚拟机时序驱动攻击研究进展:</p>
+<ul>
+<li>只是将传统时序驱动攻击方法直接应用于跨虚拟机攻击场景中． </li>
+</ul>
+<p>跨虚拟机访问驱动攻击研究进展:   </p>
+<ul>
+<li>迁移传统攻击方法：<ul>
+<li>2009年，Ristenpart等人：利用Prime-Probe《Cache attacks and countermeasures：The case of AES》方法在Amazon EC2云平台中探测得到同驻虚拟机的Cache负载状态信息以及用户击键间隔时间信息等。</li>
+<li>2012年，Zhang等人：基于Prime—Probe 方法设计了HomeAlone工具，租户可利用Home—Alone来检测是否有其他租户的虚拟机与其同驻．</li>
+<li>随后，Zhang等人利用Prime—Probe方法对L1指令Cache进行探测，并设计了一个隐马尔科夫模型过滤探测噪声，成功恢复了其它同驻虚拟机上使用的E1Gamal加密密钥．</li>
+<li>2015年，Younis等人将虚拟机的虚拟地址转换为物理地址，再利用Prime—Probe方法监控这些物理地址是否被其它虚拟机访问过．</li>
+<li>Liu等人和Irazoqui等人利用大页映射得到的额外物理地址知识来保留LLC和物理内存之间的映射关系，绕过了LLC与内存地址映射不透明的问题，使得Prime—Probe方法可用于探测LLC．在此之前，Prime-Probe方法只能用于探测容 量较小的L1 Cache．</li>
+<li>随后，Inci等人和Kayaalp等人对LLC的索引哈希机制进行逆向工程，得到了内存地址与LLC各分片之间的映射关系，解决了LLC与内存地址映射不透明的问题． </li>
+</ul>
+</li>
+<li>设计新的攻击方法： <ul>
+<li>2014年，Yarom等人假设攻击虚拟机和目标虚拟机共享内存页面，并利用Cache的包容性特点，将Gullasch攻击∞刈扩展之后用于探测LLC，提出了第1个可以跨内核进行攻击的Cache侧信道攻 击方法(Flush—Reload攻击)． </li>
+<li>2015年，Gruss等人发现缓存刷新指令的执行时间取决于被刷新的内存块是否位于Cache中，他们利用这一点对Flush—Reload攻击进行了改进，提出了Flush—Flush攻击，在缩短了攻击执行时间的同时提高了攻击的隐匿性． </li>
+<li>2016年，Irazoqui等人基于Cache一致性协议，提出并实现了第1个跨CPU的Cache侧信道攻击方法(Invalidate—Transfer攻击)，成功恢复了另一个CPU上运行的加密软件库中使用的AES密钥和ElGamal密钥．</li>
+</ul>
+</li>
+</ul>
+<p>跨虚拟机访问驱动攻击的攻击方法更为多样化，随着攻击媒介从L1数据Cache和L1指令Cache，到LLC，再到双路CPU上Cache的变化，攻击的限制条件越来越现实：从要求攻击虚拟机和目标虚拟机同驻一个CPU核心，到同驻一个CPU，再到跨CPU，威胁范围也越来越广。</p>
+<h1 id="跨虚拟机访问驱动Cache侧信道攻击的通用模型"><a href="#跨虚拟机访问驱动Cache侧信道攻击的通用模型" class="headerlink" title="跨虚拟机访问驱动Cache侧信道攻击的通用模型"></a>跨虚拟机访问驱动Cache侧信道攻击的通用模型</h1><p><img src="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/model-CrossVirtualMachine-CacheSideChannelAttacks.png" alt="跨虚拟机访问驱动Cache侧信道攻击的通用模型"></p>
+<h2 id="相关假设"><a href="#相关假设" class="headerlink" title="相关假设"></a>相关假设</h2><ul>
+<li>云服务供应商及其提供的底层基础设施都是可信的，而使用云平台的各个租户之间是互不信任的。</li>
+<li>攻击者为使用云平台的恶意租户，其拥有目标用户所运行应用的相关背景知识，但不具有任何特殊权限，期望利用侧信道攻击来获取目标用户的隐私信息。</li>
+<li>攻击目标为使用云平台的正常租户，他们利用虚拟机运行某些机密性相关的应用，并对外提供公开的服务访问接口。 </li>
+</ul>
+<h2 id="攻击过程"><a href="#攻击过程" class="headerlink" title="攻击过程"></a>攻击过程</h2><p>跨虚拟机Cache侧信道攻击本质上是一种基于统计分析的攻击方法.</p>
+<ol>
+<li>实现同驻:<ul>
+<li>基于一定策略，攻击者创建并运行多个虚拟机实例，并利用虚拟机同驻检测方法逐一判断这些虚拟机是否和目标虚拟机同驻；重复这一过程，直到实现至少一个攻击虚拟机和目标虚拟机同驻为止。 </li>
+</ul>
+</li>
+<li>探测Cache侧信道信息:<ul>
+<li>攻击虚拟机首先根据具体攻击场景（包括攻击虚拟机和目标虚拟机共享Cache的方式，目标虚拟机所运行应用的具体实现特征等）的不同，设计选取合适的Cache侧信道信息探测方法；</li>
+<li>然后，将Cache设置为一个已知状态，并访问部署在目标虚拟机中的应用；</li>
+<li>最后，探测并收集目标虚拟机运行过程中产生的Cache侧信道信息． </li>
+</ul>
+</li>
+<li>分析Cache侧信道信息: <ul>
+<li>将攻击者想要获取的隐私信息标记为 $K = \{ K_1，K_2，K_3，…，K_n \}$。目标虚拟机中的应用为了响应攻击者的服务请求，将执行一些操作 $OP = \{ OP_1，OP_2，…，OP_n \}$，而操作OP与隐私信息K之间通常具有依赖关系，即由隐私信息K决定执行哪些操作，可以表示为函数$f：K-&gt;OP$，即 $OP=f(K)$；</li>
+<li>在执行OP时，目标虚拟机访问共享Cache，这将产生一些Cache侧信道信息 $L = \{ L_1，L_2，…，L_n \}$；当 Cache 初始状态相同时，不同的操作OP将产生不同的Cache行为，从而产生不同的Cache侧信道信息，即操作OP与执行操作OP产生的Cache侧信道信息L之间具有强相关性，可以表示为函数 $g：OP-&gt;L$，即 $L = g(OP)$。 </li>
+</ul>
+</li>
+</ol>
+<p>通过上述分析：</p>
+<ul>
+<li>攻击虚拟机可以通过分析探测到的Cache侧信道信息L来推测得到目标虚拟机中的应用具体执行了哪些操作，再结合这些操作(OP)与隐私信息(K)之间的关系，减小K的取值范围或直接推测K的取值。</li>
+<li>具体地：通过对目标应用的具体实现进行分析，可以建立函数f，并得到其逆函数：$K=f^{-1}(OP)$；对具体Cache行为与其产生的 Cache侧信道信息进行关联，可以建立函数g，并得到其逆函数：$OP=g^{-1}(L)$；在此基础之上，建立泄露模型：$K=f^{-1}(g^{-1}(L))$，即可通过对Cache侧信道信息L进行分析，推测得到目标虚拟机的隐私信息K。</li>
+</ul>
+<h1 id="虚拟机同驻"><a href="#虚拟机同驻" class="headerlink" title="虚拟机同驻"></a>虚拟机同驻</h1><p>现状：服务中心的物理机器越来越多，攻击者可能需要花费大量的时间和精力才能实现和特定的目标虚拟机的同驻</p>
+<h2 id="虚拟机资源调度策略"><a href="#虚拟机资源调度策略" class="headerlink" title="虚拟机资源调度策略"></a>虚拟机资源调度策略</h2><p>主要解决：虚拟机与物理主机的映射问题，包括虚拟机的创建、迁移以及管理等   </p>
+<ul>
+<li>作为云计算底层的核心技术之一，虚拟机资源调度策略的好坏将直接影响到云平台的整体性能、运营成本以及服务质量等</li>
+</ul>
+<p>目前，公有云平台的虚拟机资源调度策略还未形成统一的标准和规范，各大云服务供应商都是根据自身资源的特点以及调度目标等采用不同的调度策略，例如：</p>
+<ul>
+<li>IBM云平台采用性能优先的调度策略，</li>
+<li>HP云平台采用成本优先的调度策略</li>
+<li>Amazon EC2的调度策略综合考虑了成本优先、负载均衡、高可靠性、满足用户不同租用请求等优化目标． </li>
+</ul>
+<p>公有云平台目前采用的虚拟机资源调度策略多是从降低能耗、减少成本、提高资源利用率以及实现负载均衡等角度出发进行优化，而大多忽略了安全上的考虑。<br>因此，攻击者可以分析并利用虚拟机资源调度策略的脆弱性，更有针对性地创建或启动虚拟机来实现与目标虚拟机的同驻。例如：</p>
+<ul>
+<li>为了降低能耗，并提高资源利用率， 虚拟机资源调度策略可能将同一时刻提交启动申请的多个虚拟机分配到一台物理主机上运行</li>
+<li>为了便于管理，虚拟机资源调度策略可能将业务分类、可用区域、实例类型等启动信息相同的虚拟机分配到一台物理主机上运行</li>
+</ul>
+<h2 id="虚拟机同驻检测方法"><a href="#虚拟机同驻检测方法" class="headerlink" title="虚拟机同驻检测方法"></a>虚拟机同驻检测方法</h2><h3 id="基于网络信息的虚拟机同驻检测"><a href="#基于网络信息的虚拟机同驻检测" class="headerlink" title="基于网络信息的虚拟机同驻检测"></a>基于网络信息的虚拟机同驻检测</h3><ul>
+<li>利用两个虚拟机的网络信息来判断它们之间是否同驻．</li>
+<li>优点：是实现简单，检测效率较高，且不会对目标虚拟机的运行造成任何影响；</li>
+<li>缺点：是检测准确率不高，且云平台可以很容易地阻止此类检测方法<ul>
+<li>例如：利用VPC对不同虚拟机的网络进行隔离等． </li>
+</ul>
+</li>
+</ul>
+<h3 id="基于资源干扰的虚拟机同驻检测"><a href="#基于资源干扰的虚拟机同驻检测" class="headerlink" title="基于资源干扰的虚拟机同驻检测"></a>基于资源干扰的虚拟机同驻检测</h3><ul>
+<li>利用两个虚拟机竞争使用共享资源时是否相互干扰来判断它们是否同驻．</li>
+<li>优点：是检测准确率较高；</li>
+<li>缺点：是实现相对复杂，容易受到同一宿主机上其它虚拟机的干扰，并且可能破坏宿主机的资源可用性．<ul>
+<li>Inci等人发现云平台通过优化资源管理机制和虚拟机隔离机制，可以有效降低同驻虚拟机之间的相互干扰；</li>
+<li>同时，随着硬件技术的不断发展，云平台中使用的硬件也更加复杂，例如固态硬盘允许多个读／写操作同时进行，在Amazon EC2云平台中已经很难观察到硬件性能上的衰减． </li>
+</ul>
+</li>
+</ul>
+<h3 id="基于隐蔽信道的虚拟机同驻检测"><a href="#基于隐蔽信道的虚拟机同驻检测" class="headerlink" title="基于隐蔽信道的虚拟机同驻检测"></a>基于隐蔽信道的虚拟机同驻检测</h3><ul>
+<li>隐蔽信道：是指两个合谋的恶意进程通过预先约定的方式操作系统中的共享资源而实现的一种信息传输方式．云计算环境中，合谋的两个虚拟机利用宿主机的共享资源创建隐蔽信道，就可以绕过VMM，以一种隐秘地方式进行通信．</li>
+<li>基于隐蔽信道的虚拟机同驻检测基于两个虚拟机是否能够合谋操作同一宿主机的共享资源，来判断它们是否同驻．</li>
+<li>优点：是误检率低，检测结果比较准确；</li>
+<li>存在一个致命的缺点：即只能应用于检测与被检测双方均为受控虚拟机的情况，并不适用于现实应用场景中只有攻击虚拟机受控的情况．<ul>
+<li>因此，基于隐蔽信道的同驻检测方法一般用于研究人员在实验环境中确定其创建的两个虚拟机同驻这一事实，并在此基础上，分析同驻虚拟机之间的一些特性． </li>
+</ul>
+</li>
+</ul>
+<h2 id="虚拟机同驻检测方法评估"><a href="#虚拟机同驻检测方法评估" class="headerlink" title="虚拟机同驻检测方法评估"></a>虚拟机同驻检测方法评估</h2><h3 id="虚拟机同驻检测方法的测评原则"><a href="#虚拟机同驻检测方法的测评原则" class="headerlink" title="虚拟机同驻检测方法的测评原则"></a>虚拟机同驻检测方法的测评原则</h3><p>需要在保证检测效果的同时兼顾检测效率与检测能力，另外，一个好的同驻检测方法应该在现实环境中可行。</p>
+<ol>
+<li>检测效果：<ul>
+<li><img src="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/ConfusionMatrix-dichotomy-problem-co-resident-detection.png" alt="同驻检测的二分问题的混淆矩阵"><ul>
+<li>正确接受：表示两个虚拟机实际同驻，检测结果也为同驻； </li>
+<li>正确拒绝：表示两个虚拟机实际不同驻，检测结果也为不同驻； </li>
+<li>错误拒绝：表示两个虚拟机实际同驻，但检测结果为不同驻； </li>
+<li>错误接受：表示两个虚拟机实际不同驻，但检测结果为同驻。 </li>
+</ul>
+</li>
+<li>根据混淆矩阵，可以使用分类器的评价指标，包括真正类率、漏报率、误报率、假负类率、正确率、精确度、准确率、召回率以及F-measure等。来对同驻检测方法的检测效果进行度量。</li>
+</ul>
+</li>
+<li>检测效率 ：<ul>
+<li>可以利用完成一次同驻检测所需的时间来对检测效率进行评估。 </li>
+</ul>
+</li>
+<li>检测能力：<ul>
+<li>主要用于反映同驻检测方法能够检测的同驻级别。</li>
+<li>由于虚拟机之间对于CPU的共享情况直接决定它们之间的Cache共享关系，根据虚拟机之间共享CPU的情况，将它们之间的同驻级别分为： <ul>
+<li>内核级同驻：两个虚拟机被分配到同一个CPU的同一个内核之上交替运行； </li>
+<li>CPU级同驻：两个虚拟机被分配到同一个CPU之上运行，包括交替地运行于同一个内核之上(内核级同驻)以及并行地运行于不同内核之上两种情况； </li>
+<li>宿主机级同驻：两个虚拟机被分配到同一个物理主机之上运行，它们之间可能被分配到同一个CPU之上运行(CPU级同驻)，也可能被分配到不同的CPU上运行． </li>
+</ul>
+</li>
+</ul>
+</li>
+<li>局限性：<ul>
+<li>主要用于衡量同驻检测方法在现实应用环境下的可行性，可以使用限制条件来描述同驻检测算法的局限性。</li>
+<li>通常来说，限制条件越严格，算法的局限性越强、可行性越低． </li>
+</ul>
+</li>
+<li>实用性：<ul>
+<li>主要用于衡量同驻检测方法在现实应用场景下的实用价值．</li>
+</ul>
+</li>
+</ol>
+<h3 id="虚拟机同驻检测方法的比较"><a href="#虚拟机同驻检测方法的比较" class="headerlink" title="虚拟机同驻检测方法的比较"></a>虚拟机同驻检测方法的比较</h3><p><img src="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Comparison-vm-coexistence-detection-methods.png" alt="虚拟机同驻检测方法的比较"></p>
+<ul>
+<li>基于隐蔽信道的同驻检测方法误检率低、检测效果最好，但其限制条件较为严格，在现实攻击场景中很难实现，实用性低；</li>
+<li>基于网络信息的同驻检测方法实现简单，检测效率较高，但其检测准确率低、检测效果一般，而且由于大多数云平台已经支持使用VPC来加强网络隔离，导致其实用性严重降低；</li>
+<li>基于资源干扰的同驻检测方法相对来说实用性最高，是目前虚拟机同驻检测的主流方法． </li>
+</ul>
+<h1 id="Cache侧信道信息探测方法"><a href="#Cache侧信道信息探测方法" class="headerlink" title="Cache侧信道信息探测方法"></a>Cache侧信道信息探测方法</h1><p>当前跨虚拟机Cache侧信道信息探测方法主要有四种：<strong>Prime-Probe方法</strong>、<strong>Flush-Reload方法</strong>、<strong>Flush-Flush方法</strong>以及<strong>Invalidate-Transfer方法</strong>。</p>
+<ul>
+<li>其中，Flush-Flush方法和Invalidate-Transfer方法与Flush—Reload方法的探测原理类似。</li>
+</ul>
+<h2 id="Prime-Probe（PP）方法"><a href="#Prime-Probe（PP）方法" class="headerlink" title="Prime-Probe（PP）方法"></a>Prime-Probe（PP）方法</h2><h3 id="方法简介"><a href="#方法简介" class="headerlink" title="方法简介"></a>方法简介</h3><p>利用PP探测Cache侧信道信息时，攻击虚拟机重复下面的步骤： </p>
+<ol>
+<li><strong>Prime</strong>：用预先准备的数据填充一个或多个 Cache 组 </li>
+<li><strong>Trigger</strong>：访问部署在目标虚拟机中的应用，并且等待一段预设的 Prime-Probe 间隔时间；在这个过程中，由于要响应服务请求，目标虚拟机执行应用并使用 Cache </li>
+<li><strong>Probe</strong>：重新读取 Prime 阶段加载的数据，测量并记录各个 Cache 组的读取时间</li>
+</ol>
+<p><img src="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Prime-Probe-method.png" alt="Prime-Probe方法"></p>
+<ul>
+<li>如图所示，如果目标虚拟机在Trigger阶段使用了一些攻击虚拟机在Prime阶段填充的Cache组，攻击虚拟机位于这些Cache组中的数据将被驱逐出Cache，导致攻击虚拟机在Probe阶段重新读取数据时发生Cache失效，从而产生一个较长的读取时间。因此，根据Probe阶段探测到的各个Cache组的重载时间，可以判断目标虚拟机在应用执行中使用了哪些Cache组。</li>
+</ul>
+<p>实际探测过程中，为了避免硬件预取导致的时延隐藏问题，通常采用<strong>Pointer-Chasing技术</strong>对预先准备的数据进行组织和操作。   </p>
+<p>PP算法基于以下关键因素实现：</p>
+<ul>
+<li>攻击者能够识别出与目标用户内存访问活动相关的Cache访问．即需要确定目标应用中安全性关键的数据或代码缓存于Cache中的哪一个或哪几个Cache组中； </li>
+<li>攻击虚拟机能够填充指定Cache组中的全部Cache行．即要求攻击者知道Cache与内存地址之间的映射关系；</li>
+<li>高分辨率的时钟；</li>
+</ul>
+<h3 id="应用PP方法探测L1-Cache"><a href="#应用PP方法探测L1-Cache" class="headerlink" title="应用PP方法探测L1 Cache"></a>应用PP方法探测L1 Cache</h3><p>大致过程：通常针对整个L1 Cache进行探测，然后再使用机器学习方法识别出与目标用户内存访问活动相关的Cache使用。   </p>
+<ul>
+<li><strong>虚拟定址</strong>：攻击者可以利用数据或代码的虚拟地址确定其在L1 Cache中的具体位置。</li>
+<li><strong>物理定址</strong>：Cache是物理标记的，即使用物理地址来确定数据或代码在Cache中的存储位置。</li>
+</ul>
+<p>虚拟机系统中共包含3种地址：   </p>
+<ul>
+<li><img src="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/3-types-addresses-vm-systems.png" alt="虚拟机系统3种地址"></li>
+<li><strong>虚拟地址</strong>：是指客户机操作系统提供给其应用程序使用的线性地址空间．对应于传统计算机系统中的虚拟地址；</li>
+<li><strong>物理地址</strong>：是指虚拟机能够看到的经过VMM抽象的伪物理地址；</li>
+<li><strong>机器地址</strong>：是指真实硬件的机器地址．即地址总线上应该出现的地址信号，对应于传统计算机系统中的物理地址。</li>
+</ul>
+<p>PP方法最初只能应用于探测 L1 Cache：</p>
+<ul>
+<li>系统在进行虚拟地址到物理地址再到机器地址的转换过程中：只对页号部分进行映射，页内地址偏移部分则保留不变；</li>
+<li>因此，当Cache容量小于等于内存页面大小时，虚拟地址的页内地址偏移部分将保留Cache与物理内存之间进行映射所需的全部地址信息，使Cache由物理定址变为虚拟定址；</li>
+<li>但是，当Cache容量大于内存页面大小时，Cache只能物理定址。此时，攻击者只能控制其数据或代码的虚拟地址，不知道也无法控制其物理地址和机器地址，也就无法控制其私有数据填充指定的Cache组． </li>
+</ul>
+<h3 id="应用PP方法探测LLC"><a href="#应用PP方法探测LLC" class="headerlink" title="应用PP方法探测LLC"></a>应用PP方法探测LLC</h3><p>除了物理定址问题，使用PP探测LLC的挑战还在于：</p>
+<ul>
+<li>非公开哈希索引机制：<ul>
+<li>LLC各分片与物理内存地址之间的映射关系由一个非公开的哈希函数确定，即使攻击者可以判断一个Cache组中包含有哪些Cache行。也不知道这些Cache行分别对应于LLC的哪个分片；</li>
+</ul>
+</li>
+<li>安全性关键访问相关的Cache组：<ul>
+<li>对于容量较大的LLC(通常大于2MB)来说，对整个LLC进行一次Prime或Probe 的时间较长，如果每次都探测整个LLC，将无法以足够的分辨率探测得到有用的信息。导致使用PP探测LLC时，只能监控那些与目标应用安全性关键访问相关的cache组，因此也就需要确定目标应用中安全性关键的数据或代码缓存与LLC中的哪一个或那几个cache组。</li>
+</ul>
+</li>
+</ul>
+<p>针对上述问题：</p>
+<ul>
+<li>《Last—level cache side—channel attacks are practical》：通过在攻击虚拟机中使用大内存页，利用大页映射产生的额外页内地址偏移来保留LLC与虚拟地址之间的映射关系；同时，利用Cache组内各Cache行之间的驱逐关系来按照分片进行Cache行划分．绕过了LLC地址映射不透明的问题；最后，通过对LLC进行扫描．一次监控一个cache组在探测周期内的时态访问模式，并判断是否与目标应用的安全性关键访问一致，直到确定目标应用中安全性关键的数据或代码对应的Cache组．</li>
+<li>《S$A：A shared cache attack that works across cores and defies VM sandboxing— and its application to AES》：也利用大页映射解决LLC的地址映射问题，并通过将探测数据从除LLC之外的多级Cache中驱逐的方法来降低其它高级别Cache对于探测结果的影响．</li>
+<li>也有通过对LLC的索引哈希机制进行逆向工程，恢复了物理内存地址与LLC的地址映射关系，从根本上解决了LLC与物理内存地址映射不透明的问题．</li>
+<li>Kayaalp等人则通过访问一个cache组时是否对目标应用造成影响来判断该cache组是否对应于目标应用的安全性关键访问。</li>
+</ul>
+<h2 id="Flush-Reload方法"><a href="#Flush-Reload方法" class="headerlink" title="Flush-Reload方法"></a>Flush-Reload方法</h2><p>Flush-Reload基于共享内存实现，是虚拟化环境中第1个跨内核、跨虚拟机的Cache探测方法．</p>
+<h3 id="方法简介-1"><a href="#方法简介-1" class="headerlink" title="方法简介"></a>方法简介</h3><p>利用FR探测Cache侧信道信息时，攻击虚拟机重复下面的操作：</p>
+<ol>
+<li><strong>Flush</strong>：将共享内存中指定位置的内存块驱逐出Cache；</li>
+<li><strong>Trigger</strong>：访问部署在目标虚拟机中的应用，并且等待一个预先设定的Flush-Reload间隔；在这个过程中，由于要响应服务请求，目标虚拟机执行应用并使用Cache；</li>
+<li><strong>Reload</strong>：重新加载这些指定位置的内存块，测量并记录各个数据块的重载时间。</li>
+</ol>
+<p><img src="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Flush-Reload-method.png" alt="Flush-Reload方法"></p>
+<ul>
+<li>Flush阶段，攻击虚拟机将指定位置的内存块驱逐出Cache，</li>
+<li>如果在Trigger阶段目标虚拟机访问了其中的一些内存块，这些数据将被重新加载到Cache，</li>
+<li>那么，Reload阶段对这些内存块的重载将发生缓存命中，从而得到一个显著降低的重载时间．</li>
+<li>因此，根据Reload阶段的重载时间，可以判断目标虚拟机是否访问了共享内存中指定位置的数据块、并进一步判断目标拟机访问了哪些数据或执行了哪些指令。</li>
+</ul>
+<p>FR算法实现基于以下关键因素：</p>
+<ul>
+<li>攻击虚拟机和目标虚拟机共享内存页面；</li>
+<li>攻击虚拟机可以无限制地使用Cache刷新指令；</li>
+<li>攻击虚拟机知道目标应用中安全性关键的数据或代码的内存位置;</li>
+<li>Cache多级架构具有包容性的特点；</li>
+<li>高分辨率的时钟．</li>
+</ul>
+<h3 id="Flush-Reload方法的应用"><a href="#Flush-Reload方法的应用" class="headerlink" title="Flush-Reload方法的应用"></a>Flush-Reload方法的应用</h3><ul>
+<li>实际中，为了得到目标应用中安全性关键的数据或代码的内存位置，攻击者通常需要对被攻击的目标应用进行逆向工程，来定位这些安全性关键的内存块的具体位置。</li>
+<li>Flush-reload攻击基于假设：<ul>
+<li>攻击虚拟机和目标虚拟机共享内存页面实现，这种共享可以基于页面的来源（比如：共享的代码库或加密库），或者基于合并内容相同的页面。</li>
+</ul>
+</li>
+<li>共享内存页面可以为攻击者提供丰富的信息。</li>
+</ul>
+<h3 id="Flush-Reload方法的扩展—-Flush-Flush方法"><a href="#Flush-Reload方法的扩展—-Flush-Flush方法" class="headerlink" title="Flush-Reload方法的扩展—-Flush-Flush方法"></a>Flush-Reload方法的扩展—-Flush-Flush方法</h3><p>《Flush+Flush：A stealthier last—level cache attack》：</p>
+<ul>
+<li>发现Cache刷新指令Clflush的 执行时间可以用来判断被刷新的内存块是否位于 Cache中：<ul>
+<li>被刷新的内存块不在Cache中时，Clflush指令将提前终止，从而产生较短的执行时间；</li>
+<li>被刷新的内存块在Cache中时，Clflush指令需要将其从全部多级Cache中驱逐，导致执行时间较长．</li>
+</ul>
+</li>
+<li>基于此， Gruss等人去掉了Flush—Reload方法中的Reload步骤，提出了Flush—Flush攻击方法。</li>
+<li>Flush—Flush方法连续两次使用Clflush指令将指定位置的内存块驱逐出Cache，并根据第2次Clflush指令的执行时间来判断在这期间目标虚拟机是否使用了这些内存块．由于去掉了Reload步骤，Flush—Flush方法缩短了一轮探测所需时间，可以提供更高的探测分辨率，同时也增加了攻击的隐匿性．</li>
+<li>但是，与Cache命中和失效产生的Cache访问时间差异信息相比，Clflush指令执行时间的差异信息较小，导致Flush-Flush方法的探测准确率没有Flush-Reload方法高． </li>
+</ul>
+<h3 id="Flush-Reload方法的扩展—-Invalidate-Transfer方法"><a href="#Flush-Reload方法的扩展—-Invalidate-Transfer方法" class="headerlink" title="Flush-Reload方法的扩展—-Invalidate-Transfer方法"></a>Flush-Reload方法的扩展—-Invalidate-Transfer方法</h3><p>《cross processor cache attacks》：</p>
+<ul>
+<li>发现在多处理器配置下，由于需要保持多处理器间Cache内容的一致性，当一个处理器发生Cache失效时，失效的数据是否缓存于另一个处理器Cache中，将产生从另一个处理器Cache读取数据和直接从内存读取数据两种可能，这将导致Cache访问时间差异(大约50个时钟周期)．</li>
+<li>基于上述事实，Irazoqui等人首次提出并实现了跨处理器的Invalidate-Transfer攻击方法，并恢复了另一个处理器上运行的加密软件库中使用的AES密钥和ElGamal密钥．</li>
+<li>Invalidate-Transfer方法:先将指定的共享内存块在Cache中的副本标记为无效，然后等待一段时间后，再重新访问上述指定的内存块，并根据重载时间来判断在此期间攻击目标是否使用了这些内存块。进一步地，根据重载时间的差异还可以判断攻击者和攻击目标是否运行于同一个CPU之上。</li>
+</ul>
+<h2 id="Cache侧信道信息探测方法的比较"><a href="#Cache侧信道信息探测方法的比较" class="headerlink" title="Cache侧信道信息探测方法的比较"></a>Cache侧信道信息探测方法的比较</h2><p><img src="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Comparison-Prime-Probe-Flush-Reload.png" alt="Prime-Probe与Flush-Reload的比较"></p>
+<ul>
+<li>Prime-Probe方法和Flush-Reload方法针对不同的应用需求，有各自的优缺点及应用挑战，具体方法的选取取决于应用场景和攻击者具备的能力等。<ul>
+<li>当攻击虚拟机和目标虚拟机之间共享内存时，采用Flush-Reload方法，攻击者可以得到更细粒度且更为丰富的信息；</li>
+<li>当攻击虚拟机和目标虚拟机没有共享内存时，攻击者只能采用Prime-Probe方法</li>
+</ul>
+</li>
+<li>因此，Flush—Reload方法的适用范围受到了严格的限制，Prime—Probe方法则更为通用</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/03/07/Literature-reading-notes/Research-CacheSideChannelAttack-Across-VM-inCloudEnvironment/" title="《云环境中跨虚拟机的Cache侧信道攻击技术研究》阅读笔记">http://www.thebetterkong.cn/2020/03/07/Literature-reading-notes/Research-CacheSideChannelAttack-Across-VM-inCloudEnvironment/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Computer-Architecture/" rel="tag"><i class="fa fa-tag"></i> Computer Architecture</a>
+              <a href="/tags/Cache%E4%BE%A7%E4%BF%A1%E9%81%93%E6%94%BB%E5%87%BB/" rel="tag"><i class="fa fa-tag"></i> Cache侧信道攻击</a>
+              <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/" rel="tag"><i class="fa fa-tag"></i> 云计算</a>
+              <a href="/tags/%E8%B7%A8%E8%99%9A%E6%8B%9F%E6%9C%BA/" rel="tag"><i class="fa fa-tag"></i> 跨虚拟机</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/02/21/Computer-Architecture/CA-MultiProcessor/" rel="prev" title="Computer Architecture：多处理器">
+      <i class="fa fa-chevron-left"></i> Computer Architecture：多处理器
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/03/15/Literature-reading-notes/ASLR-on-the-Line-Practical-Cache-Attacks-on-the-MMU/" rel="next" title="《anc_ndss17》阅读笔记">
+      《anc_ndss17》阅读笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#背景介绍"><span class="nav-number">1.</span> <span class="nav-text">背景介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#基础概念"><span class="nav-number">1.1.</span> <span class="nav-text">基础概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#云计算"><span class="nav-number">1.2.</span> <span class="nav-text">云计算</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#现有举措"><span class="nav-number">1.3.</span> <span class="nav-text">现有举措</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Cache侧信道信息泄露分析"><span class="nav-number">2.</span> <span class="nav-text">Cache侧信道信息泄露分析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Cache侧信道信息"><span class="nav-number">2.1.</span> <span class="nav-text">Cache侧信道信息</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Cache侧信道信息与密钥之间的相关性"><span class="nav-number">2.2.</span> <span class="nav-text">Cache侧信道信息与密钥之间的相关性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Cache侧信道信息泄露来源"><span class="nav-number">2.3.</span> <span class="nav-text">Cache侧信道信息泄露来源</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Cache争用产生的信息泄露"><span class="nav-number">2.3.1.</span> <span class="nav-text">Cache争用产生的信息泄露</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#数据重用产生的信息泄露"><span class="nav-number">2.3.2.</span> <span class="nav-text">数据重用产生的信息泄露</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Cache侧信道信息泄露方式"><span class="nav-number">2.4.</span> <span class="nav-text">Cache侧信道信息泄露方式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#分时共享"><span class="nav-number">2.4.1.</span> <span class="nav-text">分时共享</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#同时共享"><span class="nav-number">2.4.2.</span> <span class="nav-text">同时共享</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#通过Cache一致性协议共享Cache数据"><span class="nav-number">2.4.3.</span> <span class="nav-text">通过Cache一致性协议共享Cache数据</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#跨虚拟机Cache侧信道攻击概述"><span class="nav-number">3.</span> <span class="nav-text">跨虚拟机Cache侧信道攻击概述</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#传统缓存侧信道攻击"><span class="nav-number">3.1.</span> <span class="nav-text">传统缓存侧信道攻击</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#跨虚拟机Cache侧信道攻击的起源"><span class="nav-number">3.2.</span> <span class="nav-text">跨虚拟机Cache侧信道攻击的起源</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#跨虚拟机Cache侧信道攻击的研究进展"><span class="nav-number">3.3.</span> <span class="nav-text">跨虚拟机Cache侧信道攻击的研究进展</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#跨虚拟机访问驱动Cache侧信道攻击的通用模型"><span class="nav-number">4.</span> <span class="nav-text">跨虚拟机访问驱动Cache侧信道攻击的通用模型</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#相关假设"><span class="nav-number">4.1.</span> <span class="nav-text">相关假设</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#攻击过程"><span class="nav-number">4.2.</span> <span class="nav-text">攻击过程</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#虚拟机同驻"><span class="nav-number">5.</span> <span class="nav-text">虚拟机同驻</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#虚拟机资源调度策略"><span class="nav-number">5.1.</span> <span class="nav-text">虚拟机资源调度策略</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#虚拟机同驻检测方法"><span class="nav-number">5.2.</span> <span class="nav-text">虚拟机同驻检测方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#基于网络信息的虚拟机同驻检测"><span class="nav-number">5.2.1.</span> <span class="nav-text">基于网络信息的虚拟机同驻检测</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基于资源干扰的虚拟机同驻检测"><span class="nav-number">5.2.2.</span> <span class="nav-text">基于资源干扰的虚拟机同驻检测</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基于隐蔽信道的虚拟机同驻检测"><span class="nav-number">5.2.3.</span> <span class="nav-text">基于隐蔽信道的虚拟机同驻检测</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#虚拟机同驻检测方法评估"><span class="nav-number">5.3.</span> <span class="nav-text">虚拟机同驻检测方法评估</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#虚拟机同驻检测方法的测评原则"><span class="nav-number">5.3.1.</span> <span class="nav-text">虚拟机同驻检测方法的测评原则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#虚拟机同驻检测方法的比较"><span class="nav-number">5.3.2.</span> <span class="nav-text">虚拟机同驻检测方法的比较</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Cache侧信道信息探测方法"><span class="nav-number">6.</span> <span class="nav-text">Cache侧信道信息探测方法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Prime-Probe（PP）方法"><span class="nav-number">6.1.</span> <span class="nav-text">Prime-Probe（PP）方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#方法简介"><span class="nav-number">6.1.1.</span> <span class="nav-text">方法简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#应用PP方法探测L1-Cache"><span class="nav-number">6.1.2.</span> <span class="nav-text">应用PP方法探测L1 Cache</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#应用PP方法探测LLC"><span class="nav-number">6.1.3.</span> <span class="nav-text">应用PP方法探测LLC</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Flush-Reload方法"><span class="nav-number">6.2.</span> <span class="nav-text">Flush-Reload方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#方法简介-1"><span class="nav-number">6.2.1.</span> <span class="nav-text">方法简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Flush-Reload方法的应用"><span class="nav-number">6.2.2.</span> <span class="nav-text">Flush-Reload方法的应用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Flush-Reload方法的扩展—-Flush-Flush方法"><span class="nav-number">6.2.3.</span> <span class="nav-text">Flush-Reload方法的扩展—-Flush-Flush方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Flush-Reload方法的扩展—-Invalidate-Transfer方法"><span class="nav-number">6.2.4.</span> <span class="nav-text">Flush-Reload方法的扩展—-Invalidate-Transfer方法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Cache侧信道信息探测方法的比较"><span class="nav-number">6.3.</span> <span class="nav-text">Cache侧信道信息探测方法的比较</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

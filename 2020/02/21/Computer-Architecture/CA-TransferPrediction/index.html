@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本节从分析程序的转移行为出发，分析了软硬件解决控制相关的方法，其中重点介绍了硬件动态转移预测，介绍了一些常见的分支预测器。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Computer Architecture：转移猜测">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-TransferPrediction/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="本节从分析程序的转移行为出发，分析了软硬件解决控制相关的方法，其中重点介绍了硬件动态转移预测，介绍了一些常见的分支预测器。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/EXToDecode.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/DelaySlotExample.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/MIPSTransferInstruction.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20200122143549719.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80NDg0OTQwMw==,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/PathRelated.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/SoftwareLoopUnfolding.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/CyclicDataCorrelation.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/ArrayElementType.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/SoftRunningWater1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/SoftRunningWater2.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/MOVEInstruction.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/ExampleConditionalInstructions.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/PrinciplesDynamicTransferPrediction.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/BHTStructure.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/BHTExample.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/BTBStructure.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/GAg.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/GAs.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/SAg(k">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/PAp(4">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/BranchAliasModel.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/Gselect.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/Gshare.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/Agree.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/Bi-Mode.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/CombinedBranchPredictor.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/Example.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/All.png">
+<meta property="article:published_time" content="2020-02-21T07:13:08.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:26:51.515Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="Computer Architecture">
+<meta property="article:tag" content="国科大研究生课程笔记">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/CA-TransferPrediction/EXToDecode.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-TransferPrediction/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Computer Architecture：转移猜测 | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-TransferPrediction/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Computer Architecture：转移猜测
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-02-21 15:13:08" itemprop="dateCreated datePublished" datetime="2020-02-21T15:13:08+08:00">2020-02-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:26:51" itemprop="dateModified" datetime="2020-08-14T17:26:51+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">计算机体系结构</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/02/21/Computer-Architecture/CA-TransferPrediction/" class="post-meta-item leancloud_visitors" data-flag-title="Computer Architecture：转移猜测" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/02/21/Computer-Architecture/CA-TransferPrediction/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/02/21/Computer-Architecture/CA-TransferPrediction/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本节从分析程序的转移行为出发，分析了软硬件解决控制相关的方法，其中重点介绍了硬件动态转移预测，介绍了一些常见的分支预测器。</p>
+<a id="more"></a> 
+<h1 id="前景"><a href="#前景" class="headerlink" title="前景"></a>前景</h1><p>提高流水线效率的技术：</p>
+<ol>
+<li><p>指令流水线：</p>
+<ul>
+<li>多发射：多车道</li>
+<li>动态调度：允许超车</li>
+</ul>
+</li>
+<li><p>喂饱“饥饿”的运算器：</p>
+<ul>
+<li>转移猜测：提供足够的指令</li>
+<li>存储管理：提供足够的数据</li>
+<li>冯诺依曼结构：存储程序和顺序执行</li>
+</ul>
+</li>
+</ol>
+<h1 id="转移指令"><a href="#转移指令" class="headerlink" title="转移指令"></a>转移指令</h1><h2 id="控制相关"><a href="#控制相关" class="headerlink" title="控制相关"></a>控制相关</h2><ul>
+<li>如果转移指令计算下一条指令地址在 EX 阶段计算，下一条指令等 2 拍 ；</li>
+<li><p>解决方法：</p>
+<ol>
+<li><p>使用专门的地址运算部件把地址<strong>计算提前到译码阶段</strong>可以少等一拍：<br><img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/EXToDecode.png" alt="EXToDecode"></p>
+</li>
+<li><p>使用一个<strong>delay slot</strong>可以不用等待，但是多发射情况下延迟槽成为需要专门照顾的负担：<br><img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/DelaySlotExample.png" alt="DelaySlotExample"></p>
+</li>
+</ol>
+</li>
+</ul>
+<h2 id="转移指令对性能的影响"><a href="#转移指令对性能的影响" class="headerlink" title="转移指令对性能的影响"></a>转移指令对性能的影响</h2><ol>
+<li><p>分支指令的影响是开发指令级并行性的重要障碍：</p>
+<ul>
+<li>一条指令流中，平均每5-7条指令中就有一条是分支指令，也即基本块大小为5-7条指令</li>
+</ul>
+</li>
+<li><p>增大发射宽度：</p>
+<ul>
+<li>在发射宽度为 n 的处理器中，遇到分支指令的速度也快了 n 倍 </li>
+</ul>
+</li>
+<li><p>增加流水线深度：</p>
+<ul>
+<li>流水线越深，处理分支指令所需要的时钟周期数就越多</li>
+</ul>
+</li>
+<li><p>例子：</p>
+<ul>
+<li>假设平均每 8 条指令中有一条转移指令，某处理器采用 4 发射结构，第 10 级流水解决转移地址相关（即第10级流水算出转移方向和目标）：<ul>
+<li>每次转移出问题，流水线停顿 9 拍，这 9 拍可发射 36 条指令，即浪费的指令带宽</li>
+</ul>
+</li>
+</ul>
+<ol>
+<li>在 A 系统中不进行转移预测，遇到转移指令就等待：<ul>
+<li>指令带宽浪费：$36/(36+8)=82\%$； //相当于每发射 8 条指令，浪费一次</li>
+</ul>
+</li>
+<li>在 B 系统中进行简单的转移预测，转移猜错率为 50%，那么平均每 16 条指令预测错误一次:<ul>
+<li>指令带宽浪费：$36/(36+16)=75\%$</li>
+</ul>
+</li>
+<li>在C系统中，转移指令猜错率为 10%，那么平均每 80 条指令预测错误一次:<ul>
+<li>指令带宽浪费：$36/(36+80)=31\%$</li>
+</ul>
+</li>
+<li>在D系统中，转移指令猜错率为 4%，平均每 200 条指令预测错误一次:<ul>
+<li>取指令带宽浪费：$36/(36+200)=15\%$</li>
+</ul>
+</li>
+</ol>
+</li>
+</ol>
+<h2 id="转移指令的属性"><a href="#转移指令的属性" class="headerlink" title="转移指令的属性"></a>转移指令的属性</h2><ol>
+<li><p>条件转移与无条件转移：</p>
+<ul>
+<li>条件转移：需等待条件确定后才能取指，程序中多数转移指令是条件转移指令</li>
+<li>无条件转移：不用判断条件就转移，如call/return</li>
+</ul>
+</li>
+<li><p>直接转移与间接转移：</p>
+<ul>
+<li>直接转移：转移目标根据指令内容直接得出</li>
+<li>间接转移：转移目标在寄存器中</li>
+</ul>
+</li>
+<li><p>相对转移与绝对转移：</p>
+<ul>
+<li>相对转移：转移目标为当前PC值加上偏移量</li>
+<li>绝对转移：转移目标由指令或寄存器内容直接给出</li>
+</ul>
+</li>
+</ol>
+<p>由上可知：理论上有8种组合，实际上不实现所有组合；</p>
+<h2 id="MIPS-指令系统的转移指令"><a href="#MIPS-指令系统的转移指令" class="headerlink" title="MIPS 指令系统的转移指令"></a>MIPS 指令系统的转移指令</h2><p><img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/MIPSTransferInstruction.png" alt="MIPSTransferInstruction"></p>
+<h1 id="程序的转移行为"><a href="#程序的转移行为" class="headerlink" title="程序的转移行为"></a>程序的转移行为</h1><p>大多数的转移指令具有强烈的一个跳转方向，具有挑战性的工作是预测其余的转移指令的跳转方向；</p>
+<h2 id="分支的可预测性"><a href="#分支的可预测性" class="headerlink" title="分支的可预测性"></a>分支的可预测性</h2><ol>
+<li><p>利用单个转移指令的重复性（基于模式的预测方法）：</p>
+<ul>
+<li><strong>循环型分支：</strong><ul>
+<li>for 型循环：TT…TN（成功 n 次后跟一次不成功 ） </li>
+<li>while 型循环：NN…NT（不成功 n 次后跟一次成功）</li>
+</ul>
+</li>
+<li><strong>周期重复模式型分支：</strong><ul>
+<li>定长重复模式类分支：$\{pat\}^q$, |pat|=k （每隔 k 个分支模式就重复一次）</li>
+<li>块模式类分支：$\{T^n N^m\}^q$， 成功 n 次，不成功 m 次，如此循环</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>利用不同转移指令之间的关系（基于相关的预测方法）：</p>
+<ul>
+<li><strong>利用指令间的方向相关</strong><ul>
+<li>两个分支的条件（完全或部分）基于相同或相关的信息</li>
+<li>第二个分支的结果基于第一个分支的结果产生<br> <img src="https://img-blog.csdnimg.cn/20200122143549719.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80NDg0OTQwMw==,size_16,color_FFFFFF,t_70" alt="DirectionalCorrelation"></li>
+</ul>
+</li>
+<li><strong>利用指令间的路径相关</strong><ul>
+<li>如果一个分支是通向当前分支的前 n 条分支之一，则称该分支处在当前分支的路径之上（Y 和 Z 在通往 X 的路径上）</li>
+<li>处在当前分支路径上的分支与当前分支结果之间的相关称为<strong>路径相关</strong>；<br> <img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/PathRelated.png" alt="PathRelated"></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>利⽤函数调⽤的递归性：</p>
+</li>
+</ol>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
+<li>分支指令是很频繁的；</li>
+<li>分支指令有较好的局部性；</li>
+<li>分支指令具有可预测性；</li>
+</ul>
+<h1 id="解决转移条件相关的方法"><a href="#解决转移条件相关的方法" class="headerlink" title="解决转移条件相关的方法"></a>解决转移条件相关的方法</h1><h2 id="方法综述"><a href="#方法综述" class="headerlink" title="方法综述"></a>方法综述</h2><ol>
+<li>阻塞：<ul>
+<li>等待直到转移条件确定</li>
+</ul>
+</li>
+<li>用延迟槽容忍延迟：<ul>
+<li>延迟槽指令来源</li>
+</ul>
+</li>
+<li>编译器优化：<ul>
+<li>循环：循环展开减少转移指令、软流水减少阻塞</li>
+<li>分支：全局代码调度（越过分支调度指令）</li>
+<li>函数调用：inline</li>
+</ul>
+</li>
+<li>转换为数据相关：<ul>
+<li>条件指令、谓词</li>
+</ul>
+</li>
+<li>硬件转移预测：<ul>
+<li>转移条件未确定时预测转移是否成功</li>
+<li>静态与动态预测</li>
+</ul>
+</li>
+</ol>
+<h2 id="软件方法解决控制相关"><a href="#软件方法解决控制相关" class="headerlink" title="软件方法解决控制相关"></a>软件方法解决控制相关</h2><h3 id="利用延迟槽"><a href="#利用延迟槽" class="headerlink" title="利用延迟槽"></a>利用延迟槽</h3><ol>
+<li>延迟槽指令的来源：<ul>
+<li>来自转移指令前：肯定执行</li>
+<li>来自转移目标地址：转移成功才执行</li>
+<li>来自转移不成功地址：转移不成功才执行</li>
+</ul>
+</li>
+<li>单延迟槽的编译效果：<ul>
+<li>能为 60% 左右的转移延迟槽找到有效操作</li>
+<li>大约 80% 的延迟槽指令用于有效计算</li>
+<li>因此大约 50% (60% x 80%) 的延迟槽操作用于有效计算</li>
+</ul>
+</li>
+<li>延迟槽的限制：<ul>
+<li>超流水情况下一条延迟槽不够</li>
+<li>多发射情况下延迟槽反而成为需要特殊照顾的兼容负担</li>
+</ul>
+</li>
+</ol>
+<h3 id="软件循环展开消除控制相关"><a href="#软件循环展开消除控制相关" class="headerlink" title="软件循环展开消除控制相关"></a>软件循环展开消除控制相关</h3><p><strong>方法</strong>：软件展开两个循环</p>
+<ol>
+<li>循环展开</li>
+<li>寄存器重命名</li>
+<li>变换次序<br> <img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/SoftwareLoopUnfolding.png" alt="SoftwareLoopUnfolding"></li>
+</ol>
+<p><strong>软件循环展开的不足：</strong></p>
+<ul>
+<li>有些循环不好展开（如循环次数不定的循环）</li>
+<li>增加指令 CACHE 的负担</li>
+</ul>
+<p><strong>循环的数据相关：</strong><br><img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/CyclicDataCorrelation.png" alt="CyclicDataCorrelation"></p>
+<ul>
+<li>循环内相关：<ul>
+<li>S2 使用同一次循环中 S1 计算的 A[i+1]。</li>
+<li>导致一个循环体内的多条指令不能并行执行；</li>
+</ul>
+</li>
+<li>循环间（loop-carried）相关：<ul>
+<li>本次循环计算的 A[i+1]/B[i+1] 将被下一次循环使用。</li>
+<li>导致多个循环体不能并行执行</li>
+</ul>
+</li>
+<li><strong>把循环间相关转换为循环内相关</strong></li>
+</ul>
+<p><strong>循环展开的条件：</strong></p>
+<ul>
+<li><strong>数组元素相关的判断：</strong><ul>
+<li>数组元素两种类型：<br><img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/ArrayElementType.png" alt="ArrayElementType"></li>
+</ul>
+</li>
+<li><strong>名字相关的消除</strong>：重命名技术</li>
+<li><strong>指针相关的判断</strong>：只有一些经验的方法</li>
+</ul>
+<p><strong>循环间相关的解决—-软流水：</strong></p>
+<ul>
+<li>新循环体的每个操作来自不同的循环体，以分开数据相关的指令，相当于软件的 Tomasulo 算法；</li>
+<li>符号级循环展开，比真正循环展开代码开销小；<br>  <img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/SoftRunningWater1.png" alt="SoftRunningWater1"><br>  <img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/SoftRunningWater2.png" alt="SoftRunningWater2"></li>
+</ul>
+<h3 id="把控制相关转换成数据相关"><a href="#把控制相关转换成数据相关" class="headerlink" title="把控制相关转换成数据相关"></a>把控制相关转换成数据相关</h3><p><strong>把条件转移指令转换为条件执行：</strong></p>
+<ul>
+<li>条件指令的条件作为指令执⾏阶段的⼀个输⼊,实际上把控制相关转化为数据相关</li>
+<li><code>if (x) then A = B op C else NOP</code> （在执行阶段判断x是否为0） //CMOV A ,B , X<br>  <img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/MOVEInstruction.png" alt="MOVEInstruction"></li>
+<li>只有条件为真时才写结果，为假时不写结果也不发生例外</li>
+<li>RISC 系统如 Alpha, MIPS, PowerPC, SPARC 都增加了条件 MOVE 指令; PA-RISC 的nullification</li>
+<li>EPIC: 使用 64 个 1位 的谓词寄存器来选择是否写执行结果</li>
+</ul>
+<p><strong>条件指令的缺点：</strong></p>
+<ul>
+<li>条件为假时仍需要1拍，占用发射槽和功能部件</li>
+<li>条件未确定仍需要在执行前等待，转移猜测反而在执行后</li>
+<li>条件复杂时会降低效率，因为条件在执行时才确定</li>
+</ul>
+<p><strong>条件指令举例：</strong></p>
+<ul>
+<li>假设转移指令没有延迟槽</li>
+<li>条件指令可消除简单的条件转移，对取绝对值等操作有用</li>
+<li>条件指令仍要在执行前等待条件，注意例外的处理<br>  <img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/ExampleConditionalInstructions.png" alt="ExampleConditionalInstructions"></li>
+</ul>
+<h2 id="硬件动态转移预测"><a href="#硬件动态转移预测" class="headerlink" title="硬件动态转移预测"></a>硬件动态转移预测</h2><h3 id="基本思路"><a href="#基本思路" class="headerlink" title="基本思路"></a>基本思路</h3><ol>
+<li><strong>在取指或译码阶段预测==转移是否成功==以及==转移目标==进行后续指令的取指</strong><ul>
+<li>以减少指令流水线由于控制相关而堵塞</li>
+</ul>
+</li>
+<li><strong>在执行阶段判断转移预测是否正确</strong><ul>
+<li>如果猜测正确，则正常提交</li>
+<li>如果猜测错误，则取消该转移指令及其后续指令</li>
+</ul>
+</li>
+</ol>
+<h3 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h3><p>猜测依据：</p>
+<ul>
+<li>当前指令的地址（PC）和性质（是否转移指令）</li>
+<li>过去转移指令历史记录</li>
+</ul>
+<p>猜测内容：</p>
+<ul>
+<li>转移方向、转移目标地址</li>
+</ul>
+<p>原理图示：<br><img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/PrinciplesDynamicTransferPrediction.png" alt="PrinciplesDynamicTransferPrediction"></p>
+<h3 id="分支处理机制的性能取决于"><a href="#分支处理机制的性能取决于" class="headerlink" title="分支处理机制的性能取决于"></a>分支处理机制的性能取决于</h3><ul>
+<li>预测精度（BPA）=&gt; 设计好的预测器<ul>
+<li>预测精度越高，能抽取的并行性就越多</li>
+</ul>
+</li>
+<li>预测正确所付的代价：转到目标地址处执行所需的延迟<ul>
+<li>译码时根据 IR 内容预测：有一拍的延迟槽，在 4 发射情况下有 4 条指令的延迟槽</li>
+<li>取指时根据 PC 预测：没有延迟槽，需要 BTB/Trace Cache 等机制</li>
+<li>MIPS R10000 无 BTAC，MIPS R12000 有 32 项 BTAC</li>
+</ul>
+</li>
+<li>预测错所付的代价：<ul>
+<li>尽量提前执行转移操作</li>
+<li>Pentium II/III 和 Alpha 21264 重新刷新流水线需要 11 周期以上</li>
+</ul>
+</li>
+</ul>
+<h3 id="转移预测关键技术"><a href="#转移预测关键技术" class="headerlink" title="转移预测关键技术"></a>转移预测关键技术</h3><ol>
+<li>如何保证准确的预测：根据记录的历史进行预测<ul>
+<li>如何记录转移历史，记录哪些转移历史</li>
+<li>记录多少转移历史</li>
+<li>何时更新：更新太早，转移指令也可能被取消；更新太晚，导致转移历史不准确</li>
+</ul>
+</li>
+<li>如何在取消猜测执行的操作时保证现场精确性<ul>
+<li>增加提交流水级，在提交时修改寄存器（寄存器重命名）和内存（write buffer 机制）</li>
+<li>I/O 指令的猜测执行难以取消</li>
+</ul>
+</li>
+<li>如何识别流水线中的指令哪些需要取消，哪些不要取消<ul>
+<li>例外取消一般在提交时，取消所有后续指令</li>
+<li>转移取消一般在执行后，只取消部分指令</li>
+<li>要求有⼀种机制来判断指令流⽔线中的每⼀条指令和错误预测的转移指令的先后关系。</li>
+</ul>
+</li>
+<li>延迟槽指令的处理</li>
+<li>每个周期多个分支预测<ul>
+<li>每周期 1 个预测，基本可满足 4-6 发射需要的取指带宽</li>
+</ul>
+</li>
+</ol>
+<h3 id="高性能性能转移预测机制特征"><a href="#高性能性能转移预测机制特征" class="headerlink" title="高性能性能转移预测机制特征"></a>高性能性能转移预测机制特征</h3><ol>
+<li>减少预测延迟槽 (如⽤根据 PC 预测的 BTB/BTAC 等机制）；</li>
+<li>在执⾏阶段尽早确定转移结果,降低错误预测的开销；</li>
+<li>在转移预测错误时要有⾼效的流⽔线刷新机制；</li>
+<li>具有⾼预测精度的转移预测机制；</li>
+</ol>
+<h3 id="静态-动态转移预测"><a href="#静态-动态转移预测" class="headerlink" title="静态/动态转移预测"></a>静态/动态转移预测</h3><ul>
+<li><strong>静态预测</strong>：总是预测转移成功或总是预测转移不成功<ul>
+<li>预测转移成功：较精确，计算转移地址需要 delay slot</li>
+<li>预测转移不成功：直接用 PC+4</li>
+</ul>
+</li>
+<li><strong>动态预测</strong>：根据转移指令执行历史进行预测<ul>
+<li>复杂预测技术：精确、控制复杂</li>
+</ul>
+</li>
+<li><strong>混合预测</strong>：利用编译器的提示，结合动态和静态预测</li>
+</ul>
+<h3 id="局部转移预测"><a href="#局部转移预测" class="headerlink" title="局部转移预测"></a>局部转移预测</h3><ul>
+<li>独立考虑单个循环的历史记录，寻找其中的重复性规律，并根据该规律预测未来的转移行为；</li>
+<li>对于重复性特征明显的转移指令（如循环）效果好；</li>
+<li>例子：<ul>
+<li>for (I=0, I&lt;10; I++){ } </li>
+<li>转移模式为 (1111111110)^n</li>
+</ul>
+</li>
+</ul>
+<h3 id="利用单个分支的重复性：BHT"><a href="#利用单个分支的重复性：BHT" class="headerlink" title="利用单个分支的重复性：BHT"></a>利用单个分支的重复性：BHT</h3><p><strong>转移历史表 BHT（Branch History Table）：</strong></p>
+<ul>
+<li>用 PC 的低位索引，每项 1 位 （可能两条转移指令的 PC 低位相同 ,从⽽引起冲突）</li>
+<li>记录同一项上次转移是否成功，表示是否转移成功<ul>
+<li>具有上述两项特征的 BHT 表，1 位，称为<strong>PHT表</strong></li>
+</ul>
+</li>
+<li>不进行地址比较检查（cache，tag 用于地址比较检查）(因为即使预测错误也还有纠正措施)</li>
+</ul>
+<p><strong>问题：</strong><br><code>for(i=0;i&lt;10;i++) for(j=0;j&lt;10;j++){......}</code></p>
+<ul>
+<li>对循环进行猜测时，1 位 BHT（PHT）引起两次猜错：<ul>
+<li>1 位 PHT 表预测时仅看该转移指令上次跳转是否成功</li>
+</ul>
+<ol>
+<li>循环退出时，转移方向不一致</li>
+<li>进入循环时，和上次退出时的转移方向不一致</li>
+</ol>
+</li>
+</ul>
+<p><strong>改进：两位BHT表—-==转移历史表==</strong></p>
+<ul>
+<li><strong>特点</strong>：<ul>
+<li>只有连续两次猜错，才会改变猜测方向</li>
+</ul>
+</li>
+<li><strong>要求</strong>：<ul>
+<li>12 位 PC 索引：4096 项已经足够，和无穷项效果差不多；</li>
+<li>BHT 表 2 位已经足够, n 位 (n&gt;2)与 2 位效果差不多；</li>
+</ul>
+</li>
+<li><strong>预测机制</strong>：<ul>
+<li><strong>执行动作</strong>：转移指令每次转移成功（这里的转移成功是指：分支真是的跳转情况）加 1，加到 3 为止；转移不成功减 1，减到 0 为止；</li>
+<li><strong>预测方向</strong>：转移预测时，若相应 PHT 表项的高位为 1（计数器的值为 2 或 3）就预测跳转；高位为 0（计数器的值为 1 或 0）就预测不跳转；</li>
+</ul>
+</li>
+<li><strong>功能结构</strong>：<br>  <img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/BHTStructure.png" alt="BHTStructure">    </li>
+<li><strong>缺点：</strong><ol>
+<li>仅能预测转移指令⽅向,⽆法预测跳转⽬标；</li>
+<li>仅在译码阶段使⽤，仅只使⽤ PC 低位索引，可能把普通指令也当作转移指令进⾏预测；</li>
+</ol>
+</li>
+<li><strong>例子说明：</strong><ul>
+<li>在前述两重循环的例子中，循环预测准确率从：<ul>
+<li>（8+80）/（10+100）= 80%  // “8” 外层循环错两次；“80” 内层循环错 20 次</li>
+<li>提高到：（7+88）/（10+100）= 87.2%<br><img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/BHTExample.png" alt="BHTExample"></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="减少猜测延迟：转移目标缓冲器-BTB"><a href="#减少猜测延迟：转移目标缓冲器-BTB" class="headerlink" title="减少猜测延迟：转移目标缓冲器 BTB"></a>减少猜测延迟：转移目标缓冲器 BTB</h3><ul>
+<li>使用 CAM 结构，在取指阶段根据当前 PC 值预测转移方向和转移地址：<ul>
+<li>需要进行地址全相等比较；</li>
+<li>直接预测 PC 值而不是根据指令内容计算；</li>
+<li>失效时进行替换；</li>
+</ul>
+</li>
+<li><strong>硬件结构：</strong><br>  <img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/BTBStructure.png" alt="BTBStructure"></li>
+<li><strong>缺点：</strong><ol>
+<li>表项复杂 ,需全相联查找，不能做⼤；</li>
+<li>BTB 需配合 PHT；</li>
+</ol>
+</li>
+</ul>
+<h3 id="RAS：返回地址栈"><a href="#RAS：返回地址栈" class="headerlink" title="RAS：返回地址栈"></a>RAS：返回地址栈</h3><ul>
+<li>返回地址栈（Return Addresses Stack）预测返回地址</li>
+<li>函数调用时压栈，返回时从栈顶弹出作为返回地址</li>
+<li>针对函数调用有很高的预测准确率</li>
+</ul>
+<h3 id="BHR-转移历史寄存器—-转移指令的相关性"><a href="#BHR-转移历史寄存器—-转移指令的相关性" class="headerlink" title="BHR 转移历史寄存器—-转移指令的相关性"></a>BHR 转移历史寄存器—-转移指令的相关性</h3><ul>
+<li><strong>作用</strong>：记录所有转移指令的历史</li>
+<li><strong>实现方式：</strong><ul>
+<li><strong>移位寄存器</strong>：处理器执行转移指令，就把 BHR 左移 1 位，左移时最高位扔掉，最低位如果转移成功就填 1，否则填 0；</li>
+</ul>
+</li>
+<li>m 位的 BHR 记录了处理器 M 次的转移历史;</li>
+<li><strong>BHR 表</strong>：为每条转移指令单独记录 BHR ,再把多个 BHR 组织在⼀起的表</li>
+<li>2 位分支预测之后，预测正确率难以提高，主要原因是分支指令的相关性  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(d &gt;= <span class="number">10</span>)  <span class="comment">//分支1</span></span><br><span class="line">	d = <span class="number">12</span>;</span><br><span class="line"><span class="keyword">if</span>(d == <span class="number">12</span>)  <span class="comment">//分支2依赖分支1</span></span><br><span class="line">	d = <span class="number">2</span>;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="Yeh-和-Patt-分类"><a href="#Yeh-和-Patt-分类" class="headerlink" title="Yeh 和 Patt 分类"></a>Yeh 和 Patt 分类</h3><p><strong>当前的转移依赖于两种情况：</strong></p>
+<ul>
+<li>该指令的过去m次转移记录：PHT（Pattern History Table） </li>
+<li>程序中所有转移指令过去m次的转移记录：BHR（Branch History Register）</li>
+</ul>
+<p><strong>BHR 的组织：</strong></p>
+<ul>
+<li>“PA” 表示 per address BHR，每条转移指令都有自己的 BHR，用 PC 索引 BHR；</li>
+<li>“GA” 表示 global address BHR，所有转移指令共用一个 BHR；</li>
+<li>“SA” 表示 set address BHR，用 PC 的低位索引 BHR</li>
+</ul>
+<p><strong>PHT 的组织：</strong></p>
+<ul>
+<li>只用历史记录索引 PHT 表，用“g”表示</li>
+<li>用全地址和历史记录一起索引 PHT 表，用“p”表示</li>
+<li>使用部分地址和历史记录一起索引 PHT 表，用“s”表示</li>
+</ul>
+<p><strong>两层自适应预测器组合情况：</strong></p>
+<ul>
+<li>BHR: Branch History Register</li>
+<li>PHT: Pattern History Table</li>
+</ul>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Global PHT</th>
+<th>per-address PHTs</th>
+<th>per-set PHTs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Global BHR</td>
+<td>GAg</td>
+<td>GAp</td>
+<td>GAs</td>
+</tr>
+<tr>
+<td>per-address BHR</td>
+<td>PAg</td>
+<td>PAp</td>
+<td>PAs</td>
+</tr>
+<tr>
+<td>per-set BHR</td>
+<td>SAg</td>
+<td>SAp</td>
+<td>SAs</td>
+</tr>
+</tbody>
+</table>
+</div>
+<ol>
+<li><p><strong>GAg 结构：</strong></p>
+<ul>
+<li>BHR 和 PHT 都是全局的，全局的 BHR 又称为 GHR（Global History Rigster）。</li>
+<li>其中 GHR 存储过去 k 次转移历史，并用 GHR 的 k 位值去索引 $2^k$ 个入口的 PHT，</li>
+<li>PHT 每项利用 2 位饱和计数器进行预测。<br><img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/GAg.png" alt="GAg"></li>
+</ul>
+</li>
+<li><p><strong>GAs 结构：</strong></p>
+<ul>
+<li>其中 BHR 表还是全局的，只有 k 位；</li>
+<li>PHT 表用 k 位的 GHR 和 PC 的低 n 位进行索引，因此一共有 $2^{k+n}$项。<br><img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/GAs.png" alt="GAs"></li>
+</ul>
+</li>
+<li><p><strong>SAg(k) 的结构：</strong></p>
+<ul>
+<li>PHT 是全局的，BHR 寄存器一共有 $2^n$ 个，每个 BHR 为 k 位。</li>
+<li>先用 PC 的低 n 位索引 GHR，然后再用 GHR 的值索引 PHT 表。<br><img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/SAg(k" alt="SAg(k)">.png)</li>
+</ul>
+</li>
+<li><p><strong>PAp(4) 结构：</strong></p>
+<ul>
+<li>每个 PC 值一个 BHR 寄存器，每个 BHR 为 k 位。</li>
+<li>先用 PC 索引 BHR，然后再用 BHR 的值和 PC 一起索引 PHT 表。<br><img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/PAp(4" alt="PAp(4)">.png)</li>
+</ul>
+</li>
+</ol>
+<h3 id="分支别名干扰问题"><a href="#分支别名干扰问题" class="headerlink" title="分支别名干扰问题"></a>分支别名干扰问题</h3><p><strong>模式：</strong><br><img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/BranchAliasModel.png" alt="BranchAliasModel"></p>
+<ul>
+<li>无论 BHR 和 PHT 表如何增大，效果也不是很明显</li>
+<li>主要原因是不同分支地址访问同一个 PHT，造成分支干扰</li>
+<li>⾃从⼆级转移预测器出现来，预测精度⼀般在 92% 左右 </li>
+</ul>
+<p><strong>分支别名干扰的消除：</strong></p>
+<ol>
+<li><strong>Gselect</strong>:全局历史 m 位和地址 n 位组合寻址<br> <img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/Gselect.png" alt="Gselect"></li>
+<li><strong>Gshare</strong>: 部分地址和全局历史异或寻址<br> <img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/Gshare.png" alt="Gshare">    </li>
+</ol>
+<ul>
+<li>性能分析结果表明：gshare 稍微好于 gselect</li>
+</ul>
+<h3 id="Agree-分支预测"><a href="#Agree-分支预测" class="headerlink" title="Agree 分支预测"></a>Agree 分支预测</h3><p><img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/Agree.png" alt="Agree"></p>
+<ul>
+<li>分支预测缓冲区 BTB：<ul>
+<li>在指令 Cache 或转移目的地址缓存（BTB）中为每一个转移都加上一个偏向位，偏向位中保存的是这条指令最常见的转移方向。</li>
+<li>偏向位依据：前面分析的多数转移指令具有强烈跳转或者不跳转倾向性</li>
+</ul>
+</li>
+<li>Gshare预测器：<ul>
+<li>2 位计数器不是用来预测转移方向的，而是用来决定是否按照偏向位来转移的。</li>
+</ul>
+</li>
+<li>当转移的实际结果与偏向位一致时，计数器加一，否则减一</li>
+</ul>
+<ol>
+<li><p><strong>举例计算说明：</strong></p>
+<ul>
+<li>2条分支预测正确率分别为 85%和15%，使用同一项PHT</li>
+<li>传统方法 - 两条分支结果相反（分支冲突）的概率:<br>   (br1taken, br2nottaken) + (br1nottaken, br2taken) = (85% <em> 85%) + (15% </em> 15%) = 74.5%</li>
+<li>Agree 方法–两条分支结果相反（分支冲突）的概率:<br>   (br1agree, br2disagree) + (br1disagree, br2agree)= (85% <em> 15%) + (15% </em> 85%) = 25.5%</li>
+</ul>
+</li>
+<li><p><strong>优点：</strong></p>
+<ul>
+<li>2 条不同方向的分支可以映射到同一表项</li>
+<li>偏向位不变，只改变 PHT</li>
+<li>gcc 误预测在 64k 的 PHT 下减少 8.6%, 1K 的 PHT 误预测减少 33.3%</li>
+</ul>
+</li>
+<li><p><strong>应用</strong>：HP 的 PA-8700 处理器</p>
+</li>
+</ol>
+<h3 id="Bi-Mode-预测器"><a href="#Bi-Mode-预测器" class="headerlink" title="Bi-Mode 预测器"></a>Bi-Mode 预测器</h3><p><img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/Bi-Mode.png" alt="Bi-Mode"></p>
+<ul>
+<li>Bi-mode 和Agree 分支预测的思想一致，不过它是把容易发生跳转和不跳转的分支放入不同的 PHT。</li>
+<li>它由3 部分组成，一部分用来选择 PHT，另外两部分表示 PHT 的方向，分别为跳转和不跳转，PHT 的方向被全局历史索引。</li>
+<li>由于对预测器的选择，达到了针对每条转移的程度，因此命中率又有所提高。</li>
+</ul>
+<h3 id="组合分支预测器"><a href="#组合分支预测器" class="headerlink" title="组合分支预测器"></a>组合分支预测器</h3><ul>
+<li>不同的分支预测只能对某类的分支行为有效</li>
+<li>不同分支预测组合起来，根据分支行为选不同分支预测器<br>  <img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/CombinedBranchPredictor.png" alt="CombinedBranchPredictor"></li>
+</ul>
+<h2 id="动态转移猜测小结"><a href="#动态转移猜测小结" class="headerlink" title="动态转移猜测小结"></a>动态转移猜测小结</h2><ul>
+<li><strong>转移的重复性和偏向性</strong>：BHT</li>
+<li><strong>转移指令的相关性问题</strong>：两层转移预测</li>
+<li><strong>分支别名干扰问题</strong>：Gshare等</li>
+<li><strong>混合预测器</strong>：不同的分支预测只能对某类的分支行为有效<br><strong>不要执着于具体办法，关键是抓住应用程序的特点</strong></li>
+</ul>
+<h1 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h1><p><img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/Example.png" alt="Example"></p>
+<h2 id="常见处理器的分支预测"><a href="#常见处理器的分支预测" class="headerlink" title="常见处理器的分支预测"></a>常见处理器的分支预测</h2><p><img src="http://img.thebetterkong.cn/blog/CA-TransferPrediction/All.png" alt="All"></p>
+<h2 id="分支预测未来"><a href="#分支预测未来" class="headerlink" title="分支预测未来"></a>分支预测未来</h2><ul>
+<li><strong>进一步提高很难：</strong><ul>
+<li>95%－98％ 左右</li>
+<li>工业界分支预测越做越大，Alpha21464 有 48KB</li>
+</ul>
+</li>
+<li><strong>进一步提高很有意义：</strong><ul>
+<li>预测精度提高 0.5%，10000 条分支指令就能减少 50 次流水线刷新</li>
+</ul>
+</li>
+<li><strong>新应用及新结构需要新的预测机制：</strong><ul>
+<li>Power-aware 分支预测</li>
+<li>SMT 结构分支预测</li>
+<li>神经网络分支预测器</li>
+</ul>
+</li>
+<li><strong>分支预测大赛：</strong><ul>
+<li>工业界支持，2 年一次</li>
+</ul>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-TransferPrediction/" title="Computer Architecture：转移猜测">http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-TransferPrediction/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Computer-Architecture/" rel="tag"><i class="fa fa-tag"></i> Computer Architecture</a>
+              <a href="/tags/%E5%9B%BD%E7%A7%91%E5%A4%A7%E7%A0%94%E7%A9%B6%E7%94%9F%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 国科大研究生课程笔记</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/02/21/Computer-Architecture/CA-MultiDataChannel/" rel="prev" title="Computer Architecture：多发数据通路">
+      <i class="fa fa-chevron-left"></i> Computer Architecture：多发数据通路
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/02/21/Computer-Architecture/CA-FuUnit/" rel="next" title="Computer Architecture：功能部件">
+      Computer Architecture：功能部件 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前景"><span class="nav-number">1.</span> <span class="nav-text">前景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#转移指令"><span class="nav-number">2.</span> <span class="nav-text">转移指令</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#控制相关"><span class="nav-number">2.1.</span> <span class="nav-text">控制相关</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#转移指令对性能的影响"><span class="nav-number">2.2.</span> <span class="nav-text">转移指令对性能的影响</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#转移指令的属性"><span class="nav-number">2.3.</span> <span class="nav-text">转移指令的属性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MIPS-指令系统的转移指令"><span class="nav-number">2.4.</span> <span class="nav-text">MIPS 指令系统的转移指令</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#程序的转移行为"><span class="nav-number">3.</span> <span class="nav-text">程序的转移行为</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#分支的可预测性"><span class="nav-number">3.1.</span> <span class="nav-text">分支的可预测性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">3.2.</span> <span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#解决转移条件相关的方法"><span class="nav-number">4.</span> <span class="nav-text">解决转移条件相关的方法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#方法综述"><span class="nav-number">4.1.</span> <span class="nav-text">方法综述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#软件方法解决控制相关"><span class="nav-number">4.2.</span> <span class="nav-text">软件方法解决控制相关</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#利用延迟槽"><span class="nav-number">4.2.1.</span> <span class="nav-text">利用延迟槽</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#软件循环展开消除控制相关"><span class="nav-number">4.2.2.</span> <span class="nav-text">软件循环展开消除控制相关</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#把控制相关转换成数据相关"><span class="nav-number">4.2.3.</span> <span class="nav-text">把控制相关转换成数据相关</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#硬件动态转移预测"><span class="nav-number">4.3.</span> <span class="nav-text">硬件动态转移预测</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#基本思路"><span class="nav-number">4.3.1.</span> <span class="nav-text">基本思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基本原理"><span class="nav-number">4.3.2.</span> <span class="nav-text">基本原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分支处理机制的性能取决于"><span class="nav-number">4.3.3.</span> <span class="nav-text">分支处理机制的性能取决于</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#转移预测关键技术"><span class="nav-number">4.3.4.</span> <span class="nav-text">转移预测关键技术</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#高性能性能转移预测机制特征"><span class="nav-number">4.3.5.</span> <span class="nav-text">高性能性能转移预测机制特征</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#静态-动态转移预测"><span class="nav-number">4.3.6.</span> <span class="nav-text">静态&#x2F;动态转移预测</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#局部转移预测"><span class="nav-number">4.3.7.</span> <span class="nav-text">局部转移预测</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#利用单个分支的重复性：BHT"><span class="nav-number">4.3.8.</span> <span class="nav-text">利用单个分支的重复性：BHT</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#减少猜测延迟：转移目标缓冲器-BTB"><span class="nav-number">4.3.9.</span> <span class="nav-text">减少猜测延迟：转移目标缓冲器 BTB</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RAS：返回地址栈"><span class="nav-number">4.3.10.</span> <span class="nav-text">RAS：返回地址栈</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#BHR-转移历史寄存器—-转移指令的相关性"><span class="nav-number">4.3.11.</span> <span class="nav-text">BHR 转移历史寄存器—-转移指令的相关性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Yeh-和-Patt-分类"><span class="nav-number">4.3.12.</span> <span class="nav-text">Yeh 和 Patt 分类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分支别名干扰问题"><span class="nav-number">4.3.13.</span> <span class="nav-text">分支别名干扰问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Agree-分支预测"><span class="nav-number">4.3.14.</span> <span class="nav-text">Agree 分支预测</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Bi-Mode-预测器"><span class="nav-number">4.3.15.</span> <span class="nav-text">Bi-Mode 预测器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#组合分支预测器"><span class="nav-number">4.3.16.</span> <span class="nav-text">组合分支预测器</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#动态转移猜测小结"><span class="nav-number">4.4.</span> <span class="nav-text">动态转移猜测小结</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结-1"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#常见处理器的分支预测"><span class="nav-number">5.1.</span> <span class="nav-text">常见处理器的分支预测</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#分支预测未来"><span class="nav-number">5.2.</span> <span class="nav-text">分支预测未来</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

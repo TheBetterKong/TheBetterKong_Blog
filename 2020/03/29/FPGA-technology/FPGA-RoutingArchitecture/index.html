@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="FPGA 内部各个逻辑模块和外部逻辑模块见的互连方式；">
+<meta property="og:type" content="article">
+<meta property="og:title" content="FPGA-Routing Architecture">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/03/29/FPGA-technology/FPGA-RoutingArchitecture/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="FPGA 内部各个逻辑模块和外部逻辑模块见的互连方式；">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/ProgrammableInterconnect.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/ExampleStructure.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/Terminology.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/Components.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/HierarchicalNetwork.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/IslandStyleNetwork.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/ConnectionBlock.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/ConnectionBlock1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/1stageMultiplexer.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/2stageMultiplexer.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/VoltageLevelRestoring.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/MixedUse.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/SwitchBlock.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/3SwitchBlock.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/ChannelSegmentDistribution.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/InternalPopulation.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/LaneChanging.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/SubBlock.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/MappingFunction.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/ProgrammableSwitch.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/PassTransistor.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/TristateBuffer.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/SwitchImplementation.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/GlobalInterconnect.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/LocalInterconnect.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/AlteraFPGAInterconnectModel.png">
+<meta property="article:published_time" content="2020-03-29T06:35:26.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:31:45.758Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="国科大研究生课程笔记">
+<meta property="article:tag" content="FPGA">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/ProgrammableInterconnect.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/03/29/FPGA-technology/FPGA-RoutingArchitecture/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>FPGA-Routing Architecture | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/03/29/FPGA-technology/FPGA-RoutingArchitecture/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          FPGA-Routing Architecture
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-03-29 14:35:26" itemprop="dateCreated datePublished" datetime="2020-03-29T14:35:26+08:00">2020-03-29</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:31:45" itemprop="dateModified" datetime="2020-08-14T17:31:45+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%8F%AF%E7%BC%96%E7%A8%8B%E9%80%BB%E8%BE%91%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1%E4%B8%8E-FPGA-%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">可编程逻辑系统设计与 FPGA 技术</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/03/29/FPGA-technology/FPGA-RoutingArchitecture/" class="post-meta-item leancloud_visitors" data-flag-title="FPGA-Routing Architecture" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/03/29/FPGA-technology/FPGA-RoutingArchitecture/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/03/29/FPGA-technology/FPGA-RoutingArchitecture/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>FPGA 内部各个逻辑模块和外部逻辑模块见的互连方式；</p>
+<a id="more"></a> 
+<p>除了可编程逻辑单元外，FPGA 还具有可编程互连，如下图所示：<br><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/ProgrammableInterconnect.png" alt="ProgrammableInterconnect">   </p>
+<h1 id="总体介绍"><a href="#总体介绍" class="headerlink" title="总体介绍"></a>总体介绍</h1><p>FPGA 互连是<strong>逻辑块</strong>和<strong>I/O 块</strong>之间可编程连接的网络;     </p>
+<h2 id="FPGA-Interconnection-体系"><a href="#FPGA-Interconnection-体系" class="headerlink" title="FPGA Interconnection 体系"></a>FPGA Interconnection 体系</h2><p><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/ExampleStructure.png" alt="结构示例"></p>
+<ul>
+<li>Wires (pre-fabricated metal tracks)</li>
+<li>Programmable switches</li>
+</ul>
+<h2 id="FPGA-Interconnection-专有名词"><a href="#FPGA-Interconnection-专有名词" class="headerlink" title="FPGA Interconnection 专有名词"></a>FPGA Interconnection 专有名词</h2><p><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/Terminology.png" alt="terminology"></p>
+<ul>
+<li>track（轨道）：用于互连的金属线</li>
+<li>channel（通道）：分布均匀的一组相同轨道</li>
+<li>通道宽度（W）：通道中的轨道数</li>
+<li>通道长度（L）：通道中轨道的长度（通常是指逻辑簇数跨度，是一种相对长度，不是绝对长度）</li>
+</ul>
+<h2 id="FPGA-Interconnection-组成"><a href="#FPGA-Interconnection-组成" class="headerlink" title="FPGA Interconnection 组成"></a>FPGA Interconnection 组成</h2><p><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/Components.png" alt="components"></p>
+<ul>
+<li>Connection Block（连接块）：逻辑集群和通道之间的连接<ul>
+<li>输出连接块、输入连接块</li>
+</ul>
+</li>
+<li>Switch Block（开关块）：通道之间的连接</li>
+<li>Local Interconnect（本地互连）：逻辑集群内的连接</li>
+</ul>
+<h2 id="FPGA-Interconnection-优化"><a href="#FPGA-Interconnection-优化" class="headerlink" title="FPGA Interconnection 优化"></a>FPGA Interconnection 优化</h2><p>考虑的六个问题：</p>
+<ol>
+<li>wires 和 switches 在 FPGA 中是如何分布的？<ul>
+<li>FPGA互连架构：层次样式（基于树）、岛式（基于网格）</li>
+</ul>
+</li>
+<li>如何在电路中实现 wires 和 switches？<ul>
+<li>Switch Box and Connection Box</li>
+</ul>
+</li>
+<li>逻辑块之间需要多少 wires？<ul>
+<li>通道宽度</li>
+</ul>
+</li>
+<li>电线跨越逻辑块有多长？<ul>
+<li>Wire segment length</li>
+</ul>
+</li>
+<li>每个逻辑块必须有多少个输入/输出？<ul>
+<li>逻辑块的扇入/扇出</li>
+</ul>
+</li>
+<li>什么样的利用效率是我们能接受的？<ul>
+<li>FPGA 互连的灵活性</li>
+</ul>
+</li>
+</ol>
+<p><strong>Programmable interconnects == Routing resources</strong>：</p>
+<ul>
+<li>FPGA 的路由资源由预制导线段和可编程开关组成；</li>
+<li>FPGA 设计的可行性更多地受到路由资源的限制，而不是逻辑资源的限制；</li>
+<li>路由延迟极大地限制了 FPGAs 的性能；</li>
+<li>仔细设计开关模块非常重要；</li>
+<li>水平和垂直通道的交叉区域称为 switch module，其中填充有  programmable switches；</li>
+<li>需要在区域（total # of switches）约束下最大化可路由性；<ul>
+<li>trade-off：more switchs（routability） vs. less switchs（delay、area）；</li>
+</ul>
+</li>
+</ul>
+<h1 id="两种-FPGA-Interconnection-构造"><a href="#两种-FPGA-Interconnection-构造" class="headerlink" title="两种 FPGA Interconnection 构造"></a>两种 FPGA Interconnection 构造</h1><h2 id="Hierarchical-Network"><a href="#Hierarchical-Network" class="headerlink" title="Hierarchical Network"></a>Hierarchical Network</h2><p>基于树的互连结构、多级分层互连（不常用）：<br><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/HierarchicalNetwork.png" alt="Hierarchical Network"></p>
+<ul>
+<li>优点：延迟好预估</li>
+<li>缺点：类似图中红线，比较局限（即使在两个相邻的 CLB 之间也可能经历多个互连阶段）</li>
+</ul>
+<h2 id="Island-style-Network"><a href="#Island-style-Network" class="headerlink" title="Island-style Network"></a>Island-style Network</h2><p>CLBs 布置在二维网格上，路由资源均匀分布在网格中；<br><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/IslandStyleNetwork.png" alt="Island-style Network">   </p>
+<p><mark>是目前常用的结构，其基本原理</mark>：</p>
+<ul>
+<li>Routing wires 通过 Switch Blocks 连接；</li>
+<li>CLBs 通过 Connection Blocks 访问路由资源；</li>
+</ul>
+<h3 id="Connection-Block"><a href="#Connection-Block" class="headerlink" title="Connection Block"></a>Connection Block</h3><p><mark>Connection Block 提供：CLB 和互连线之间可编程连接；</mark>    </p>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/ConnectionBlock.png" alt="Connection Block"></p>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/ConnectionBlock1.png" alt="Connection Block1">  </p>
+<p>Switch 实现（相同的输入数 $N_{in}=n \times m$）：</p>
+<ol>
+<li>一级多路复用器：<br><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/1stageMultiplexer.png" alt="1-stage multiplexer"><ul>
+<li>CRAMs 的数量：$n \times m$</li>
+<li>路径延迟短</li>
+</ul>
+</li>
+<li>两级多路复用器：<br><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/2stageMultiplexer.png" alt="2-stage multiplexer"><ul>
+<li>CRAM 数量：$m+n$，减少了 CRAM 的数量</li>
+<li>长路径延迟</li>
+<li>电压恢复切断缓冲器短路电流：<br> <img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/VoltageLevelRestoring.png" alt="Voltagelevelrestoring"></li>
+</ul>
+</li>
+<li>性能与面积的平衡：混合使用<br><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/MixedUse.png" alt="混合使用"><ul>
+<li>使用包含快速路径的路由多路复用器：通过将关键路径路由放到快速输入部分来提高性能</li>
+</ul>
+</li>
+</ol>
+<h3 id="Switch-Block"><a href="#Switch-Block" class="headerlink" title="Switch Block"></a>Switch Block</h3><p>Switch Block 出现在水平和垂直布线通道之间的每个交叉点处，定义这些通道之间的所有可能连接;    </p>
+<p><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/SwitchBlock.png" alt="Switch Block">   </p>
+<p>Routability：定义一条进线可以链接到多少条出线；</p>
+<ul>
+<li>允许所有可能的互连？<ul>
+<li>Too big、Too slow</li>
+</ul>
+</li>
+<li>优化 Switch Blocks，于是出现了三种结构：Disjoint Switch Block、Universal Switch Block、Wilton Switch Block<br> <img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/3SwitchBlock.png" alt="3 Switch Block"></li>
+</ul>
+<p>Switch Block 的线段长度：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>较长的导线段（跨越多个块）</td>
+<td>需要更少的交换机，从而减少路由区域和延迟</td>
+<td>降低了路由灵活性</td>
+</tr>
+<tr>
+<td>较短的导线段</td>
+<td>让路由更加灵活</td>
+<td>需要更多的路由区域和延迟</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>基于上述特点，于是将这两种类型的导线段混合使用，来平衡routability、area and delay：<br>  <img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/ChannelSegmentDistribution.png" alt="Channel segment distribution"></p>
+<ul>
+<li>在 long wire segments 引入 Internal (midpoint) population，即：内部（中点）填充：如果导线段可以从其端点以外的任何点连接到其他导线段，则在内部填充开关块<br><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/InternalPopulation.png" alt="internal population"></li>
+</ul>
+<p>wire segments 的“<strong><mark>lane changing</mark></strong>”:<br>  <img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/LaneChanging.png" alt="lane changing"></p>
+<p>Disjoint switch block 在 midpoint 里需要的 switchs 更少：<br>  <img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/SubBlock.png" alt="sub block"></p>
+<p>使用 <mark>mapping functions（$f_{e,1}…f_{e,6}$)</mark>，描述 endpoint population：<br>  <img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/MappingFunction.png" alt="mapping function"></p>
+<p>Programmable switch（使用 6 个晶体管）：<br>  <img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/ProgrammableSwitch.png" alt="Programmable switch"></p>
+<p>Switch Block 的电路实现（Pass transistor、Tri-state buffer）：</p>
+<ol>
+<li>Pass transistor：<br><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/PassTransistor.png" alt="Pass transistor"><ul>
+<li>SRAM 控制晶体管开或关</li>
+<li>双向信号传播</li>
+<li>产生压降</li>
+</ul>
+</li>
+<li>Tri-state buffer:<br><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/TristateBuffer.png" alt="Tri-state buffer"></li>
+<li>Switch implementation：逻辑功能相当，但可能有不同的驱动强度和延迟<br><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/SwitchImplementation.png" alt="Switch implementation"></li>
+</ol>
+<h3 id="Global-Interconnect"><a href="#Global-Interconnect" class="headerlink" title="Global Interconnect"></a>Global Interconnect</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/GlobalInterconnect.png" alt="Global Interconnect"></p>
+<ul>
+<li>Horizontal channels</li>
+<li>Vertical channels</li>
+</ul>
+<h3 id="Local-Interconnect"><a href="#Local-Interconnect" class="headerlink" title="Local Interconnect"></a>Local Interconnect</h3><p>Local Interconnect 在同一个 CLB 中的 LEs 之间传输信号，更高的性能和灵活性：<br>  <img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/LocalInterconnect.png" alt="Local Interconnect"></p>
+<ul>
+<li>反馈路径：CLB 内的本地连接</li>
+<li>与相邻 CLB 的直接连接：两个相邻 CLB 之间的专用连接</li>
+</ul>
+<h1 id="Altera-FPGA-Interconnect-Model"><a href="#Altera-FPGA-Interconnect-Model" class="headerlink" title="Altera FPGA Interconnect Model"></a>Altera FPGA Interconnect Model</h1><p><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingArchitecture/AlteraFPGAInterconnectModel.png" alt="Altera FPGA Interconnect Model"></p>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/03/29/FPGA-technology/FPGA-RoutingArchitecture/" title="FPGA-Routing Architecture">http://www.thebetterkong.cn/2020/03/29/FPGA-technology/FPGA-RoutingArchitecture/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%9B%BD%E7%A7%91%E5%A4%A7%E7%A0%94%E7%A9%B6%E7%94%9F%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 国科大研究生课程笔记</a>
+              <a href="/tags/FPGA/" rel="tag"><i class="fa fa-tag"></i> FPGA</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/03/26/FPGA-technology/FPGA-ProgrammingTechnologies/" rel="prev" title="FPGA-ProgrammingTechnologies">
+      <i class="fa fa-chevron-left"></i> FPGA-ProgrammingTechnologies
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/03/31/FPGA-technology/FPGA-RoutingDesignMethodology/" rel="next" title="FPGA-Routing Design Methodology">
+      FPGA-Routing Design Methodology <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#总体介绍"><span class="nav-number">1.</span> <span class="nav-text">总体介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#FPGA-Interconnection-体系"><span class="nav-number">1.1.</span> <span class="nav-text">FPGA Interconnection 体系</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#FPGA-Interconnection-专有名词"><span class="nav-number">1.2.</span> <span class="nav-text">FPGA Interconnection 专有名词</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#FPGA-Interconnection-组成"><span class="nav-number">1.3.</span> <span class="nav-text">FPGA Interconnection 组成</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#FPGA-Interconnection-优化"><span class="nav-number">1.4.</span> <span class="nav-text">FPGA Interconnection 优化</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#两种-FPGA-Interconnection-构造"><span class="nav-number">2.</span> <span class="nav-text">两种 FPGA Interconnection 构造</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Hierarchical-Network"><span class="nav-number">2.1.</span> <span class="nav-text">Hierarchical Network</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Island-style-Network"><span class="nav-number">2.2.</span> <span class="nav-text">Island-style Network</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Connection-Block"><span class="nav-number">2.2.1.</span> <span class="nav-text">Connection Block</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Switch-Block"><span class="nav-number">2.2.2.</span> <span class="nav-text">Switch Block</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Global-Interconnect"><span class="nav-number">2.2.3.</span> <span class="nav-text">Global Interconnect</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Local-Interconnect"><span class="nav-number">2.2.4.</span> <span class="nav-text">Local Interconnect</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Altera-FPGA-Interconnect-Model"><span class="nav-number">3.</span> <span class="nav-text">Altera FPGA Interconnect Model</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

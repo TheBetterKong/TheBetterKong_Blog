@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Cache 作为存储结构中十分重要的部分，不管是安全还是性能，它都十分关键，本节主要从性能出发，介绍 cache 的结特点和性能优化方法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Computer Architecture：高速缓存">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-Cache/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="Cache 作为存储结构中十分重要的部分，不管是安全还是性能，它都十分关键，本节主要从性能出发，介绍 cache 的结特点和性能优化方法。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/CompositionComputer.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/StorageHierarchy.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/CacheStructureCharacteristics.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/CacheBlockLocation.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/FullyConnected.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/DirectlyConnected.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/GroupConnected.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/ExampleCacheBlockLocation.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/CacheReplacementStatistics.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/CachePerformanceAnalysis.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/3CFailureAnalysis.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/BlockSizeToFailureRate.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/ConnectivityToDelay.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/HitAndPseudohit.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/MergingArrays.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/LoopInterchange.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/LoopFusion.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/ArrayBlocking.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/EffectSoftwareOptimization.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/WriteMerge.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/VictimCache.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/ReduceHittime.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/ParallelAccessCacheTLB.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/CacheSizeFailureRate.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/PageColoring1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/PageColoring2.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-Cache/CacheOptimizationSummary.png">
+<meta property="article:published_time" content="2020-02-21T07:15:08.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:26:06.334Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="Computer Architecture">
+<meta property="article:tag" content="国科大研究生课程笔记">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/CA-Cache/CompositionComputer.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-Cache/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Computer Architecture：高速缓存 | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-Cache/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Computer Architecture：高速缓存
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-02-21 15:15:08" itemprop="dateCreated datePublished" datetime="2020-02-21T15:15:08+08:00">2020-02-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:26:06" itemprop="dateModified" datetime="2020-08-14T17:26:06+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">计算机体系结构</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/02/21/Computer-Architecture/CA-Cache/" class="post-meta-item leancloud_visitors" data-flag-title="Computer Architecture：高速缓存" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/02/21/Computer-Architecture/CA-Cache/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/02/21/Computer-Architecture/CA-Cache/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Cache 作为存储结构中十分重要的部分，不管是安全还是性能，它都十分关键，本节主要从性能出发，介绍 cache 的结特点和性能优化方法。</p>
+<a id="more"></a> 
+<h1 id="存储层次的基本概念"><a href="#存储层次的基本概念" class="headerlink" title="存储层次的基本概念"></a>存储层次的基本概念</h1><h2 id="CPU-与-RAM-的速度剪刀差"><a href="#CPU-与-RAM-的速度剪刀差" class="headerlink" title="CPU 与 RAM 的速度剪刀差"></a>CPU 与 RAM 的速度剪刀差</h2><ol>
+<li><p>摩尔定律：</p>
+<ul>
+<li>CPU 的频率和 RAM 的容量每 18 个月翻一番</li>
+<li>但 RAM 的速度增加缓慢</li>
+</ul>
+</li>
+<li><p>通过存储层次来弥补差距：</p>
+<ul>
+<li>寄存器、Cache、存储器、IO</li>
+</ul>
+</li>
+</ol>
+<h2 id="处理器和内存速度剪刀差"><a href="#处理器和内存速度剪刀差" class="headerlink" title="处理器和内存速度剪刀差"></a>处理器和内存速度剪刀差</h2><ul>
+<li>早期 Alpha 处理器 Cache 失效延迟：<ul>
+<li>1st    Alpha (7000):  340 ns/5.0 ns = 68 clks x 2 or 136 </li>
+<li>2nd  Alpha (8400):   266 ns/3.3 ns = 80 clks x 4 or 320</li>
+<li>3rd   Alpha (t.b.d.):  180 ns/1.7 ns =108 clks x 6 or 648</li>
+</ul>
+</li>
+<li>当前主流处理器主频 2GHz 以上：<ul>
+<li>IBM Power 6 主频 6GHz 以上</li>
+<li>内存延迟 50ns 左右</li>
+</ul>
+</li>
+<li>访存延迟 &gt;100 拍 </li>
+<li>多发射加剧了访存瓶颈</li>
+</ul>
+<h2 id="摩尔定律使-CPU-的内容发生了变化"><a href="#摩尔定律使-CPU-的内容发生了变化" class="headerlink" title="摩尔定律使 CPU 的内容发生了变化"></a>摩尔定律使 CPU 的内容发生了变化</h2><ol>
+<li><p>冯诺依曼结构的核心思想：</p>
+<ul>
+<li>存储程序：指令和数据都存放在存储器中</li>
+</ul>
+</li>
+<li><p>计算机的五个组成部分：</p>
+<ul>
+<li>运算器、控制器、存储器、输入、输出</li>
+<li>运算器和控制器合称中央处理器（CPU）</li>
+</ul>
+</li>
+<li><p>为了缓解存储瓶颈，把部分存储器做在片内：</p>
+<ul>
+<li>现在的 CPU 芯片：控制器+运算器+部分存储器</li>
+<li>片内 Cache 占了整个芯片的很大一部分面积</li>
+</ul>
+</li>
+</ol>
+<h2 id="计算机硬件系统的组成"><a href="#计算机硬件系统的组成" class="headerlink" title="计算机硬件系统的组成"></a>计算机硬件系统的组成</h2><p><img src="http://img.thebetterkong.cn/blog/CA-Cache/CompositionComputer.png" alt="CompositionComputer"></p>
+<h2 id="CPU-中-RAM-的面积和晶体管比例"><a href="#CPU-中-RAM-的面积和晶体管比例" class="headerlink" title="CPU 中 RAM 的面积和晶体管比例"></a>CPU 中 RAM 的面积和晶体管比例</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>CPU名称</th>
+<th>片内RAM面积</th>
+<th>片内RAM晶体管</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Alpha 21164</td>
+<td>37%</td>
+<td>77%</td>
+</tr>
+<tr>
+<td>StrongArm SA110</td>
+<td>61%</td>
+<td>94%</td>
+</tr>
+<tr>
+<td>Pentium Pro</td>
+<td>64%</td>
+<td>88%</td>
+</tr>
+<tr>
+<td>龙芯3A</td>
+<td>31%</td>
+<td>80%</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>RAM 所占的面积比例小于晶体管：</p>
+<ul>
+<li>因为 RAM 很规则，可以做到很密，而普通逻辑不行；</li>
+</ul>
+<h2 id="存储层次基本原理"><a href="#存储层次基本原理" class="headerlink" title="存储层次基本原理"></a>存储层次基本原理</h2><p><img src="http://img.thebetterkong.cn/blog/CA-Cache/StorageHierarchy.png" alt="StorageHierarchy"></p>
+<ul>
+<li>程序访问的局部性：时间局部性和空间局部性<ul>
+<li>新型的应用（如媒体）对传统的局部性提出了挑战</li>
+</ul>
+</li>
+</ul>
+<h1 id="Cache-结构"><a href="#Cache-结构" class="headerlink" title="Cache 结构"></a>Cache 结构</h1><h2 id="cache-特征"><a href="#cache-特征" class="headerlink" title="cache 特征"></a>cache 特征</h2><ul>
+<li>Cache 的内容是主存储器内容的一个子集</li>
+<li>Cache 没有程序上的意义，只是为了降低访存延迟</li>
+<li>处理器访问 Cache 和访问存储器使用相同的地址</li>
+</ul>
+<h2 id="cache-结构特点"><a href="#cache-结构特点" class="headerlink" title="cache 结构特点"></a>cache 结构特点</h2><p><img src="http://img.thebetterkong.cn/blog/CA-Cache/CacheStructureCharacteristics.png" alt="CacheStructureCharacteristics"></p>
+<ul>
+<li>同时存储数据和地址以及在 cache 中的转态；</li>
+<li>通过地址的比较判断相应数据是否在 Cache 中 ；</li>
+<li>需要考虑所需要的数据不在 Cache 中的情况：替换机制，写策略等；</li>
+</ul>
+<h2 id="cache-分类"><a href="#cache-分类" class="headerlink" title="cache 分类"></a>cache 分类</h2><h3 id="cache-块的位置"><a href="#cache-块的位置" class="headerlink" title="cache 块的位置"></a>cache 块的位置</h3><p>同一单元在不同结构 Cache 中的位置：<br><img src="http://img.thebetterkong.cn/blog/CA-Cache/CacheBlockLocation.png" alt="CacheBlockLocation"></p>
+<ul>
+<li><p><strong>全相联</strong>：</p>
+<ul>
+<li>命中率高；硬件复杂、延迟大；<br><img src="http://img.thebetterkong.cn/blog/CA-Cache/FullyConnected.png" alt="FullyConnected"></li>
+</ul>
+</li>
+<li><p><strong>直接相联：</strong></p>
+<ul>
+<li>命中率低；硬件简单、延迟最小；<br><img src="http://img.thebetterkong.cn/blog/CA-Cache/DirectlyConnected.png" alt="DirectlyConnected"></li>
+</ul>
+</li>
+<li><p><strong>组相联：</strong></p>
+<ul>
+<li>介于全相联和直接相联之间；<br><img src="http://img.thebetterkong.cn/blog/CA-Cache/GroupConnected.png" alt="GroupConnected"></li>
+</ul>
+</li>
+<li><p>例题：<br>  <img src="http://img.thebetterkong.cn/blog/CA-Cache/ExampleCacheBlockLocation.png" alt="ExampleCacheBlockLocation"></p>
+</li>
+</ul>
+<h3 id="Cache-替换算法"><a href="#Cache-替换算法" class="headerlink" title="Cache 替换算法"></a>Cache 替换算法</h3><ul>
+<li>常见的替换算法：<ul>
+<li><strong>随机替换、LRU 最近最少使用、FIFO 先进先出</strong></li>
+</ul>
+</li>
+<li>对直接相联 Cache 不存在替换算法问题；</li>
+<li>每 1000 条指令失效次数统计：<ul>
+<li>SPEC CPU2000 中的 gap, gcc, gzip, mcf, perl, applu, art, equake, lucas, swim 10 个程序</li>
+<li>Aplha 结构，块大小64B<br><img src="http://img.thebetterkong.cn/blog/CA-Cache/CacheReplacementStatistics.png" alt="CacheReplacementStatistics"></li>
+</ul>
+</li>
+</ul>
+<h3 id="写命中时采取的策略"><a href="#写命中时采取的策略" class="headerlink" title="写命中时采取的策略"></a>写命中时采取的策略</h3><ul>
+<li><strong>写穿透（Write Through）</strong>：<ul>
+<li>写 Cache 的同时写内存</li>
+<li>内存里的数据永远是最新的，Cache 替换时直接扔掉</li>
+<li>Cache 块管理简单，只需有效位</li>
+</ul>
+</li>
+<li><strong>写回（Write-back）</strong>：<ul>
+<li>只写 Cache 不写内存</li>
+<li>替换时要把 Cache 块写回内存</li>
+<li>Cache 块状态复杂一些，需要有效位和脏位</li>
+</ul>
+</li>
+<li><strong>写回/写穿透的使用</strong>：（CPU&lt;—&gt;L1（常在CPU内）&lt;—&gt;L2&lt;—&gt;内存）<ul>
+<li>L1 到 L2 用写穿透的多，L2 较快</li>
+<li>L2 到内存用写回的多，内存太慢了</li>
+<li>龙芯 2 号两级都采用写回策略</li>
+</ul>
+</li>
+</ul>
+<h3 id="写失效时采取的策略"><a href="#写失效时采取的策略" class="headerlink" title="写失效时采取的策略"></a>写失效时采取的策略</h3><ul>
+<li><strong>写分配（ Write Allocate ）</strong>：<ul>
+<li>先把失效块读到 Cache，再在 Cache 中写</li>
+<li>一般用在写命中时采用写回策略的 Cache 中 </li>
+</ul>
+</li>
+<li><strong>写不分配（Write Non-allocate）</strong>：<ul>
+<li>写 Cache 失效时直接写进内存</li>
+<li>一般用在写命中时采用写穿透的 Cache 中</li>
+</ul>
+</li>
+</ul>
+<h1 id="Cache-性能优化"><a href="#Cache-性能优化" class="headerlink" title="Cache 性能优化"></a>Cache 性能优化</h1><h2 id="Cache-性能分析"><a href="#Cache-性能分析" class="headerlink" title="Cache 性能分析"></a>Cache 性能分析</h2><p><img src="http://img.thebetterkong.cn/blog/CA-Cache/CachePerformanceAnalysis.png" alt="CachePerformanceAnalysis"></p>
+<ul>
+<li>CPU 执行时间与访存延迟的关系</li>
+<li>平均访存时间 AMAT = Average Memory Access Time</li>
+<li>CPIALUOps 不包括访存指令</li>
+</ul>
+<h2 id="Cache-性能优化-1"><a href="#Cache-性能优化-1" class="headerlink" title="Cache 性能优化"></a>Cache 性能优化</h2><p>四个方向：</p>
+<ol>
+<li>降低失效率（MissRate）</li>
+<li>降低失效延迟（MissPenalty） </li>
+<li>降低命中延迟（HitTime） </li>
+<li>提高Cache访问并行性</li>
+</ol>
+<h3 id="降低失效率"><a href="#降低失效率" class="headerlink" title="降低失效率"></a>降低失效率</h3><p><strong>引起 Cache 失效的因素（3C/4C）</strong>：</p>
+<ul>
+<li><strong>冷失效（Cold Miss或Compulsory Miss）</strong> ：<ul>
+<li>CPU 第一次访问 Cache 块时 Cache 中还没有该 Cache 块引起的失效；</li>
+<li>冷失效是不可避免的，即使 Cache 容量再大也会有；</li>
+</ul>
+</li>
+<li><strong>容量失效（Capacity Miss） ：</strong><ul>
+<li>程序执行过程中，有限的 Cache 容量导致 Cache 放不下时替换出部分 Cache 块，被替换的 Cache 块再被访问时引起失效；</li>
+<li>一定容量下全相联 Cache 中的失效；</li>
+</ul>
+</li>
+<li><strong>冲突失效（Conflict Miss）</strong> ：<ul>
+<li>直接相联或组相联 Cache 中，不同 Cache 块由于 index 相同引起冲突；</li>
+<li>在全相联 Cache 不存在；</li>
+</ul>
+</li>
+<li><strong>一致性失效（Coherence Miss）</strong>：<ul>
+<li>由于维护 Cache 一致性引起的失效；</li>
+</ul>
+</li>
+</ul>
+<p><strong>3C 失效率分析（SPEC92）：</strong><br><img src="http://img.thebetterkong.cn/blog/CA-Cache/3CFailureAnalysis.png" alt="3CFailureAnalysis"></p>
+<p><strong>解决方法：</strong></p>
+<ol>
+<li><p><strong>增加块大小降低失效率：</strong></p>
+<ul>
+<li>利用空间局部性：降低冷失效，增加冲突失效以及容量失效</li>
+<li>SPEC92，DECstation 5000，小容量 Cache 块较小<br><img src="http://img.thebetterkong.cn/blog/CA-Cache/BlockSizeToFailureRate.png" alt="BlockSizeToFailureRate"></li>
+</ul>
+</li>
+<li><p><strong>增加 Cache 容量提高命中率：</strong></p>
+<ul>
+<li><strong>一级 Cache 访问直接决定时钟周期</strong><ul>
+<li>尤其是在深亚微米的情况下，连线延迟很大</li>
+<li>PIII 一级 Cache 为 16KB，PIV 一级 Cache 为 8KB；</li>
+</ul>
+</li>
+<li><strong>增加片内 Cache 大小增加芯片面积</strong><ul>
+<li>有的处理器片内 Cache 面积占整个芯片面积的 80% 以上</li>
+<li>现代处理器二级或三级 Cache 大小已经达到几 MB 甚至几十 MB。</li>
+</ul>
+</li>
+<li><strong>现代通用处理器的一级 Cache 大小</strong><ul>
+<li>HP PA8700：一级 Cache 为 1MB+1.5MB，没有二级 Cache</li>
+<li>其他 RISC 处理器（ Alpha, Power, MIPS, Ultra SPARC）32/64KB+32/64KB</li>
+<li>PIV 12Kop Trace cache+8KB 数据 Cache（PIII: 16KB+16KB）</li>
+<li>反映出设计人员的不同取舍</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>增加相联数目降低失效率：</strong></p>
+<ul>
+<li><strong>增加相联度：</strong><ul>
+<li>2:1 规则：大小为 N 的直接相联的 Cache 命中率与大小为 N/2 的二路组相联的 Cache 命中率相当</li>
+<li>八路组相联的效果已经与全相联的失效率相差很小（4 路以后再增加就不明显了)</li>
+</ul>
+</li>
+<li><strong>增加相联度会增加时钟周期延迟以及硬件复杂性：</strong><br>   <img src="http://img.thebetterkong.cn/blog/CA-Cache/ConnectivityToDelay.png" alt="ConnectivityToDelay"><ul>
+<li>例如，直接相连时钟周期为 1ns，2 路组相联为 1.36ns，4 路组相联为 1.44ns，8 路组相联为 1.52ns，失效延迟为 25 时钟周期</li>
+<li>Cache 访问可能是整个处理器的关键路径</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>“路预测（Way Prediction）”和“伪相联”提高命中率：</strong></p>
+<ul>
+<li><mark>结合直接相联访问时间短和组相联命中率高的优点</mark></li>
+<li><strong>做法：在多路相联的结构中，每次Cache访问只检查一路，如果不命中再检查其他路：</strong><ul>
+<li>两种命中：hit 和 pseudohit</li>
+<li>直接判断第 0 路，或进行 Way-Prediction：<ul>
+<li>Alpha 21264 ICache 路猜测命中率 85%，hit 时间为 1 拍，pseudohit 时间 3 拍 ；</li>
+<li>//1 位进行路预测，预测命中 1 拍，不命中再一起访问其余三路需要 3 拍。再不命中，发生 cache 失效；</li>
+</ul>
+</li>
+<li>不用并行访问每一路，可以大幅度降低功耗</li>
+<li>在片外或 L2 以下 cache 中用得较多，如 MIPS R10000、UltraSPARC 的 L2</li>
+<li>//伪相联：⼆级cache在⽚外时可通过路预测，每次访问一路减少芯⽚引脚。<br> <img src="http://img.thebetterkong.cn/blog/CA-Cache/HitAndPseudohit.png" alt="HitAndPseudohit"></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>软件优化降低失效率：</strong></p>
+<ul>
+<li><strong>常见软件优化技术：</strong><ol>
+<li><strong>数组合并（Merging Arrays）：</strong><ul>
+<li>通过数组合并降低数组 val 和 key 的冲突，增加空间局部性；<br><img src="http://img.thebetterkong.cn/blog/CA-Cache/MergingArrays.png" alt="MergingArrays"></li>
+</ul>
+</li>
+<li><strong>循环交换（Loop Interchange） ：</strong><ul>
+<li>通过循环交换提高空间局部性，把非连续访问变换成连续访问；<br><img src="http://img.thebetterkong.cn/blog/CA-Cache/LoopInterchange.png" alt="LoopInterchange"></li>
+</ul>
+</li>
+<li><strong>循环合并（Loop Fusion） ：</strong><ul>
+<li>通过循环合并提高空间局部性，数组 a&amp;c 的失效次数从2次降低到1次；<br><img src="http://img.thebetterkong.cn/blog/CA-Cache/LoopFusion.png" alt="LoopFusion"></li>
+</ul>
+</li>
+<li><strong>数组分块（Array Blocking）：</strong><ul>
+<li>分块前，y 和 z失效 N^3 次，x 失效 N^2 次，总失效次数从 2N^3 + N^2; </li>
+<li>分块后，由于可以在 cache 中放下 BxB 的小矩阵，y 和 z 失效 1 次可以用 B 次，因此失效次数从 2N^3 + N^2 降为 2N^3/B +N^2;<br><img src="http://img.thebetterkong.cn/blog/CA-Cache/ArrayBlocking.png" alt="ArrayBlocking"></li>
+</ul>
+</li>
+</ol>
+</li>
+<li><strong>软件优化的效果:</strong><br>   <img src="http://img.thebetterkong.cn/blog/CA-Cache/EffectSoftwareOptimization.png" alt="EffectSoftwareOptimization"></li>
+</ul>
+</li>
+</ol>
+<h3 id="降低-MissPenalty"><a href="#降低-MissPenalty" class="headerlink" title="降低 MissPenalty"></a>降低 MissPenalty</h3><p><strong>通过关键字优先降低失效延迟：</strong></p>
+<ul>
+<li>在 Cache 访问失效时，优先访问读访问需要的字：<ul>
+<li>例如，Cache 块大小为 64 字节，分为 8 个 8 字节的双字，如果取数指令访问其中的第6个双字引起 Cache 失效，就按 6、7、0、1、2、3、4、5 的次序，而不是按 0、1、2、3、4、5、6、7 的次序访问内存；</li>
+<li>关键字优先的实现只需要对访问地址进行简单变换；</li>
+<li>在失效的数据从内存取回之后，往 Cache 送的同时直接送回到寄存器也可以降低失效延迟；</li>
+</ul>
+</li>
+</ul>
+<p><strong>通过读优先降低失效延迟：</strong></p>
+<ul>
+<li>读 Cache 失效对指令流水线效率的影响比写失效大：<ul>
+<li>在处理器中一般都有写缓存（Write Buffer），写指令只要把要写的数据写到写缓存就可以提交，再由写缓存写到 Cache 或内存；</li>
+<li>取数在数据读回来回前取数指令不能提交，与取数指令存在数据相关的后续指令要等待取数操作读回来的数据才能执行，可见读 Cache 失效容易堵塞指令流水线；</li>
+</ul>
+</li>
+<li>在进行 Cache 失效处理时，优先处理读失效以减小堵塞：<ul>
+<li>读失效时要注意与 Write Buffer 的 RAW 相关，不能等写缓存为空，要动态检查写缓存；</li>
+<li>读失效可能需要替换 dirty 块，不要把替换块写回到内存再读，可以把替换块写到写缓存，然后先读，后把写缓存的内容写回内存；</li>
+</ul>
+</li>
+</ul>
+<p><strong>通过写合并降低失效延迟：</strong></p>
+<ol>
+<li><strong>写缓存（Write Buffer）的作用：</strong><ul>
+<li>处理器写到WB就算完成写操作，由WB写到下一级存储器</li>
+<li>注意一致性问题：处理器后续的读操作、外设的DMA操作等</li>
+</ul>
+</li>
+<li><strong>通过把写缓存中对同一 Cache 块的写操作进行合并来提高写缓存使用率，减少处理器等待</strong><ul>
+<li>注意IO操作不能合并</li>
+<li>Store Fill Buffer：连续的写操作拼满一个 Cache 块，写失效时不用到下一级存储器取数<br><img src="http://img.thebetterkong.cn/blog/CA-Cache/WriteMerge.png" alt="WriteMerge"></li>
+</ul>
+</li>
+</ol>
+<p><strong>通过 Victim Cache 降低失效延迟：</strong></p>
+<ul>
+<li>在<strong>直接相联</strong>的 Cache 中避免冲突失效；</li>
+<li>增加缓存（Victim Cache）保存从 Cache 中替换出来的数据；<ul>
+<li>Jouppi [1990]：4 项 victim cache 可消除直接相联 4KB Cache 中 20%-95% 的冲突访问</li>
+<li>在 Alpha, HP 等处理器中应用<br><img src="http://img.thebetterkong.cn/blog/CA-Cache/VictimCache.png" alt="VictimCache"></li>
+</ul>
+</li>
+</ul>
+<p><strong>通过二/多级 Cache 降低失效延迟：</strong></p>
+<ol>
+<li><p><strong>通过L2降低失效延迟：</strong></p>
+<ul>
+<li>AMAT = Hit TimeL1 + Miss RateL1 x Miss PenaltyL1</li>
+<li>Miss PenaltyL1 = Hit TimeL2 + Miss RateL2 x Miss PenaltyL2</li>
+<li><strong>AMAT = Hit TimeL1 + Miss RateL1 x (Hit TimeL2 + Miss RateL2 x Miss PenaltyL2)</strong></li>
+</ul>
+</li>
+<li><p><strong>L2 的失效率：</strong></p>
+<ul>
+<li><strong>局部失效率</strong>（Local miss rate）— L2失效次数除以L2访问次数<ul>
+<li>Miss RateL2</li>
+</ul>
+</li>
+<li><strong>全局失效率</strong>（Global miss rate） — L2失效次数除以所有访存次数<ul>
+<li>$Miss Rate_{L1}∗Miss Rate_{L2} = {\frac{L2访存次数}{所有访存次数}}∗{\frac{L2失效次数}{L2访存次数}}$</li>
+</ul>
+</li>
+<li>局部失效率较高（10%-20%），全局失效率很低（&lt;1%）；</li>
+<li>一般，一级 cache 的内容是二级 cache 内容的真子集：<ol>
+<li>若一级 cache 冲突，二级 cache 冲突概率也大，则二级 cache 组相联度常比一级 cache 高；</li>
+<li>变换二级 cache 的索引（把二级 cache 索引和高位地址异或，降低二级 cache 冲突概率）；</li>
+<li>二级 cache 容量大，且二级 cache 访问拍数不关键，因此访问二级 cache 的流水线级可能更长；</li>
+</ol>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="降低-HitTime"><a href="#降低-HitTime" class="headerlink" title="降低 HitTime"></a>降低 HitTime</h3><p><img src="http://img.thebetterkong.cn/blog/CA-Cache/ReduceHittime.png" alt="ReduceHittime"></p>
+<p><strong>简化 Cache 设计：</strong></p>
+<ol>
+<li>访问 Cache 常常是整个 CPU 的时钟关键路径：<ul>
+<li>Cache越小，延迟越小</li>
+<li>直接相联的 Cache 延迟小</li>
+</ul>
+</li>
+<li>简化一级 Cache 设计需要统筹考虑：<ul>
+<li>PIV 数据 Cache 从 PIII 的 16KB 降低为 8KB，而且只有定点可以访问，从而达到高主频</li>
+<li>但 PIV 的二级 Cache 只有 6 拍的访问延迟</li>
+</ul>
+</li>
+</ol>
+<p><strong>并行访问 Cache 与 TLB：</strong></p>
+<ol>
+<li><strong>避免地址转换延迟：虚地址 Cache（最有效）</strong><ul>
+<li>通过虚地址直接访问 Cache 减少虚实地址转换时间；</li>
+<li><strong>模型：</strong><br><img src="http://img.thebetterkong.cn/blog/CA-Cache/ParallelAccessCacheTLB.png" alt="ParallelAccessCacheTLB"></li>
+<li><strong>问题：</strong><ul>
+<li><strong>区分进程问题</strong>：不同进程的虚地址空间是一样的，需要在进程切换时候刷 Cache 以维护一致性，增加了冷失效</li>
+<li><strong>别名（aliases）问题</strong>：操作系统有时候（如为了进程间共享）需要不同的虚地址对应同一物理地址</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>虚地址 Cache 中多进程对 Cache 命中率的影响：</strong><ul>
+<li>进程切换问题可以通过在 TLB 中增加进程号的方式来解决：</li>
+<li>单进程、多进程切换时刷 Cache、多进程用 ID 号来区分虚地址；</li>
+<li>Y 轴表示 Cache 失效率；X 轴表示 Cache 大小（2 KB - 1024 KB）；<br><img src="http://img.thebetterkong.cn/blog/CA-Cache/CacheSizeFailureRate.png" alt="CacheSizeFailureRate"></li>
+</ul>
+</li>
+<li><strong>虚 Index 实 Tag 技术：</strong><ul>
+<li>在用 Index 从 cache 中读 Tag 的同时，进行虚实地址转换，可以使用物理地址做 tag；</li>
+<li><strong>问题</strong>：如何保证虚实地址 Index 位的一致？<ul>
+<li>增加页大小、增加相联度；（提高 Page Offset 位数 | 减少 Index 位数）</li>
+<li>软件保证：<mark>页着色（Page coloring）</mark>；（现在软件支持不好）<br> <img src="http://img.thebetterkong.cn/blog/CA-Cache/PageColoring1.png" alt="PageColoring1"><ol>
+<li>若：Page Offset &gt; Index+Block Offset，则：虚地址cache=物理地址cache；</li>
+<li>若：Page Offset &lt; Index+Block Offset，则：虚地址 cache 中有可能存在同一块数据由于虚地址 cache 索引的不同，在 cache 中有多个备份的情况（cache 别名问题）</li>
+</ol>
+</li>
+<li>具体详情：<br> <img src="http://img.thebetterkong.cn/blog/CA-Cache/PageColoring2.png" alt="PageColoring2"></li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<p><strong>增加 Cache 访问流水级：</strong></p>
+<ul>
+<li>Cache 访问时间是处理器主频的决定因素之一，其他因素包括加法及 bypass 时间等；</li>
+<li>把 cache 访问分成多拍以提高主频：<ul>
+<li>MIPS：1拍 </li>
+<li>Alpha：2拍 </li>
+<li>增加流水节拍增加了 load-use 延迟</li>
+</ul>
+</li>
+</ul>
+<h3 id="提高-Cache-访问并行性"><a href="#提高-Cache-访问并行性" class="headerlink" title="提高 Cache 访问并行性"></a>提高 Cache 访问并行性</h3><p><strong>多访存部件：</strong></p>
+<ul>
+<li>现代高性能处理器大都采用两个或更多访存部件：<ul>
+<li>如 Intel 的 IvyBridge 有两个读部件、一个写部件</li>
+<li>AMD 的 Bulldozer 有两个读/写部件</li>
+</ul>
+</li>
+<li>多个访存部件提高了访存的吞吐率：<ul>
+<li>降低了平均 Hittime</li>
+</ul>
+</li>
+</ul>
+<p><strong>非阻塞 Cache：</strong></p>
+<ol>
+<li><strong>机制：</strong><ul>
+<li><strong>非阻塞（Non-blocking/Lockup-free）Cache 在访问失效时允许后续的访问继续进行：</strong><ul>
+<li><mark>hit under miss、hit under multiple miss、miss under miss</mark></li>
+<li>前面的失效访问不影响后续访问，需要支持多个outstanding访问，需要类似于保留栈的访存队列机制</li>
+<li>在乱序执行的 CPU 中使用，显著增加 Cache 控制器复杂度</li>
+</ul>
+</li>
+<li><strong>多个层次的非阻塞访问：</strong><ul>
+<li>L1、L2、内存控制器</li>
+<li>龙芯 2 号支持 24 个 L1 非阻塞访问，8 个 L2 非阻塞访问</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>SPEC 程序的非阻塞访存效果：</strong><ul>
+<li>8 KB 直接相联数据 Cache，块大小 32 字节，失效延迟 16 拍 ：<ul>
+<li>浮点程序 AMAT= 0.68 -&gt; 0.52 -&gt; 0.34 -&gt; 0.26</li>
+<li>定点程序 AMAT= 0.24 -&gt; 0.20 -&gt; 0.19 -&gt; 0.19</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<p><strong>硬件预取：</strong></p>
+<ol>
+<li><strong>指令预取：</strong><ul>
+<li>Alpha 21064 在 Cache 失效时取连续两块，多取的 Cache 块存放在流缓存（stream buffer）中，下一次 Cache 失效时先检查指令是否在流缓存中</li>
+</ul>
+</li>
+<li><strong>数据预取：</strong><ul>
+<li>Jouppi [1990]：对 4KB 的 Cache，1 项流缓存可以命中 25% 的 Cache 失效访问， 4 项流缓存可以命中 43% 的 Cache 失效访问</li>
+<li>Palacharla &amp; Kessler [1994]：指令和数据 Cache 各为四路组相联的 64KB，对科学计算程序，8 项流缓存可以命中 50%-70% 的 Cache 失效访问</li>
+</ul>
+</li>
+<li><strong>现代处理器都实现复杂预取技术：</strong><ul>
+<li>预取对访存带宽提出了更高的要求</li>
+</ul>
+</li>
+</ol>
+<p><strong>软件预取：</strong></p>
+<ol>
+<li><strong>软件预取都是数据预取：</strong><ul>
+<li>预取到寄存器: (HP PA-RISC loads)</li>
+<li>预取到 Cache: (MIPS IV, PowerPC, SPARC v. 9)</li>
+<li>预取指令不发生例外，预取到 Cache 的指令可以不等待数据返回</li>
+</ul>
+</li>
+<li><strong>预取指令开销：占用指令槽：</strong><ul>
+<li>多发射结构对预取指令占用指令槽不怎么敏感</li>
+</ul>
+</li>
+<li><strong>龙芯 2 号对软件预取的支持：</strong><ul>
+<li>目标寄存器为 0 号寄存器的取数指令不发生例外，不阻塞流水线</li>
+</ul>
+</li>
+</ol>
+<h2 id="Cache-优化小结"><a href="#Cache-优化小结" class="headerlink" title="Cache 优化小结"></a>Cache 优化小结</h2><p><img src="http://img.thebetterkong.cn/blog/CA-Cache/CacheOptimizationSummary.png" alt="CacheOptimizationSummary"></p>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-Cache/" title="Computer Architecture：高速缓存">http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-Cache/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Computer-Architecture/" rel="tag"><i class="fa fa-tag"></i> Computer Architecture</a>
+              <a href="/tags/%E5%9B%BD%E7%A7%91%E5%A4%A7%E7%A0%94%E7%A9%B6%E7%94%9F%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 国科大研究生课程笔记</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/02/21/Computer-Architecture/CA-FuUnit/" rel="prev" title="Computer Architecture：功能部件">
+      <i class="fa fa-chevron-left"></i> Computer Architecture：功能部件
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/02/21/Computer-Architecture/CA-MemManage/" rel="next" title="Computer Architecture：存储管理">
+      Computer Architecture：存储管理 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#存储层次的基本概念"><span class="nav-number">1.</span> <span class="nav-text">存储层次的基本概念</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#CPU-与-RAM-的速度剪刀差"><span class="nav-number">1.1.</span> <span class="nav-text">CPU 与 RAM 的速度剪刀差</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#处理器和内存速度剪刀差"><span class="nav-number">1.2.</span> <span class="nav-text">处理器和内存速度剪刀差</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#摩尔定律使-CPU-的内容发生了变化"><span class="nav-number">1.3.</span> <span class="nav-text">摩尔定律使 CPU 的内容发生了变化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#计算机硬件系统的组成"><span class="nav-number">1.4.</span> <span class="nav-text">计算机硬件系统的组成</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CPU-中-RAM-的面积和晶体管比例"><span class="nav-number">1.5.</span> <span class="nav-text">CPU 中 RAM 的面积和晶体管比例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#存储层次基本原理"><span class="nav-number">1.6.</span> <span class="nav-text">存储层次基本原理</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Cache-结构"><span class="nav-number">2.</span> <span class="nav-text">Cache 结构</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#cache-特征"><span class="nav-number">2.1.</span> <span class="nav-text">cache 特征</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cache-结构特点"><span class="nav-number">2.2.</span> <span class="nav-text">cache 结构特点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cache-分类"><span class="nav-number">2.3.</span> <span class="nav-text">cache 分类</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#cache-块的位置"><span class="nav-number">2.3.1.</span> <span class="nav-text">cache 块的位置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Cache-替换算法"><span class="nav-number">2.3.2.</span> <span class="nav-text">Cache 替换算法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#写命中时采取的策略"><span class="nav-number">2.3.3.</span> <span class="nav-text">写命中时采取的策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#写失效时采取的策略"><span class="nav-number">2.3.4.</span> <span class="nav-text">写失效时采取的策略</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Cache-性能优化"><span class="nav-number">3.</span> <span class="nav-text">Cache 性能优化</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Cache-性能分析"><span class="nav-number">3.1.</span> <span class="nav-text">Cache 性能分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Cache-性能优化-1"><span class="nav-number">3.2.</span> <span class="nav-text">Cache 性能优化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#降低失效率"><span class="nav-number">3.2.1.</span> <span class="nav-text">降低失效率</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#降低-MissPenalty"><span class="nav-number">3.2.2.</span> <span class="nav-text">降低 MissPenalty</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#降低-HitTime"><span class="nav-number">3.2.3.</span> <span class="nav-text">降低 HitTime</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#提高-Cache-访问并行性"><span class="nav-number">3.2.4.</span> <span class="nav-text">提高 Cache 访问并行性</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Cache-优化小结"><span class="nav-number">3.3.</span> <span class="nav-text">Cache 优化小结</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

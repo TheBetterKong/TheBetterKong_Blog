@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="受疫情影响，现在基本都是远程上课，眼看学期末就要到了，各个课程也纷纷结课。往常的结课考试，自然也就行不通，所以大部分课程开始改为递交课程报告的形式。于是乎，现在天天就是看论文，找资料，写报告……头都大了！特别有时候，好不容易在网上找到一些资料，结果还不让我使用传统的 Crtl C+V 大法，有的是让你登录，更狠的直接给你禁了，你都找不到这个选项。现在版权意识越来越重，要说不让随意下">
+<meta property="og:type" content="article">
+<meta property="og:title" content="干货分享 | 网页文档不让复制？带你一起破解网页限制">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/05/30/Skills/ResolveCopyProhibition/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="受疫情影响，现在基本都是远程上课，眼看学期末就要到了，各个课程也纷纷结课。往常的结课考试，自然也就行不通，所以大部分课程开始改为递交课程报告的形式。于是乎，现在天天就是看论文，找资料，写报告……头都大了！特别有时候，好不容易在网上找到一些资料，结果还不让我使用传统的 Crtl C+V 大法，有的是让你登录，更狠的直接给你禁了，你都找不到这个选项。现在版权意识越来越重，要说不让随意下">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/ResolveCopyProhibition/header.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/ResolveCopyProhibition/print.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/ResolveCopyProhibition/drag.jpg">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/ResolveCopyProhibition/html.jpg">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/ResolveCopyProhibition/jscode.jpg">
+<meta property="article:published_time" content="2020-05-30T09:34:17.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:34:52.119Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="Skills">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/ResolveCopyProhibition/header.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/05/30/Skills/ResolveCopyProhibition/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>干货分享 | 网页文档不让复制？带你一起破解网页限制 | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/05/30/Skills/ResolveCopyProhibition/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          干货分享 | 网页文档不让复制？带你一起破解网页限制
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-05-30 17:34:17" itemprop="dateCreated datePublished" datetime="2020-05-30T17:34:17+08:00">2020-05-30</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:34:52" itemprop="dateModified" datetime="2020-08-14T17:34:52+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Skills/" itemprop="url" rel="index"><span itemprop="name">Skills</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/05/30/Skills/ResolveCopyProhibition/" class="post-meta-item leancloud_visitors" data-flag-title="干货分享 | 网页文档不让复制？带你一起破解网页限制" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/05/30/Skills/ResolveCopyProhibition/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/05/30/Skills/ResolveCopyProhibition/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <div align="center"> <img src="http://img.thebetterkong.cn/blog/ResolveCopyProhibition/header.png" width="100%" alt="header.png" /> </div>    
+
+<p>受疫情影响，现在基本都是远程上课，眼看学期末就要到了，各个课程也纷纷结课。往常的结课考试，自然也就行不通，所以大部分课程开始改为递交课程报告的形式。于是乎，现在天天就是看论文，找资料，写报告……头都大了！特别有时候，好不容易在网上找到一些资料，结果还不让我使用传统的 <kbd>Crtl C+V</kbd> 大法，有的是让你登录，更狠的直接给你禁了，你都找不到这个选项。现在版权意识越来越重，要说不让随意下载转发，尚还接受，可是，有时候我就想用一下那么几句话，亦或者做下阅读笔记，还得一字一句的打，效率太低了。然后，就开始了各种捣鼓，这里总结出了所有我知道的办法，欢迎评论补充！</p>
+<a id="more"></a> 
+<h1 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h1><p>介绍具体破解方法前，我们还是有必要先弄清楚这种「复制禁用」到底是怎么实现的，只有知其然亦知其所以然，才能不变应万变；（如果你只是简单的想找个破解方法，可以跳过此章节）     </p>
+<p>目前，绝大多数网页禁用复制功能，都可以囊括到如下三类：</p>
+<p><strong>JavaScript 脚本的方式</strong>：</p>
+<ul>
+<li>也是目前最常用的方式，常用的实现方式如下：<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 禁止右键菜单</span></span><br><span class="line"><span class="built_in">document</span>.body.oncontextmenu = <span class="function"><span class="params">e</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(e, <span class="string">'右键'</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    <span class="comment">// e.preventDefault();</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 禁止文字选择。</span></span><br><span class="line"><span class="built_in">document</span>.body.onselectstart = <span class="function"><span class="params">e</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(e, <span class="string">'文字选择'</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    <span class="comment">// e.preventDefault();</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 禁止复制</span></span><br><span class="line"><span class="built_in">document</span>.body.oncopy = <span class="function"><span class="params">e</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(e, <span class="string">'copy'</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>; </span><br><span class="line">    <span class="comment">// e.preventDefault();</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 禁止剪切</span></span><br><span class="line"><span class="built_in">document</span>.body.oncut = <span class="function"><span class="params">e</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(e, <span class="string">'cut'</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    <span class="comment">// e.preventDefault();</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 禁止粘贴</span></span><br><span class="line"><span class="built_in">document</span>.body.onpaste = <span class="function"><span class="params">e</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(e, <span class="string">'paste'</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    <span class="comment">// e.preventDefault();</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 使用e.preventDefault()也可以禁用，但建议使用 return false 这样就不用去访问 e 和 e 的方法了;</span></span><br><span class="line"><span class="comment">// 示例中 document.body 全局都禁用了，也可以对 dom （某些区域）进行禁用。</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p><strong>CSS 的方式</strong>：<br><a id="mao"></a></p>
+<ul>
+<li>使用 CSS 能够保证在用户禁用 JavaScript 脚本的情况下，复制功能也会被禁止；<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-tag">body</span> &#123;</span><br><span class="line">  <span class="attribute">-moz-user-select</span>:none; <span class="comment">/* Firefox私有属性 */</span></span><br><span class="line">  <span class="attribute">-webkit-user-select</span>:none; <span class="comment">/* WebKit内核私有属性 */</span></span><br><span class="line">  <span class="attribute">-ms-user-select</span>:none; <span class="comment">/* IE私有属性(IE10及以后) */</span></span><br><span class="line">  <span class="attribute">-khtml-user-select</span>:none; <span class="comment">/* KHTML内核私有属性 */</span></span><br><span class="line">  <span class="attribute">-o-user-select</span>:none; <span class="comment">/* Opera私有属性 */</span></span><br><span class="line">  <span class="attribute">user-select</span>:none; <span class="comment">/* CSS3属性 */</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p><strong>HTML 属性的方式</strong>：</p>
+<ul>
+<li>这种方式就用的不多了；<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">body</span> <span class="attr">oncopy</span>=<span class="string">"return false"</span> <span class="attr">oncut</span>=<span class="string">"return false;"</span> <span class="attr">onselectstart</span>=<span class="string">"return false"</span> &gt;</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>最后，还必须提一下，有些爱捣鼓的网站（很少很少）会想办法禁用开发者模式，但是这种禁用通常是不可能 100% 禁用的；   </p>
+<p>有的只是单纯通过禁用 <kbd>F12</kbd> 按键，又或者高级一些的：  </p>
+<blockquote>
+<p>“利用 console.log 打印一个对象然后覆盖这个对象的 toString 方法，一旦开发者工具存在，toString 方法就会被调用。”</p>
+</blockquote>
+<h1 id="基础方法"><a href="#基础方法" class="headerlink" title="基础方法"></a>基础方法</h1><p>首先最简单最笨的办法，当然就是，百度搜索这篇文章，看看有没有别的地方可以直接复制或者下载的。这不符合本文主题，pass！</p>
+<h2 id="利用网页打印"><a href="#利用网页打印" class="headerlink" title="利用网页打印"></a>利用网页打印</h2><p>这里说的打印，不是让你真的打印（当然，不嫌麻烦话当我没说）；    </p>
+<p>具体做法就是：</p>
+<ul>
+<li>在文档上：<kbd>右键</kbd> -&gt; <kbd>打印</kbd></li>
+<li>然后，就可以直接在弹出的打印预览页面的，愉快的复制粘贴了；</li>
+</ul>
+<p><img src="http://img.thebetterkong.cn/blog/ResolveCopyProhibition/print.png" alt="print"></p>
+<h2 id="拖拽法"><a href="#拖拽法" class="headerlink" title="拖拽法"></a>拖拽法</h2><p>选中所需要的文字，鼠标点击拖入到文本文件中；<br><img src="http://img.thebetterkong.cn/blog/ResolveCopyProhibition/drag.jpg" alt="drag"></p>
+<h2 id="查看源码"><a href="#查看源码" class="headerlink" title="查看源码"></a>查看源码</h2><p><kbd>F12</kbd> 进入开发者模式，在 hmtl 源码里就可以找到你所需要的文字；<br><img src="http://img.thebetterkong.cn/blog/ResolveCopyProhibition/html.jpg" alt="html"></p>
+<p>这种方法很明显有个弊端就是，我们复制的文字量比较大时，会复制到一些不必要的 <code>&lt;p&gt;</code>、<code>&lt;div&gt;</code> 这种标签，这就需要自己去手动修改了，比较麻烦；</p>
+<h1 id="进阶"><a href="#进阶" class="headerlink" title="进阶"></a>进阶</h1><p>前面我们知道了，网站禁用复制的实现原理，那么，只需要按照对应的原理进行破解就 OK 了；</p>
+<h2 id="0-命令"><a href="#0-命令" class="headerlink" title="$=0 命令"></a>$=0 命令</h2><p>许多网站在复制时会弹窗，提示让你登录，或者其它信息，这些网站通常是让你复制时触发 js 代码实现；   </p>
+<p>而在 js 中，由于受到 prototype.js（老外写的框架，用于将一些常用的函数封装，方便操作）的影响，现在很多人都<strong>用 <code>$</code> 来表示一个查找对象的函数</strong>，于是也就有了命令： <code>$=0</code>，这样就能破坏 js 代码的执行；</p>
+<p>具体操作：</p>
+<ul>
+<li><kbd>F12</kbd> 进入开发者模式，点击 <kbd>Console</kbd>；</li>
+<li>输入：<code>$=0</code>，回车执行，再返回去复制即可；</li>
+</ul>
+<p><img src="http://img.thebetterkong.cn/blog/ResolveCopyProhibition/jscode.jpg" alt="jscode"></p>
+<h2 id="禁用-js-代码"><a href="#禁用-js-代码" class="headerlink" title="禁用 js 代码"></a>禁用 js 代码</h2><p>上面提到的办法，不能保证 100% 的让 js 失效，所以接下来，我们直接设置禁用 js 代码；</p>
+<p>以 Google 浏览器为例（其它浏览器大同小异）：</p>
+<ul>
+<li>进入 <kbd>设置</kbd> -&gt; <kbd>隐私设置和安全性</kbd> -&gt; <kbd>网站设置</kbd> -&gt; <kbd>JavaScript</kbd></li>
+<li>将 <kbd>允许</kbd> 关闭，或者，将文档那个网站加入到禁止名单即可；</li>
+<li>回去，刷新网站，就可以复制了；</li>
+</ul>
+<p>使用完后，别忘了将设置还原！</p>
+<h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><p>如果，你尝试完上述所有方法依旧不管用，那就是我们之前提到过得，网站使用了 <code>user-select: none;</code> 设置 css 样式进而停用用户选择，它是不受 js 影响的。所以，此方法处理起来比较复杂；</p>
+<p>通常，<kbd>F12</kbd> 进入开发者模式，进入 Elements 选项卡，然后取消选中 body 下面的 CSS 规则：</p>
+<ul>
+<li>具体规则见前文：<a href="#mao">规则查看</a></li>
+<li>主要是：<code>user-select: none;</code> 和 <code>webkit-user-select：none;</code></li>
+</ul>
+<p>或者说，可以使用用户脚本来覆盖设置（<a href="https://qastack.cn/superuser/1282718/how-do-websites-block-selecting-text-and-how-do-i-unblock-that" target="_blank" rel="noopener">方法来源</a>）：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ==UserScript==</span></span><br><span class="line"><span class="comment">// @name         Force Select</span></span><br><span class="line"><span class="comment">// @version      1.0</span></span><br><span class="line"><span class="comment">// @description  Stop sites from disabling selection of text</span></span><br><span class="line"><span class="comment">// @author       You</span></span><br><span class="line"><span class="comment">// @match        *://*/*</span></span><br><span class="line"><span class="comment">// @grant        none</span></span><br><span class="line"><span class="comment">// ==/UserScript==</span></span><br><span class="line"></span><br><span class="line">(<span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line"><span class="meta">  'use strict'</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> style = <span class="built_in">document</span>.createElement(<span class="string">'style'</span>);</span><br><span class="line">  style.innerHTML = <span class="string">'*&#123; user-select: auto !important; &#125;'</span>;</span><br><span class="line"></span><br><span class="line">  <span class="built_in">document</span>.body.appendChild(style);</span><br><span class="line">&#125;)();</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>如果启用此功能，则将适用于每个页面，这在所有情况下都不是理想的；</li>
+<li>因此，可以使用 Violentmonkey，Tampermonkey 或 Greasemonkey 之类的用户脚本管理器来安装脚本，并轻松打开/关闭该脚本；</li>
+</ul>
+<h1 id="补充"><a href="#补充" class="headerlink" title="补充"></a>补充</h1><p>如果你能熟练掌握上述所有方法，那么基本所有的文档都能任由你复制了；    </p>
+<p>但是，如果还非要说上面那些方法不会使用，想要更加轻松的方式，那就直接使用第三方插件吧！   </p>
+<p>推荐几款谷歌插件：</p>
+<ul>
+<li>『<a href="https://chrome.google.com/webstore/detail/enable-copy/lmnganadkecefnhncokdlaohlkneihio" target="_blank" rel="noopener">Enable Copy</a>』：安装完后会在 chrome 插件栏上增加一个对勾形状按钮，以后碰到不能直接复制的网页，每次复制网页内容之前，先点此勾形按钮即可；</li>
+<li>『<a href="https://chrome.google.com/webstore/detail/simple-allow-copy/aefehdhdciieocakfobpaaolhipkcpgc?utm_source=chrome-ntp-icon" target="_blank" rel="noopener">simple allow copy</a>』：使用方法，和 Enable Copy 基本相同；</li>
+</ul>
+<p>再就是前面提到过的脚本管理器：『<a href="https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?utm_source=chrome-ntp-icon" target="_blank" rel="noopener">Tampermonkey</a>』</p>
+<ul>
+<li>你可以用该脚本管理器添加，前面提及的脚本，也可以自己在上面查找一些相关脚本；</li>
+<li>再提供一款脚本『<a href="https://greasyfork.org/zh-CN/scripts/28497-remove-web-limits-modified" target="_blank" rel="noopener">网页限制解除（改）</a>』供选择；</li>
+</ul>
+<p>最后，送佛送到西，再安利一个文档下载器：</p>
+<ul>
+<li>『<a href="http://www.bingdian001.com/?p=30" target="_blank" rel="noopener">冰点文库下载器</a>』：可以解决常见的像百度文库这种，大部分的文档下载；</li>
+</ul>
+<p>最最最后，只要不嫌麻烦，<strong>包治百病的终极大法</strong>：</p>
+<ul>
+<li>截图 + 文字识别</li>
+<li>至于这两个工具，直接百度，那就是一大堆了；</li>
+</ul>
+<p>那就再附加一个，网页内容选择性打印的脚本：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 找到你所需要打印的部分的 div，这里是利用 ID 识别</span></span><br><span class="line"><span class="comment">// 你也可以利用 JSP 的 DOM（Document Object Model）的其他方式</span></span><br><span class="line"><span class="comment">// 常用的三种方法：getElementById、getElementsByName、getElementsByTagName</span></span><br><span class="line"><span class="comment">// Element.innerHTML 属性用于设置或返回指定标签之间的 HTML 内容</span></span><br><span class="line"><span class="keyword">var</span> printData = <span class="built_in">document</span>.getElementById(<span class="string">"article_content"</span>).innerHTML;</span><br><span class="line"></span><br><span class="line"><span class="comment">//把 html 里的数据复制给 body 的 html 数据 ，相当于重置了整个页面的内容</span></span><br><span class="line"><span class="built_in">window</span>.document.body.innerHTML = printData; </span><br><span class="line"></span><br><span class="line"><span class="comment">// 开始打印</span></span><br><span class="line"><span class="built_in">window</span>.print();</span><br></pre></td></tr></table></figure></p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><ul>
+<li><a href="https://juejin.im/post/5b66993ee51d451924734c35#heading-6" target="_blank" rel="noopener">前端er怎样操作剪切复制以及禁止复制+破解等</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/05/30/Skills/ResolveCopyProhibition/" title="干货分享 | 网页文档不让复制？带你一起破解网页限制">http://www.thebetterkong.cn/2020/05/30/Skills/ResolveCopyProhibition/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Skills/" rel="tag"><i class="fa fa-tag"></i> Skills</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/05/25/Literature-reading-notes/Morpheus-EMTDsWithChurn/" rel="prev" title="《Morpheus:A Vulnerability-Tolerant Secure Architecture Based on EMTDs with Churn》阅读笔记">
+      <i class="fa fa-chevron-left"></i> 《Morpheus:A Vulnerability-Tolerant Secure Architecture Based on EMTDs with Churn》阅读笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/05/31/FPGA-technology/FPGA-CADTools-Routing/" rel="next" title="FPGA-CAD Tools：Placement">
+      FPGA-CAD Tools：Placement <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#写在前面"><span class="nav-number">1.</span> <span class="nav-text">写在前面</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#基础方法"><span class="nav-number">2.</span> <span class="nav-text">基础方法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#利用网页打印"><span class="nav-number">2.1.</span> <span class="nav-text">利用网页打印</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#拖拽法"><span class="nav-number">2.2.</span> <span class="nav-text">拖拽法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#查看源码"><span class="nav-number">2.3.</span> <span class="nav-text">查看源码</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#进阶"><span class="nav-number">3.</span> <span class="nav-text">进阶</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#0-命令"><span class="nav-number">3.1.</span> <span class="nav-text">$&#x3D;0 命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#禁用-js-代码"><span class="nav-number">3.2.</span> <span class="nav-text">禁用 js 代码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#其他"><span class="nav-number">3.3.</span> <span class="nav-text">其他</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#补充"><span class="nav-number">4.</span> <span class="nav-text">补充</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考"><span class="nav-number">5.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

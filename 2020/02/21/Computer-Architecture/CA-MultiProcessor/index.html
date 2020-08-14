@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="多处理器中共享存储，和存储一致性问题。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Computer Architecture：多处理器">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-MultiProcessor/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="多处理器中共享存储，和存储一致性问题。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/Overview.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ComparisonMessagingSharedstorage.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/SharedstorageDescription.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/MatrixMultiplication.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/MatrixSharedStorage.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/MatrixMessaging.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20200123172437996.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80NDg0OTQwMw==,size_16,color_FFFFFF,t_70">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExampleConsistencyProblem1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExampleParallelProgramModel.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExampleConflictAccess.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExampleConceptOfExecution.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExampleExecuteCorrectly.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/GPPOConditions.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExampleOutOfOrder.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/StorageConsistencyModel.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExampleRC.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExampleSsC.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/SingleMultipleWrite.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/UrgentLazyUpdatesCompare.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/StateTransitionDiagram.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ESI1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ESI2.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ESI3.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExamplesAgreements1.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExamplesAgreements2.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExamplesAgreements3.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExamplesAgreements4.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExamplesAgreements5.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExamplesAgreements6.png">
+<meta property="article:published_time" content="2020-02-21T07:17:08.000Z">
+<meta property="article:modified_time" content="2020-08-14T09:26:41.792Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="Computer Architecture">
+<meta property="article:tag" content="国科大研究生课程笔记">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/CA-MultiProcessor/Overview.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-MultiProcessor/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Computer Architecture：多处理器 | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-MultiProcessor/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Computer Architecture：多处理器
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-02-21 15:17:08" itemprop="dateCreated datePublished" datetime="2020-02-21T15:17:08+08:00">2020-02-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-14 17:26:41" itemprop="dateModified" datetime="2020-08-14T17:26:41+08:00">2020-08-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">计算机体系结构</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/02/21/Computer-Architecture/CA-MultiProcessor/" class="post-meta-item leancloud_visitors" data-flag-title="Computer Architecture：多处理器" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/02/21/Computer-Architecture/CA-MultiProcessor/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/02/21/Computer-Architecture/CA-MultiProcessor/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>多处理器中共享存储，和存储一致性问题。</p>
+<a id="more"></a> 
+<p><img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/Overview.png" alt="Overview"></p>
+<h1 id="消息传递与共享存储"><a href="#消息传递与共享存储" class="headerlink" title="消息传递与共享存储"></a>消息传递与共享存储</h1><h2 id="消息传递与共享存储对比"><a href="#消息传递与共享存储对比" class="headerlink" title="消息传递与共享存储对比"></a>消息传递与共享存储对比</h2><p><img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ComparisonMessagingSharedstorage.png" alt="ComparisonMessagingSharedstorage"></p>
+<ol>
+<li><p><strong>共享存储：</strong></p>
+<ul>
+<li>复杂度高，影响了可升缩性（几百或几十个：SMP 服务器系统几个到几十个）<br><img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/SharedstorageDescription.png" alt="SharedstorageDescription"></li>
+</ul>
+</li>
+<li><p><strong>消息传递：</strong></p>
+<ul>
+<li>目前常用的几万个处理器；</li>
+</ul>
+</li>
+</ol>
+<h2 id="共享存储与消息传递的编程复杂度"><a href="#共享存储与消息传递的编程复杂度" class="headerlink" title="共享存储与消息传递的编程复杂度"></a>共享存储与消息传递的编程复杂度</h2><ol>
+<li><p>任务划分与数据划分</p>
+<ul>
+<li>共享存储编程只需划分任务</li>
+<li>消息传递编程除了划分任务外，还需划分数据和考虑通信</li>
+<li>共享存储：BBS 与消息传递：Email</li>
+</ul>
+</li>
+<li><p>传递复杂的数据结构较困难：</p>
+<ul>
+<li>多个指针组成的结构</li>
+<li><code>struct {int *pa; int pb*; int *pc}</code></li>
+</ul>
+</li>
+<li><p>动态通信：</p>
+<ul>
+<li><code>{for (i,j){ x=…; y=…; a [i][j] = b [x][y];}}</code></li>
+<li>进程迁移及进程数目的变化</li>
+</ul>
+</li>
+</ol>
+<h2 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h2><h3 id="积分求-π"><a href="#积分求-π" class="headerlink" title="积分求 π"></a>积分求 π</h3><p><strong>问题：</strong><br>$\pi = 4\int ^1_0 \frac{1}{1+x^2} {\rm d}x = \sum^N_{i=1} \frac{4}{1+(\frac{i-0.5}{N})^2} \times \frac{1}{N}$</p>
+<p><strong>串行程序：</strong><br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">h = <span class="number">1.0</span>/N; pi = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">for</span>(i=<span class="number">1</span>; i&lt;N; i++)&#123;</span><br><span class="line">	temp = (i<span class="number">-0.5</span>)*h;</span><br><span class="line">	pi = pi +<span class="number">4</span>/(<span class="number">1</span>+temp*temp);</span><br><span class="line">&#125;</span><br><span class="line">pi = pi * h;</span><br><span class="line"><span class="built_in">printf</span> pi;</span><br></pre></td></tr></table></figure></p>
+<p><strong>并行程序：</strong><br>该并行程序都采用 SPMD（single program multiple data）模式；<br>每个进程虽然都运行同一个程序，但是处理不同的数据；<br>其中：</p>
+<ul>
+<li><strong>numprocs</strong>：参与运算的进程个数，所有参与运算的进程都有相同的numprocs值；</li>
+<li><strong>myid</strong>：参与运算的进程的编号，每个进程都有自己的编号（一般并行编程系统都会提供接口函数让进程知道自己的编号）</li>
+</ul>
+<ol>
+<li><p><strong>共享存储程序</strong>：（JIAJIA 虚拟共享存储系统）</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"> <span class="keyword">double</span> *pi;</span><br><span class="line"> pi = jia_alloc(<span class="number">8</span>);</span><br><span class="line"> h = <span class="number">1.0</span>/N;</span><br><span class="line"> mypi = <span class="number">0.0</span>;</span><br><span class="line"> <span class="keyword">if</span>(myid == <span class="number">0</span>) &#123;pi = <span class="number">0.0</span>;&#125;</span><br><span class="line"> <span class="keyword">for</span>(i=muid+<span class="number">1</span>; i&lt;N; i+=numprocs) &#123;mypi = ...&#125;</span><br><span class="line"> jia_lock(<span class="number">1</span>);</span><br><span class="line">pi+=mypi;</span><br><span class="line"> jia_unlock(<span class="number">1</span>);</span><br><span class="line"> <span class="keyword">if</span>(myid==<span class="number">0</span>) <span class="built_in">printf</span> pi;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>由 jie_alloc() 分配空间的变量 pi 是所有参与运算的进程共享的，所有进程只有一份，其他变量都是每个进程局部的，每个进程都有一份；</li>
+<li>每个进程通过 numprocs 和 myid 号分别计算部分的圆周率值，最后通过一个临界区的机制吧所有进程的计算结果加到一起；</li>
+<li>Jia_lock() 和 jia_unlock() 是临界区的锁机制；</li>
+</ul>
+</li>
+<li><p><strong>消息传递程序：</strong></p>
+</li>
+</ol>
+   <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">double</span> *pi;</span><br><span class="line">pi = <span class="built_in">malloc</span>(<span class="number">8</span>);</span><br><span class="line">h = <span class="number">1.0</span>/N;</span><br><span class="line">mypi = <span class="number">0.0</span>;</span><br><span class="line">pi = <span class="number">0.0</span>;</span><br><span class="line"><span class="keyword">for</span>(i=muid+<span class="number">1</span>; i&lt;N; i+=numprocs) &#123;mypi = ...&#125;</span><br><span class="line">reduce(mypi,pi,<span class="number">0</span>);</span><br><span class="line"><span class="keyword">if</span>(myid==<span class="number">0</span>) <span class="built_in">printf</span> pi;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>由 malloc() 分配空间的变量每个进程都有独立的一份，互相看不见；</li>
+<li>每个进程算完部分结果后，通过规约操作 reduce（）把所有进程的 mypi 加到 0 号进程的 pi 中；</li>
+</ul>
+<h3 id="矩阵乘法"><a href="#矩阵乘法" class="headerlink" title="矩阵乘法"></a>矩阵乘法</h3><p><strong>问题描述：</strong><br><img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/MatrixMultiplication.png" alt="MatrixMultiplication"></p>
+<ul>
+<li>A x B = C 的过程可分为四个独立的部分：Ai x B = Ci，i = 1, 2, 3, 4</li>
+<li>每部分包含的运算可由一台处理机单独完成</li>
+<li>矩阵较大时，需分开存放，即 Ai,Bi,Ci 放在结点i上 </li>
+<li>每个结点的工作分为 AiB1, AiB2, AiB3, AiB4 四个部分</li>
+</ul>
+<p><strong>并行程序：</strong></p>
+<ol>
+<li><p><strong>共享存储：</strong><br> <img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/MatrixSharedStorage.png" alt="MatrixSharedStorage"></p>
+<ul>
+<li>先由 0 号进程对 A、B、C 三个矩阵进程初始化，而其他进程通过jia_barrier（）语句等待；</li>
+<li><mark>barrier</mark> 是并行程序常见的同步方式，它要求所有进程都到齐后在前进；</li>
+<li>然后每个进程分别完成部分运算，在通过 jia_barrier（）到齐后由进程 0 统一打印结果；</li>
+</ul>
+</li>
+<li><p><strong>消息传递：</strong><br> <img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/MatrixMessaging.png" alt="MatrixMessaging">    </p>
+<ul>
+<li>需要通过显示的发送语句 send 和接受语句 recv 进程多个进程之间的通信；</li>
+<li>先由进程 0 进行初始化后发生给其他进程，每个进程分别算完后在发生给进程 0 进行打印；</li>
+<li>在该机制中，要详细列出每次发送的数据大小和起始地址等信息， 0 号进程接收的时候还要把从其他进程收到的数据拼接在一个矩阵中；</li>
+</ul>
+</li>
+</ol>
+<h3 id="图像纠正"><a href="#图像纠正" class="headerlink" title="图像纠正"></a>图像纠正</h3><p><strong>问题描述：</strong></p>
+<ul>
+<li>把原始图像in通过多项式函数P（）映射到目标图像</li>
+</ul>
+<p><strong>串行程序：</strong><br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(i=<span class="number">0</span>; i&lt;lin2; i++)&#123;</span><br><span class="line">	fpor(j=<span class="number">0</span>; j&lt;co12; j++)&#123;</span><br><span class="line">		x=P(i,j,...);</span><br><span class="line">		y=P(i,j,...);</span><br><span class="line">		out[i,j]=in[x][y]</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><strong>共享存储并行程序：</strong><br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">start=line2/jiahosts*jiapid;</span><br><span class="line"><span class="built_in">end</span>=star+lin2/jiahosts;</span><br><span class="line"><span class="keyword">if</span>(jiaid==jiahosts) <span class="built_in">end</span>=lin2;</span><br><span class="line"><span class="keyword">for</span>(i=start;i&lt;co12;j++)&#123;</span><br><span class="line">	<span class="keyword">for</span>(j=<span class="number">0</span>;i&lt;<span class="built_in">end</span>;i++)&#123;</span><br><span class="line">		x=P(i,j,...);</span><br><span class="line">		y=P(i,j,...);</span><br><span class="line">		out[i,j]=in[x][y];</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line">jia_barrier();</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>通信行为是在程序运行过程中动态确定的，这些应用消息传递的方法写并行程序难度大；</li>
+<li>数组 in 和 out 分布在不同进程的内存上，在消息传递环境下进程并行化时，由于访问 in 的下标（x，y）是通过多项式 P（）动态算出来的，编写程序是不知道谁需要跟谁通信；</li>
+<li>在共享存储环境下由于不用考虑数据分布，只考虑任务分配，所以并行化比较简单；</li>
+</ul>
+<h2 id="常见的共享存储系统体系结构"><a href="#常见的共享存储系统体系结构" class="headerlink" title="常见的共享存储系统体系结构"></a>常见的共享存储系统体系结构</h2><p><strong>分类依据：</strong></p>
+<ul>
+<li>存储器的分布、一致性的维护、实现方式等</li>
+</ul>
+<p><strong>依据存储器的分布：</strong></p>
+<ul>
+<li><strong>集中式</strong>：多处理器由总线或交叉开关等与共享存储器相连（访问延迟相同），当个数增加时，集中式的存储器成为瓶颈；</li>
+<li><strong>分布式（DSM）</strong>：每个结点包含共享存储器的一部分，结点间由伸缩性好的互联网（如：mesh）相连，这样增加了访存带宽，但导致不一致的访存结构NUMA；</li>
+</ul>
+<p><strong>常见结构：</strong></p>
+<ol>
+<li><p><strong>无 CACHE 结构：</strong></p>
+<ul>
+<li>集中式共享存储；</li>
+<li>无 cache，多个处理器通过交叉开关或多级互联网络等直接访问共享存储器；</li>
+<li>无 CACHE 一致性问题，可伸缩性受限于交叉开关或多级互联网络的带宽；</li>
+<li>如：CRAY-XMP，YMP-C90</li>
+</ul>
+</li>
+<li><p><strong>SMP 结构（共享总线结构）：</strong></p>
+<ul>
+<li>集中式共享存储；</li>
+<li>每个处理器都有 cache，多个处理器通过总线与存储器相连；</li>
+<li>侦听总线或环等维护一致性，但由于总线是独占性资源，可伸缩性有限；</li>
+<li>如：DEC，SUN，SEQUENT，SGI 等公司的 SMP 产品、目前流行的片内多核也多采用该结构；</li>
+</ul>
+</li>
+<li><p><strong>CC-NUMA 结构：</strong></p>
+<ul>
+<li>cache 一致的分布式共享存储；</li>
+<li>共享存储器分布于各结点之间，结点间通过可伸缩性好的互联网相连，每个处理器都能缓存共享单元；</li>
+<li>cache 一致性维护是该系统关键，决定了系统的可伸缩性；</li>
+<li>通过目录协议等维护一致性；</li>
+<li>如：DASH, Alewife, Origin 2000等 </li>
+</ul>
+</li>
+<li><p><strong>NCC-NUMA 结构：</strong></p>
+<ul>
+<li>cache 不一致的分布式共享存储系统；</li>
+<li>虽然每个处理器都有 cache，但硬件不负责维护 cache 一致性，cache 一致性由编译器或程序员维护；</li>
+<li>可伸缩性好，可达上千个处理机；</li>
+<li>如：以 Cray-T3D 及 T3E 为代表；他们提供了一些用于同步的库函数，便于用户通过设置临界区等手段来维护数据一致性</li>
+</ul>
+</li>
+<li><p><strong>COMA 结构：</strong></p>
+<ul>
+<li>唯有 cache 结构；共享存储器的地址是活动的；</li>
+<li>存储单元与物理地址分离，数据可以根据访存模式动态地在各结点间的存储器移动和复制；</li>
+<li>每个结点的存储器相当于一个大容量 CACHE，数据一致性也在这一级维护；</li>
+<li>如：KSR，DDM 等； </li>
+<li>优点：当处理器访问不在 cache 命中时，在本地共享存储器命中的概率较高；</li>
+<li>缺点：当处理器的访问不在本结点命中时，由于存储器的地址是活动的，需要有一种机制来查找被访问单元的当前位置，因此延迟大。</li>
+</ul>
+</li>
+<li><p><strong>虚拟共享存储系统：</strong></p>
+<ul>
+<li>又称软件 DSM 系统；</li>
+<li>在基于消息传递的 MPP 多计算机或机群中，用软件的方法把分布于各节点的多个独立编址的存储器转化为一个统一编址的共享虚拟存储空间；</li>
+<li>如：IVY, Midway, Munin, TreadMarks, JIAJIA等；</li>
+</ul>
+</li>
+</ol>
+<h2 id="共享存储与消息传递发展趋势"><a href="#共享存储与消息传递发展趋势" class="headerlink" title="共享存储与消息传递发展趋势"></a>共享存储与消息传递发展趋势</h2><ul>
+<li>1970 年代到 1980 年代中期，并行系统主要是 <strong>SMP与向量机</strong>，结点个数不多（4-8 路），是科学计算、事务处理、服务器领域的主要产品；</li>
+<li>由于 SMP 与向量机可伸缩性差，1990年代<strong>消息传递的 MP</strong>P兴起，主要用于科学计算，同时NUMA系统的研究全面展开，如DASH，Alewife，KSR-1等 ；</li>
+<li>1990年代后期，由于解决了伸缩性问题，以 Origin 2000 为标志，<strong>中规模和大规模的共享存储兴起</strong>，SUN 的Starfile，Compaq的Wildfire, 及IBM的NUMA-Q ；<ul>
+<li>目前主流的服务器均采用共享存储，低端服务器由处理器ᨀ供直接互连形成2-4路系统；高端服务器通过桥片连接形成几十路的系统；</li>
+</ul>
+</li>
+<li>以科学计算为目的大规模 MPP 系统仍以消息传递为主，几千到上万个处理机，随着带宽的增加与用户级通信的发展，<strong>机群系统与MPP系统</strong>的界限越来越模糊；</li>
+<li>主流商业片内多核都采用共享存储结构，甚至==分布式共享存储系统==；片内众核（几百到上千核）如GPU 结构采用独立存储结构；</li>
+</ul>
+<h2 id="共享存储多核处理器的关键问题"><a href="#共享存储多核处理器的关键问题" class="headerlink" title="共享存储多核处理器的关键问题"></a>共享存储多核处理器的关键问题</h2><p>通用多核处理器一般采用共享存储结构：</p>
+<ol>
+<li>多个处理器核发出的访存指令次序如何约定？<ul>
+<li>存储一致性模型：如顺序一致性、处理器一致性等</li>
+</ul>
+</li>
+<li>多个处理器核间共享片上 Cache 如何组织及维护一致性？<ul>
+<li>Cache 一致性协议：片上 Cache 结构及 Cache 一致性协议</li>
+</ul>
+</li>
+<li>多个核处理器核间如何实现通信？ <ul>
+<li>片上互连结构</li>
+</ul>
+</li>
+<li>多个处理器核间如何实现同步？<ul>
+<li>多核同步机制：互斥锁操作（lock）、路障操作（barrier）</li>
+</ul>
+</li>
+</ol>
+<h1 id="共享存储系统中的访存相关性"><a href="#共享存储系统中的访存相关性" class="headerlink" title="共享存储系统中的访存相关性"></a>共享存储系统中的访存相关性</h1><h2 id="一致性问题"><a href="#一致性问题" class="headerlink" title="一致性问题"></a>一致性问题</h2><ul>
+<li>在单机系统中，只要保持程序中的数据相关性，就可以保证执行正确。在多处理机系统中，不仅要考虑单机内的数据相关，而且要考虑多机之间的数据相关；</li>
+<li>为了执行的正确性，每个处理机都必须根据程序序来执行指令</li>
+<li>共享存储程序片段 PRG1：是保证只有一个进程进入临界区的一种同步机制</li>
+</ul>
+<p>例子：<br><img src="https://img-blog.csdnimg.cn/20200123172437996.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80NDg0OTQwMw==,size_16,color_FFFFFF,t_70" alt="ExampleConsistencyProblem"></p>
+<ul>
+<li>变量定义：<ul>
+<li>变量 a，b：指示进程 P1，P2 是否进入临界区的标志（0 未进入，1 进入）；P1，P2 的共享变量；</li>
+<li>寄存器 R1，R2 是 P1,P2 的内部寄存器；</li>
+</ul>
+</li>
+<li>工作机制：<ul>
+<li>当一个进程试图进入临界区时，它首先把本进程的标志置 1，然后检查另一进程的标志；</li>
+<li>若另一进程的标志为 0，说明另一进程为进入临界区，则本进程进入临界区；</li>
+<li>否则本进程等待，直到另一进程退出临界区；</li>
+</ul>
+</li>
+<li>可能情况：<ul>
+<li>当P1和P2分别执行完相应的进程时，R1 和 R2 的值的正确组合是（0,1）、（1,0）、（1,1）。</li>
+<li>这里最后一种情况将导致死锁（假设没有其他方法来防止死锁）；</li>
+<li>只有 R1=R2=0 的结果是错误的，它将导致 P1 和 P2 同时进入临界区；            </li>
+</ul>
+</li>
+<li>即使每个处理机都根据程序序执行指令，仍可能导致错误结果：<br>  <img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExampleConsistencyProblem1.png" alt="ExampleConsistencyProblem1"><ul>
+<li>起因：从 Write Atomic 原子的到 Write Non-atomic；</li>
+<li>什么是写可分割系统中正确的执行？<ul>
+<li><strong>存储一致性模型</strong>和 <strong>Cache 一致性协议</strong></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="什么是正确的执行？"><a href="#什么是正确的执行？" class="headerlink" title="什么是正确的执行？"></a>什么是正确的执行？</h2><ul>
+<li><strong>正确性标准</strong>：符合程序员的直觉</li>
+<li><strong>正确性规范</strong>：顺序一致性<ul>
+<li>如果在多处理机环境下的一个并行执行的结果等于同一程序在单处理机多进程环境下的一个执行的结果，则此并行程序执行正确；</li>
+</ul>
+</li>
+</ul>
+<h2 id="并行程序模型"><a href="#并行程序模型" class="headerlink" title="并行程序模型"></a>并行程序模型</h2><p><strong>程序模型 = 指令集 + 指令集上的序关系：</strong></p>
+<ul>
+<li>一个进程 P 是一个二元组 $<V(P),PO(P)>$，其中 $V(P)$ 是 LOAD 和 STORE 指令的集合，$PO(P)$ 是 $V(P)$ 上的一个全序关系；</li>
+<li>由 N 个进程 P1,P2,…,Pn 组成的程序 PRG(P1,P2,…,Pn) 是一个二元组 $<V(PRG),PO(PRG)>$，其中 $V(PRG)=V(P1)\cup V(P2)\cup…\cup V(Pn)$ 是程序 PRG 的指令集，$PO(PRG)=PO(P1)\cup PO(P2)\cup…\cup PO(Pn)$ 是程序 PRG 的程序序；</li>
+<li>例：<br>  <img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExampleParallelProgramModel.png" alt="ExampleParallelProgramModel"></li>
+</ul>
+<p><strong>冲突访问的概念：</strong></p>
+<ul>
+<li>意义：程序中冲突访问的执行次序决定了程序执行的结果；</li>
+<li>如果两个访存操作访问的是同一单元（单处理器中同一变量）且其中至少有一个是存数操作, 则称这两个访存操作是冲突的；</li>
+<li>C(PRG)={(u,v)|((u,v)∈V(PRG))∩(u,v是冲突访问)} 称为程序 PRG 中冲突访问对集；</li>
+<li>例：<br>  <img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExampleConflictAccess.png" alt="ExampleConflictAccess"></li>
+</ul>
+<h2 id="程序执行的正确性"><a href="#程序执行的正确性" class="headerlink" title="程序执行的正确性"></a>程序执行的正确性</h2><h3 id="执行的概念"><a href="#执行的概念" class="headerlink" title="执行的概念"></a>执行的概念</h3><ul>
+<li>在在一个并行执行中，一旦互相冲突的访问的执行次序确定了。那么执行结果也就确定了；</li>
+<li>在程序 PRG 中, 对冲突访问对集 C(PRG) 的任一无圈定序称为程序PRG 的一个执行，记为 E(PRG)。</li>
+<li>E（PRG ）是C（PRG ）的 ⼀个 定序 : 对任意的 (u,v)∈C(PRG)，(u,v)∈E(PRG) 和 (v,u)∈E(PRG) 有且仅有⼀个成⽴</li>
+<li>例子：<br>  <img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExampleConceptOfExecution.png" alt="ExampleConceptOfExecution"></li>
+</ul>
+<h3 id="执行的正确性"><a href="#执行的正确性" class="headerlink" title="执行的正确性"></a>执行的正确性</h3><ul>
+<li>如果存在 PRG 的⼀个正确串⾏执⾏ SE（PRG），使得 SE（PRG）U P0（PRG）⽆圈 ，且 E（PRG）和 SE（PRG）结果相等 ,则称 E（PRG）是程序 PRG 的⼀个正确执⾏；</li>
+<li>串⾏程序串指令的相关性是并⾏程序中冲突访问的⼀种特殊情况；</li>
+<li>串⾏程序的执⾏中满⾜程序的相关性是并⾏程序中 E（PRG）U P0（PRG）⽆圈的⼀种特殊情况；</li>
+<li>例子：<br>  <img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExampleExecuteCorrectly.png" alt="ExampleExecuteCorrectly"></li>
+</ul>
+<h1 id="共享存储系统的访存事件次序"><a href="#共享存储系统的访存事件次序" class="headerlink" title="共享存储系统的访存事件次序"></a>共享存储系统的访存事件次序</h1><h2 id="满足顺序一致的访存事件次序"><a href="#满足顺序一致的访存事件次序" class="headerlink" title="满足顺序一致的访存事件次序"></a>满足顺序一致的访存事件次序</h2><p><strong>顺序一致的一个充分条件（GPPO条件）：</strong><br>在共享存储多处理机中，若任一处理机都严格按照访存指令在进程中出现的次序执行，且在当前访存指令彻底执行完之前不能开始执行下一条访存指令，则此共享存储系统是顺序一致的。</p>
+<ul>
+<li>一个存数操作“彻底完成”指的是它所引起的值的变化已被所有处理机所接受；</li>
+<li>一个取数操作彻底完成是指它取回的值已确定，且写此值的存数操作已“彻底完成；</li>
+</ul>
+<h2 id="分布式系统的访存模型"><a href="#分布式系统的访存模型" class="headerlink" title="分布式系统的访存模型"></a>分布式系统的访存模型</h2><ol>
+<li><p><strong>写可分割系统的访存事件模型：</strong></p>
+<ul>
+<li>系统中有 N 个处理机, 每个处理机执行一个进程。</li>
+<li>任一访存操作 u 被分割成 N 个子操作 u1,u2,… , un, 其中 ui 表示 u 相对于 Pi 已执行完。 </li>
+</ul>
+</li>
+<li><p><strong>GPPO 条件的描述：</strong></p>
+<ul>
+<li>任一处理机都按访存指令在进程中出现的次序执行，且在当前访存指令彻底执行完之前不能开始执行下一条访存指令；<br><img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/GPPOConditions.png" alt="GPPOConditions"></li>
+</ul>
+</li>
+<li><p>在写可分割系统中，若执行 E(PRG) 满足 GPPO 条件，则 E(PRG) 正确；</p>
+</li>
+</ol>
+<h2 id="顺序一致系统中的乱序执行"><a href="#顺序一致系统中的乱序执行" class="headerlink" title="顺序一致系统中的乱序执行"></a>顺序一致系统中的乱序执行</h2><ul>
+<li>如果访存操作 u 和 v 是同一进程 Pi 的两个访存操作且 u 在 v 之前，则在如下条件下 v 可先于 u 执行而不影响程序正确性：<ul>
+<li>在v发出之后u“彻底完成”之前的这段时间内，没有其他对v所访问单元的访问相对于Pi完成（如v所访问单元在Pi中的备份不被更新）<br><img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExampleOutOfOrder.png" alt="ExampleOutOfOrder"></li>
+</ul>
+</li>
+<li>乱序执行的实现方法：猜测执行<ul>
+<li>先往下执行，收到相应的invalidate信号再反悔（区分处理器是不是顺序一致的主要标志）</li>
+</ul>
+</li>
+</ul>
+<h1 id="存储一致性模型"><a href="#存储一致性模型" class="headerlink" title="存储一致性模型"></a>存储一致性模型</h1><h2 id="常见的存储一致性模型"><a href="#常见的存储一致性模型" class="headerlink" title="常见的存储一致性模型"></a>常见的存储一致性模型</h2><p><img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/StorageConsistencyModel.png" alt="StorageConsistencyModel"></p>
+<p>从某种意义上说，存储一致性模型对共享存储系统中多处理机的访存次序作了限制，从而影响了性能；</p>
+<h2 id="对存储一致性模型（Memory-Consistency）的观点"><a href="#对存储一致性模型（Memory-Consistency）的观点" class="headerlink" title="对存储一致性模型（Memory Consistency）的观点"></a>对存储一致性模型（Memory Consistency）的观点</h2><ol>
+<li><p><strong>历史的观点: Hardware-Centric：</strong></p>
+<ul>
+<li>对多个处理机访问共享存储器的次序的一些限制</li>
+<li>弱一致性模型：放松限制来ᨀ高性能</li>
+<li>程序员必须考虑访存次序</li>
+<li>系统设计者没有优化余地</li>
+</ul>
+</li>
+<li><p><strong>正确的观点: Programmer-Centric：</strong></p>
+<ul>
+<li>结构设计者与应用程序员之间的一种约定</li>
+<li>给出正确程序的标准</li>
+<li>程序员不用考虑访存次序</li>
+<li>系统设计者有更多的ᨀ高性能的空间</li>
+</ul>
+</li>
+</ol>
+<h2 id="各存储模型"><a href="#各存储模型" class="headerlink" title="各存储模型"></a>各存储模型</h2><h3 id="顺序一致性模型-SC"><a href="#顺序一致性模型-SC" class="headerlink" title="顺序一致性模型 SC"></a>顺序一致性模型 SC</h3><p>正确性标准：符合程序员的直觉<br>正确性规范：顺序一致性</p>
+<ul>
+<li>如果在多处理机环境下的一个并行执行的结果等于同一程序在单处理机多进程环境下的一个执行的结果，则此并行程序执行正确</li>
+</ul>
+<h3 id="处理机一致性模型-PC"><a href="#处理机一致性模型-PC" class="headerlink" title="处理机一致性模型 PC"></a>处理机一致性模型 PC</h3><ul>
+<li>由 Goodman 提出的处理机一致性（Processor Consistency）比顺序一致性弱；</li>
+<li>处理机一致性对访存事件发生次序施加的限制是：<ul>
+<li>在任一取数操作 LOAD 允许被执行之前，所有在同一处理机中先于这一 LOAD 的取数操作都已完成</li>
+<li>在任一存数操作 STORE 允许被执行之前，所有在同一处理机中先于这一STORE 的访存操作（包括 LOAD 和 STORE）都已完成</li>
+<li>上述条件允许 STORE 之后的 LOAD 越过 STORE 而执行，放松了顺序一致性模型对访存次序的限制</li>
+</ul>
+</li>
+<li>实际上是把 Write Buffer 变得让用户可见：<ul>
+<li>如：Store 提交后在 Write Buffer，还没有写 Cache /内存，后面的 Load 已经从 Cache 取回数据，此时收到对 Load 访问 Cache 行的一个无效请求（load 指令不可取消）；</li>
+</ul>
+</li>
+</ul>
+<h3 id="弱存储一致性模型-WC"><a href="#弱存储一致性模型-WC" class="headerlink" title="弱存储一致性模型 WC"></a>弱存储一致性模型 WC</h3><ul>
+<li>把同步操作和普通访存操作区分开来，只在同步点维护一致性：<ul>
+<li>同步操作实现顺序一致性；</li>
+<li>冲突访问必须用同步操作保护；</li>
+</ul>
+</li>
+<li>访存次序：<ul>
+<li>同步操作的执行满足顺序一致性条件；</li>
+<li>在任一普通访存操作允许被执行之前，所有在同一处理机中先于这一访存操作的同步操作都已完成；</li>
+<li>在任一同步操作允许被执行之前，所有在同一处理机中先于这一同步操作的普通访存操作都已完成；</li>
+</ul>
+</li>
+</ul>
+<h3 id="释放一致性模型-RC"><a href="#释放一致性模型-RC" class="headerlink" title="释放一致性模型 RC"></a>释放一致性模型 RC</h3><ul>
+<li>把同步操作进一步分成获取操作 ACQUIRE 和释放操作 RELEASE；</li>
+<li>冲突访问必须用 REL-&gt;ACQ 对隔开；</li>
+<li>访存次序：<ul>
+<li>同步操作的执行满足顺序一致性条件；</li>
+<li>任一普通访存操作允许被执行之前，所有在同一处理机中先于这一访存操作的 ACQUIRE 操作都已完成；</li>
+<li>任一 RELEASE 操作允许被执行之前，所有在同一处理机中先于这一 RELEASE 的普通访存操作都已完成；</li>
+</ul>
+</li>
+</ul>
+<h4 id="急切更新释放一致性-ERC"><a href="#急切更新释放一致性-ERC" class="headerlink" title="急切更新释放一致性 ERC"></a>急切更新释放一致性 ERC</h4><ul>
+<li>临界区内的多个存数操作对共享内存的更新不是及时进行，而是在执行 release 操作前（退出临界区）集中进行；</li>
+<li>把多个存数操作合在一起，从进行统一执行，进而减少了数据通信次数；</li>
+</ul>
+<h4 id="懒惰更新释放一致性-LRC"><a href="#懒惰更新释放一致性-LRC" class="headerlink" title="懒惰更新释放一致性 LRC"></a>懒惰更新释放一致性 LRC</h4><ul>
+<li>由一个处理器对某单元的存数操作并不是由此处理器主动的传播到所有共享该单元的处理器，而是在其他处理器要用到此处理器所写的数据时（其他处理器acquire时）再向此处理器索取该单元的最新备份；</li>
+</ul>
+<h4 id="例子-1"><a href="#例子-1" class="headerlink" title="例子"></a>例子</h4><p><img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExampleRC.png" alt="ExampleRC"></p>
+<ul>
+<li>处理器 p1 所写的 y 值到达处理器 p2 的时刻不同：<ul>
+<li>RC：P1 执行操作 “y=1” 时就开始把 y 的新值传播到 P2；</li>
+<li>ERC：P1 执行 “rell（11）” 时才开始传播 y 的新值；</li>
+<li>LRC：它不要求 P1 主动传播 y 的新值，只有在 P2 执行 “acq（11）” 时才向 P1 索取 y 的新值；</li>
+</ul>
+</li>
+<li>RC、ERC、LRC 对同一程序体现出相同的行为，即它们在程序行为一级有相同的语义，对程序员有相同的正确程序设计要求。它们不是不同的存储一致性模型，而是同一存储一致性模型的不同实现；</li>
+</ul>
+<h3 id="域一致性模型-ScC"><a href="#域一致性模型-ScC" class="headerlink" title="域一致性模型 ScC"></a>域一致性模型 ScC</h3><ul>
+<li>冲突访问必须用同一把锁保护；</li>
+<li>举例：<br><img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExampleSsC.png" alt="ExampleSsC"></li>
+</ul>
+<h3 id="单项一致性模型-EC"><a href="#单项一致性模型-EC" class="headerlink" title="单项一致性模型 EC"></a>单项一致性模型 EC</h3><ul>
+<li>必须为每一个共享变量指定相应的锁；</li>
+<li>加重了程序员的负担；</li>
+<li>有利于性能；</li>
+</ul>
+<h1 id="CACHE-一致性协议"><a href="#CACHE-一致性协议" class="headerlink" title="CACHE 一致性协议"></a>CACHE 一致性协议</h1><h2 id="共享存储多处理机中的-Cache-一致性问题"><a href="#共享存储多处理机中的-Cache-一致性问题" class="headerlink" title="共享存储多处理机中的 Cache 一致性问题"></a>共享存储多处理机中的 Cache 一致性问题</h2><ol>
+<li>Cache 在共享存储系统中的作用：<ul>
+<li>弥补 CPU 与主存间的速度差距</li>
+<li>减少访存冲突以及对互连网络带宽的需求</li>
+</ul>
+</li>
+<li>Cache 一致性问题：<ul>
+<li>如何保持数据在 Cache 及主存中的多个备份的一致性</li>
+</ul>
+</li>
+</ol>
+<h2 id="Cache-一致性协议（Cache-Coherence-Protocol）"><a href="#Cache-一致性协议（Cache-Coherence-Protocol）" class="headerlink" title="Cache 一致性协议（Cache Coherence Protocol）"></a>Cache 一致性协议（Cache Coherence Protocol）</h2><p><strong>定义：</strong></p>
+<ul>
+<li>一种把新写的值传播到其他处理机的机制；</li>
+</ul>
+<p><strong>类别：</strong></p>
+<ul>
+<li>如何传播新值：Write Invalidate vs. Write Update // 写无效 vs 写更新</li>
+<li>谁可以产生新值：Single Writer vs. Multiple Writer // 单写协议 vs 多写协议</li>
+<li>何时开始传播新值：Early vs. Delayed Propagation // 及时传播 vs 延时传播</li>
+<li>向何处传播新值：Snoopy vs. Directory Protocol  // 侦听协议 vs 目录协议</li>
+</ul>
+<p><strong>意义：</strong></p>
+<ul>
+<li>Cache 一致性协议决定系统为维护一致性所做的具体动作，因而直接影响系统性能；</li>
+</ul>
+<p><strong>Write-Invalidate 和 Write Update：</strong></p>
+<ol>
+<li><p>Write-Invalidate：</p>
+<ul>
+<li>当一个处理机更新某共享单位（如存储行或存储页）时（之前或之后），通过某种机制使该共享单位的其它备份无效，当其它处理机访问该共享单位时，访问失效，再取得有效备份；</li>
+<li>适用于顺序共享（sequential sharing）的程序：在较长时间内只有一个处理器访问一个变量；</li>
+</ul>
+</li>
+<li><p>Write-Update：</p>
+<ul>
+<li>当一个当一个处理机更新某共享单位时，把更新的内容传播给所有拥有该共享单位备份的处理机；</li>
+<li>适用于紧密共享（tight sharing）的程序：多个处理器在一段时间内频繁的访问同一变量；</li>
+</ul>
+</li>
+<li><p>比较：</p>
+<ul>
+<li>Write Update: 重复更新已不再使用的行；</li>
+<li>Write Invalidate: 假共享导致乒乓问题（处理器之间频繁的互相剥夺对一个共享块的访问权导致性能严重地下降）；</li>
+</ul>
+</li>
+<li><p>补充：</p>
+<ul>
+<li>在共享粒度较⼤的共享存储系统中（尤其指共享虚拟存储系统中，共享粒度很⼤，通常为⼀⻚），容易导致假共享。</li>
+<li><strong>假共享</strong>：⼏个处理器虽然共享某个存储块，但没有真正共享数据。在⼏个处理器同时访问同⼀共享块的不同部分时就会发⽣假共享</li>
+</ul>
+</li>
+</ol>
+<p><strong>单写和多写：</strong></p>
+<ol>
+<li><p>单写：任一时刻只有一个处理机能写某共享单位</p>
+</li>
+<li><p>多写：多个处理机同时写某共享单位的不同部分</p>
+<ul>
+<li>多写协议会引起额外的存储和计算开销；</li>
+<li>问题：<ul>
+<li>为了把不同处理器对同一共享块中不同部分的修改内容“合并”在一起，需要识别每个处理器修改了该共享块中的哪部分内容？</li>
+</ul>
+</li>
+<li>做法：<ul>
+<li>在处理器第一次写一个共享块之前，为该共享块做一个备份（该共享块的块备份 twin）；</li>
+<li>当一致性协议要求对不同处理器的修改内容进行合并时，每个修改过该共享块的处理器吧该快当前的内容与它的 twin 进行比较，得出本处理器的修改内容（块差 diff）；</li>
+<li>这样，可以把不同处理器关于同一共享块的 diff 合并在一起，得到该共享块的新内容；</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>图示：<br> <img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/SingleMultipleWrite.png" alt="SingleMultipleWrite"></p>
+</li>
+</ol>
+<p><strong>急切更新与懒惰更新：</strong></p>
+<ul>
+<li>普通 RC：边写边传输写操作</li>
+<li>Eager RC：把写操作延迟到 Release 时一起发出</li>
+<li>Lazy RC：进一步延迟到下一个 Acquire 时再传输</li>
+<li>ERC 和 LRC 是 RC 的不同实现，不是不同的一致性模型<br>  <img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/UrgentLazyUpdatesCompare.png" alt="UrgentLazyUpdatesCompare"></li>
+</ul>
+<p><strong>侦听协议：</strong></p>
+<ol>
+<li>通过广播维护一致性：<ul>
+<li>写数的处理机把新写的值或所需的存储行地址广播出去；</li>
+<li>其他处理机侦听广播，当广播中的内容与自己有关时，接受新值或提供数据：<ol>
+<li>写使无效侦听：让自己的备份无效；</li>
+<li>写更新侦听：更新自己的备份值；</li>
+</ol>
+</li>
+<li>存储器和每个处理机的 Cache 只维护状态信息；</li>
+</ul>
+</li>
+<li>适合于总线结构的 SMP 系统中：<ul>
+<li>只适用于可伸缩性差的共享总线结构；</li>
+<li>总线是一种廉价而有效的广播工具</li>
+</ul>
+</li>
+<li>可伸缩性有限<ul>
+<li>总线是一种独占性资源</li>
+<li>总线延迟随处理机数的增加而增加：仲裁、总线长度、总线阻抗</li>
+</ul>
+</li>
+</ol>
+<p><strong>基于目录的协议：</strong></p>
+<ul>
+<li>每个存储行对应一个目录项：<ul>
+<li>记录拥有该行的一个副本的那些处理机以及此行是否已被改写等信息；</li>
+<li>当某个处理机写该行时,根据目录项的内容传播数据（写使无效/写更新信号）；</li>
+<li>在 COMA 结构中，记录该行的 Owner</li>
+</ul>
+</li>
+<li>由于避免了广播，目录协议有一定的伸缩性；</li>
+<li>适⽤于采⽤通⽤互联⽹络的分布式系统；</li>
+<li>目录需要大量存储空间, 需要动态维护：<ol>
+<li>位向量目录: O(MN)，存储开销大；<ul>
+<li>其中：M：共享存储容量；N：处理器数；</li>
+<li>目录表每一目录项，包括：<ul>
+<li>n位的向量：第i位为1表示此存储行在第i个存储器有备份；</li>
+<li>改写位：为1表示某处理器独占并改写此行，此行为dirty，否则为CLEAN状态；</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>有限指针目录：O(M logN)，指针溢出；<ul>
+<li>用有限个指针（log2n）指向当前持有此向量的几个处理器；</li>
+<li>共享的处理器太多时，可能出现指针溢出，此时用指针替换、广播等方法处理；</li>
+</ul>
+</li>
+<li>链目录: O(M logN)，串行更新；<ul>
+<li>把所有持有同一存储行的cache行用链表链接起来，链表头存在存储行处；</li>
+</ul>
+</li>
+</ol>
+</li>
+</ul>
+<h2 id="ESI-协议"><a href="#ESI-协议" class="headerlink" title="ESI 协议"></a>ESI 协议</h2><p><strong>状态</strong>：<br>ESI 是指 Cache 行的三种一致性状态：</p>
+<ul>
+<li>EXC（Exclusive，独占）：表明对应Cache 行被当前处理器核独占，当前处理器核可以随意读写，其他处理器核如果想读写这个cache 行需要请求占有这个cache 块的处理器核释放该Cache 行 ；</li>
+<li>SHD（Shared，共享）：表明当前Cache 行可能被多个处理器核共享，只能读取，不能写入；</li>
+<li>INV （Invalid，无效）：表明当前Cache 块是无效的；</li>
+</ul>
+<p><strong>状态转换图：</strong><br><img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/StateTransitionDiagram.png" alt="StateTransitionDiagram"></p>
+<p><strong>应用情景：</strong><br>根据 x 在 cache 和存储器中的不同状态采取不同的操作:<br><img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ESI1.png" alt="ESI1"><br><img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ESI2.png" alt="ESI2"><br><img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ESI3.png" alt="ESI3"></p>
+<p><strong>协议举例</strong><br>基于目录，单写，写使无效；</p>
+<ol>
+<li><p>单元 x 初始时在存储器中处于 CLEAN 状态（改写位为 0），并被处理器 Pj 和 Pk 所共享（在 Pj 和 Pk 的 cache 中处于 SHD 状态，如图 a；<br> <img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExamplesAgreements1.png" alt="ExamplesAgreements1"></p>
+</li>
+<li><p>接着 x 被多个处理器按如下次序访问：</p>
+<ul>
+<li>处理器 Pi 发出存数操作 STORE x；<br><img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExamplesAgreements2.png" alt="ExamplesAgreements2"></li>
+<li>处理器 Pk 发出存数操作 STORE x；<br><img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExamplesAgreements3.png" alt="ExamplesAgreements3"></li>
+<li>处理器 Pi 发出取数操作 LOAD x；<ul>
+<li>若支持 SC，Pi 需等到 Pk 的 “STORE x” 执行完；</li>
+<li>若支持 RC，无限制；<br><img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExamplesAgreements4.png" alt="ExamplesAgreements4"></li>
+</ul>
+</li>
+<li>处理器 Pj 发出取数操作 LOAD x；<br><img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExamplesAgreements5.png" alt="ExamplesAgreements5"></li>
+</ul>
+</li>
+<li><p>最终状态：<br> <img src="http://img.thebetterkong.cn/blog/CA-MultiProcessor/ExamplesAgreements6.png" alt="ExamplesAgreements6"></p>
+</li>
+</ol>
+<h2 id="存储一致性模型与-Cache-一致性协议"><a href="#存储一致性模型与-Cache-一致性协议" class="headerlink" title="存储一致性模型与 Cache 一致性协议"></a>存储一致性模型与 Cache 一致性协议</h2><p>存储一致性模型对 Cache 一致性协议的制约作用：</p>
+<ol>
+<li>Cache 一致性协议都是针对某种存储一致性模型而设计的；</li>
+<li>存储一致性模型为 Cache 一致性协议规定了“一致性”的目标，即，什么是“一致性”；<ul>
+<li>如，顺序一致性模型要求对某处理机所写的值立即进行传播，在确保该值已经被所有处理机接受后才能继续其它指令的执行；</li>
+<li>如，释放一致性模型允许将某处理机所写的值延迟到释放锁时进行传播；</li>
+</ul>
+</li>
+</ol>
+<h2 id="访存事件次序在微结构中的实现"><a href="#访存事件次序在微结构中的实现" class="headerlink" title="访存事件次序在微结构中的实现"></a>访存事件次序在微结构中的实现</h2><ol>
+<li><p>指令在保留站中等待发射时检查并等待：</p>
+<ul>
+<li>等到前面所有指令都提交</li>
+<li>Store 操作写到 Cache、访存失效队列空</li>
+<li>同步操作如 sync、LL、SC 一般在发射时控制</li>
+</ul>
+</li>
+<li><p>Load 操作能不能越过未完成（地址未确定或尚在 Store Buffer 中）的 Store 操作执行：</p>
+<ul>
+<li>如果 Load 数据返回到寄存器并被使用了，取消起来很麻烦</li>
+<li>外部来的 invalidate 操作要查看 Store Buffer 也很麻烦</li>
+</ul>
+</li>
+<li><p>为了性能和实现的简洁常使用弱一致性模型</p>
+</li>
+</ol>
+<h2 id="分析多核-CPU-的要素"><a href="#分析多核-CPU-的要素" class="headerlink" title="分析多核 CPU 的要素"></a>分析多核 CPU 的要素</h2><ol>
+<li><p>处理器核：</p>
+<ul>
+<li>异构、同构；通用、专用；重核、轻核；多核、众核</li>
+</ul>
+</li>
+<li><p>互连结构：</p>
+<ul>
+<li>可伸缩程度，是否支持片间互连</li>
+</ul>
+</li>
+<li><p>访存结构：</p>
+<ul>
+<li>所有核同一地址空间、不同核不同地址空间</li>
+<li>Cache 一致性协议：是否可伸缩</li>
+</ul>
+</li>
+<li><p>峰值性能和访存带宽及 IO 带宽：</p>
+<ul>
+<li>避免茶壶里面倒饺子</li>
+<li>通用多核处理器访存带宽和峰值性能差距不能太大</li>
+</ul>
+</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-MultiProcessor/" title="Computer Architecture：多处理器">http://www.thebetterkong.cn/2020/02/21/Computer-Architecture/CA-MultiProcessor/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Computer-Architecture/" rel="tag"><i class="fa fa-tag"></i> Computer Architecture</a>
+              <a href="/tags/%E5%9B%BD%E7%A7%91%E5%A4%A7%E7%A0%94%E7%A9%B6%E7%94%9F%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 国科大研究生课程笔记</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/02/21/Computer-Architecture/CA-MemManage/" rel="prev" title="Computer Architecture：存储管理">
+      <i class="fa fa-chevron-left"></i> Computer Architecture：存储管理
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/03/07/Literature-reading-notes/Research-CacheSideChannelAttack-Across-VM-inCloudEnvironment/" rel="next" title="《云环境中跨虚拟机的Cache侧信道攻击技术研究》阅读笔记">
+      《云环境中跨虚拟机的Cache侧信道攻击技术研究》阅读笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#消息传递与共享存储"><span class="nav-number">1.</span> <span class="nav-text">消息传递与共享存储</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#消息传递与共享存储对比"><span class="nav-number">1.1.</span> <span class="nav-text">消息传递与共享存储对比</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#共享存储与消息传递的编程复杂度"><span class="nav-number">1.2.</span> <span class="nav-text">共享存储与消息传递的编程复杂度</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#例子"><span class="nav-number">1.3.</span> <span class="nav-text">例子</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#积分求-π"><span class="nav-number">1.3.1.</span> <span class="nav-text">积分求 π</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#矩阵乘法"><span class="nav-number">1.3.2.</span> <span class="nav-text">矩阵乘法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#图像纠正"><span class="nav-number">1.3.3.</span> <span class="nav-text">图像纠正</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#常见的共享存储系统体系结构"><span class="nav-number">1.4.</span> <span class="nav-text">常见的共享存储系统体系结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#共享存储与消息传递发展趋势"><span class="nav-number">1.5.</span> <span class="nav-text">共享存储与消息传递发展趋势</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#共享存储多核处理器的关键问题"><span class="nav-number">1.6.</span> <span class="nav-text">共享存储多核处理器的关键问题</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#共享存储系统中的访存相关性"><span class="nav-number">2.</span> <span class="nav-text">共享存储系统中的访存相关性</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#一致性问题"><span class="nav-number">2.1.</span> <span class="nav-text">一致性问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#什么是正确的执行？"><span class="nav-number">2.2.</span> <span class="nav-text">什么是正确的执行？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#并行程序模型"><span class="nav-number">2.3.</span> <span class="nav-text">并行程序模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#程序执行的正确性"><span class="nav-number">2.4.</span> <span class="nav-text">程序执行的正确性</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#执行的概念"><span class="nav-number">2.4.1.</span> <span class="nav-text">执行的概念</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#执行的正确性"><span class="nav-number">2.4.2.</span> <span class="nav-text">执行的正确性</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#共享存储系统的访存事件次序"><span class="nav-number">3.</span> <span class="nav-text">共享存储系统的访存事件次序</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#满足顺序一致的访存事件次序"><span class="nav-number">3.1.</span> <span class="nav-text">满足顺序一致的访存事件次序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#分布式系统的访存模型"><span class="nav-number">3.2.</span> <span class="nav-text">分布式系统的访存模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#顺序一致系统中的乱序执行"><span class="nav-number">3.3.</span> <span class="nav-text">顺序一致系统中的乱序执行</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#存储一致性模型"><span class="nav-number">4.</span> <span class="nav-text">存储一致性模型</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#常见的存储一致性模型"><span class="nav-number">4.1.</span> <span class="nav-text">常见的存储一致性模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#对存储一致性模型（Memory-Consistency）的观点"><span class="nav-number">4.2.</span> <span class="nav-text">对存储一致性模型（Memory Consistency）的观点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#各存储模型"><span class="nav-number">4.3.</span> <span class="nav-text">各存储模型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#顺序一致性模型-SC"><span class="nav-number">4.3.1.</span> <span class="nav-text">顺序一致性模型 SC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#处理机一致性模型-PC"><span class="nav-number">4.3.2.</span> <span class="nav-text">处理机一致性模型 PC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#弱存储一致性模型-WC"><span class="nav-number">4.3.3.</span> <span class="nav-text">弱存储一致性模型 WC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#释放一致性模型-RC"><span class="nav-number">4.3.4.</span> <span class="nav-text">释放一致性模型 RC</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#急切更新释放一致性-ERC"><span class="nav-number">4.3.4.1.</span> <span class="nav-text">急切更新释放一致性 ERC</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#懒惰更新释放一致性-LRC"><span class="nav-number">4.3.4.2.</span> <span class="nav-text">懒惰更新释放一致性 LRC</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#例子-1"><span class="nav-number">4.3.4.3.</span> <span class="nav-text">例子</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#域一致性模型-ScC"><span class="nav-number">4.3.5.</span> <span class="nav-text">域一致性模型 ScC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#单项一致性模型-EC"><span class="nav-number">4.3.6.</span> <span class="nav-text">单项一致性模型 EC</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#CACHE-一致性协议"><span class="nav-number">5.</span> <span class="nav-text">CACHE 一致性协议</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#共享存储多处理机中的-Cache-一致性问题"><span class="nav-number">5.1.</span> <span class="nav-text">共享存储多处理机中的 Cache 一致性问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Cache-一致性协议（Cache-Coherence-Protocol）"><span class="nav-number">5.2.</span> <span class="nav-text">Cache 一致性协议（Cache Coherence Protocol）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ESI-协议"><span class="nav-number">5.3.</span> <span class="nav-text">ESI 协议</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#存储一致性模型与-Cache-一致性协议"><span class="nav-number">5.4.</span> <span class="nav-text">存储一致性模型与 Cache 一致性协议</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#访存事件次序在微结构中的实现"><span class="nav-number">5.5.</span> <span class="nav-text">访存事件次序在微结构中的实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#分析多核-CPU-的要素"><span class="nav-number">5.6.</span> <span class="nav-text">分析多核 CPU 的要素</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">50</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共226k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

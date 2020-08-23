@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在云计算时代，安全问题可谓是层出不穷。由此而衍生出的同态加密技术可以解决各种保护隐私的计算问题。它通过对数据进行加密处理，并允许任何人直接在加密后数据上进行处理（加减乘除等计算），生成加密结果，但是只有解密密钥的所有者才能进行解密进而得到所需的数据。但是由于 HE 需要进行大量的计算，导致其对性能的要求很高，这也是 HE 方案很大的不足。这篇论文就介绍了一种基于 CUDA 的 SHE （Somew">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《High Performance FV Somewhat Homomorphic Encryption on GPUs:An Implementation using CUDA》阅读笔记">
+<meta property="og:url" content="http://www.thebetterkong.cn/2020/08/20/Literature-reading-notes/High-Performance-FV-Somewhat-HE-on-GPUs/index.html">
+<meta property="og:site_name" content="TheBetterKong">
+<meta property="og:description" content="在云计算时代，安全问题可谓是层出不穷。由此而衍生出的同态加密技术可以解决各种保护隐私的计算问题。它通过对数据进行加密处理，并允许任何人直接在加密后数据上进行处理（加减乘除等计算），生成加密结果，但是只有解密密钥的所有者才能进行解密进而得到所需的数据。但是由于 HE 需要进行大量的计算，导致其对性能的要求很高，这也是 HE 方案很大的不足。这篇论文就介绍了一种基于 CUDA 的 SHE （Somew">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/CUDAStructModel.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/CUDAMemModel.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/DGTAlgorithm.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/TextbookFV.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/DecRNSAlgorithm.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/FlowDivideAndRoundinRNSFV.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/EvalMulRNSAlgorithm.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/PerformanceTextbookFVRNSVariant.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/GarnerAlgorithm.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/GarnerCRTReconstructMemLayout.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/TestEnvironmentAndParameter.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/ResultPowerUtilization.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/ResultLatency.png">
+<meta property="og:image" content="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/ResuiltLatency2.png">
+<meta property="article:published_time" content="2020-08-20T06:17:24.000Z">
+<meta property="article:modified_time" content="2020-08-23T18:11:01.432Z">
+<meta property="article:author" content="TheBetterKong">
+<meta property="article:tag" content="CUDA">
+<meta property="article:tag" content="Homomorphic Encryption">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/CUDAStructModel.png">
+
+<link rel="canonical" href="http://www.thebetterkong.cn/2020/08/20/Literature-reading-notes/High-Performance-FV-Somewhat-HE-on-GPUs/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>《High Performance FV Somewhat Homomorphic Encryption on GPUs:An Implementation using CUDA》阅读笔记 | TheBetterKong</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">TheBetterKong</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">自律即自由</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/08/20/Literature-reading-notes/High-Performance-FV-Somewhat-HE-on-GPUs/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          《High Performance FV Somewhat Homomorphic Encryption on GPUs:An Implementation using CUDA》阅读笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-08-20 14:17:24" itemprop="dateCreated datePublished" datetime="2020-08-20T14:17:24+08:00">2020-08-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-08-24 02:11:01" itemprop="dateModified" datetime="2020-08-24T02:11:01+08:00">2020-08-24</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%96%87%E7%8C%AE%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">文献阅读笔记</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/08/20/Literature-reading-notes/High-Performance-FV-Somewhat-HE-on-GPUs/" class="post-meta-item leancloud_visitors" data-flag-title="《High Performance FV Somewhat Homomorphic Encryption on GPUs:An Implementation using CUDA》阅读笔记" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/08/20/Literature-reading-notes/High-Performance-FV-Somewhat-HE-on-GPUs/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/08/20/Literature-reading-notes/High-Performance-FV-Somewhat-HE-on-GPUs/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在云计算时代，安全问题可谓是层出不穷。由此而衍生出的同态加密技术可以解决各种保护隐私的计算问题。它通过对数据进行加密处理，并允许任何人直接在加密后数据上进行处理（加减乘除等计算），生成加密结果，但是只有解密密钥的所有者才能进行解密进而得到所需的数据。但是由于 HE 需要进行大量的计算，导致其对性能的要求很高，这也是 HE 方案很大的不足。这篇论文就介绍了一种基于 CUDA 的 SHE （Somewhat Homomorphic Encryption）实现方案。</p>
+<a id="more"></a> 
+<h1 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h1><p>这一部分主要介绍了 FHE 方案的产生以及不足之处，由此产生了两种改进方案：</p>
+<ol>
+<li>针对特定需求涉及的 SHE 方案：<ul>
+<li><strong>FHE（Fully Homomorphic Encryption，全同态加密）</strong>：直白说就是支持任意函数 f 的同态加密方案，它主要由两种思路：<ul>
+<li>从计算机原理考虑：计算机的运算也就是位运算。而一个计算机只要支持逻辑与运算（AND），以及异或运算（XOR），那么这个计算机理论上就可以实现计算机的所有运算了（这种性质称之为图灵完备性，Turing Completeness）；</li>
+<li>从抽象代数考虑：只需要加法和乘法就可以完成全部运算了。但其实更严格的说，只要我们在一个域（Field）上构造 HE，理论上我们就可以支持所有的 f；</li>
+</ul>
+</li>
+<li><strong>SHE（Somewhat Homomorphic Encryption，半同态加密）</strong>：<ul>
+<li>这种 HE 方案只支持一些特定的 f 函数；</li>
+<li>SHE 方案稍弱，但也意味着开销会变得较小，容易实现，现在已经可以在实际中使用；</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>将计算卸载到硬件加速器，例如：FPGA、ASIC、GPU 等：<ul>
+<li>本论文的主要研究方向也就是基于 GPU 加速的；</li>
+<li>沿用之前的，将 HE 计算的某些部分（通常是多项式乘法）在硬件加速器上运行，但它们包括大量的主机到设备和设备到主机的数据传输速率；</li>
+<li>于是，通过启用 CUDA 的 GPU 加速方案进一步加速 FV SHE，实现的主要功能是所有 FV 原语：密钥生成，加密，解密以及同态加法和乘法完全在 GPU 上运行，这样从而降低了主机到设备和设备到主机的传输速率；</li>
+<li>另外，利用了一些代数工具、模块化算法以及 FV 的改编，避免了计算的关键路径上多精度算术问题；</li>
+</ul>
+</li>
+</ol>
+<p>论文结构：</p>
+<ul>
+<li>第 2 节：介绍 HE 方案的几种软件和硬件实现，重点是 FV 方案；</li>
+<li>第 3 节：部分简要介绍了通用的 CUDA 编程范例。；</li>
+<li>第 4 节：介绍一些代数工具，例如<mark>中国剩余定理（CRT）</mark>和<mark>离散伽罗瓦变换（DGT）</mark>；</li>
+<li>第 5 节：回顾了<mark>教科书 FV</mark> 方案及其<mark>残数系统（RNS）</mark>变体；</li>
+<li>第 6 节：提供所用实现和优化技术的布局；</li>
+<li>第 7 节：作者的实验和比较结果；</li>
+<li>第 8 节：总结工作并提供了潜在的未来工作指南；</li>
+</ul>
+<h1 id="文献回顾"><a href="#文献回顾" class="headerlink" title="文献回顾"></a>文献回顾</h1><p>总结起来大致内容如下：</p>
+<ul>
+<li>使用硬件平台提高 HE 性能，主要是基于 ASIC、FPGA、GPU。并且与 ASIC 相比，FPGA 和 GPU 更加灵活便宜，更具有优势。</li>
+<li>最早将 FPGA 用在 HE 的是 Cousins 等人，他们使用 FPGA 和 Matlab Simulink 利用基本构造块来实现的基于 FHE 的 NTRU，但没有报告结果；</li>
+<li>Gentry-Halevi（GH）FHE 的加密，解密和重新加密过程在定制的 ASIC 实现中分别花费了 18.1 毫秒，16.1 毫秒和 3.1 秒钟；</li>
+<li>GH FHE 的 GPU 实现，作者设法加快了中小参数设置的方案，但是，对于安全推荐的大参数，由于 GPU 内存不足以存储所有必需的预先计算的常量，因此他们失败了；</li>
+<li>FV SHE 方案是基于错误学习（LWE）的 FHE 对环形 RLWE 的扩展，该方案结构简单比较实用受到了广泛关注，目前已有两个团队实现。它也是作者评估 GPU 实现的一个标准；</li>
+<li>SEAL（v2.3.0-4）利用 C++，CPU 实现了大数值的多项式算法。该方案后来提出 RNS FV 方案变体显著提高了性能。<ul>
+<li>它的主要特征是可以对解密和同态乘法的轻微修改，具体来说就是可根据秘钥能力来接受任意大小的密文，以及允许密文在同态乘法之后增大大小，进而可以去完成重新线性化；</li>
+<li>采用 Nussbaumer 算法计算 $\frac{Z_q[x]}{x^{2^k}+1}$ 中多项式乘法的数论变换（NTT），并使用特殊质数作为密文系数模数，以进行有效的模运算；</li>
+<li>该库提供了一个用户友好的界面，其中包括几个功能，例如：用于表示多项式数据的编码功能（FV 的关键要求），默认参数选择器，噪声监控和 CRT 批处理程序；</li>
+</ul>
+</li>
+<li>NFLlib-FV 是并行的多核 CPU 实现：<ul>
+<li>它利用 NFLlib（一种基于 NTT 的快速晶格库）在 $\frac{Z_q[x]}{x^{2^k}+1}$ 中执行多项式算法；NFLlib 利用向量指令（SSE 和 AVX2）在多处理器体系结构上执行算术运算；</li>
+<li>该库与著名的数论库（例如 NTL 和 FLINT）相比具有优势；</li>
+<li>与 SEAL 不同，NFLlib-FV 具有较少的功能。例如，它不包括编码或 CRT 批处理技术。</li>
+</ul>
+</li>
+</ul>
+<h1 id="知识准备（代数知识）"><a href="#知识准备（代数知识）" class="headerlink" title="知识准备（代数知识）"></a>知识准备（代数知识）</h1><h2 id="CUDA-编程范例"><a href="#CUDA-编程范例" class="headerlink" title="CUDA 编程范例"></a>CUDA 编程范例</h2><p>GPU 或者其他硬件加速器可以看做是一种帮助 CPU 完成特定任务的辅助计算元素。在使用时，通常需要我们利用映射和简化过程来手动分配任务，这一过程比较麻烦。   </p>
+<p>目前很受欢迎的两个框架：OpenCL 和 CUDA 他们都扩展自 C 语言，并提供了一组 API 供多平台并行编程，其中：</p>
+<ul>
+<li>CUDA 仅受 NVIDIA GPU 等 NVIDIA 设备支持；</li>
+<li>而 OpenCL 可与包括 NVIDIA GPU 在内的各种平台一起使用；</li>
+<li>与 OpenACC 不同，程序员必须进行映射并减少这些框架中的过程；</li>
+</ul>
+<p>下面主要介绍本文工作采用的 CUDA 原理；</p>
+<p><strong>CUDA 结构模型：</strong></p>
+<ul>
+<li>CUDA GPU 包括许多<strong>流式多处理器（SM）</strong>。SM 由片上多个内核组成，也称为<strong>流处理器（SP）</strong>：<ul>
+<li>它们共享计算资源（例如共享内存，L1 高速缓存，寄存器文件和特殊功能单元）。</li>
+<li>通过启动多个线程（每个线程在单个内核上运行），SM 可以看作是向量处理器，能够对多个操作数执行相同的指令，也称为单指令多数据（SIMD）指令。</li>
+<li>CUDA 提供了一组内部变量，这些变量提供元数据以唯一地标识线程；</li>
+</ul>
+</li>
+<li>程序员通过将线程组织为两种结构：<strong>线程块</strong>和<strong>网格</strong>，来确定执行特定内核的线程总数（CUDA 线程执行的部分代码）：<br><img src="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/CUDAStructModel.png" alt="CUDAStructModel"><ul>
+<li>线程块是 1-3 维度的结构，用于指定每个维度中的线程数；</li>
+<li>线程块也按 1-3 个维度的网格进行分组，指定每个维度中的块数；</li>
+<li>线程块和网格的大小受硬件功能的限制；</li>
+<li>GPU 将线程块分配为在单个 SM 上运行。这些线程也被分组为 warps2。 GPU 确保扭曲中的线程在一个 SM 上同时运行。可同时在 SM 上运行的扭曲的数量是特定于硬件的，具体取决于扭曲调度程序的数量。尽管每个线程都有自己的一组寄存器，但是请注意，warp 中的线程可能会通过 CUDA  shuffle 指令访问彼此的寄存器。</li>
+</ul>
+</li>
+</ul>
+<p><strong>CUDA 内存模型：</strong><br><img src="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/CUDAMemModel.png" alt="CUDAMemModel"></p>
+<ul>
+<li>一个块中的线程可以直接通过共享内存进行通信。相反，不同块的线程只能通过全局内存进行通信。在设备代码中，一个块中线程之间的同步点是可能的，而所有线程（不同块中）之间的全局同步点是不可能的，直到通过协作线程实现 CUDA 9。全局同步也可以通过几个内核启动来计算大型任务来完成。</li>
+<li>CUDA GPU 包括各种类型的存储器，这些存储器的访问速度，作用域和读/写权限不同：<ul>
+<li>例如，全局内存很大，很慢，在整个程序执行过程中都是持久性的，并且可以由任何线程访问以进行读/写。</li>
+<li>另一方面，共享内存是片上的，快速的，但是只有声明了该内存的块中的线程才能看到。</li>
+<li>快速且可全局访问的另一种类型的内存是常量内存。它被限制为较小的大小，通常为 64 KB，并且只能用作针对时间局部性优化的只读存储器。</li>
+<li>最后，还有另一种类型的持久性只读存储器，它利用了空间局部性的原理，即纹理存储器。纹理适用于非镶嵌访问模式。它们比全局内存快，但比恒定内存慢。</li>
+</ul>
+</li>
+</ul>
+<h2 id="数学知识"><a href="#数学知识" class="headerlink" title="数学知识"></a>数学知识</h2><h3 id="符号（Notation）表示"><a href="#符号（Notation）表示" class="headerlink" title="符号（Notation）表示"></a>符号（Notation）表示</h3><ul>
+<li>大写字母表示集合，小写字母表示集合里的元素；</li>
+<li>$Z$、$Q$、$R$、$C$ 分别表示整数，有理数，实数和复数；</li>
+<li>$\lceil \cdot \rceil$、$\lfloor \cdot \rfloor$、$\lfloor \cdot \rceil$ 分别表示向上舍入，向下舍入和舍入到最接近的整数；</li>
+<li>$[\cdot]_q$ 表示由平衡集 $\{\lceil -\frac{q}{2} \rceil,…,\lfloor \frac{q-1}{2} \rfloor\}$ 表示的 $q$ 模整数的集合；$|\cdot|_q$ 表示 $\{0,…,q-1\}$；</li>
+<li>$|\cdot|$ 表示数字或集合基数的 bits 大小；</li>
+<li>$R_q$ 是多项式环 $\frac{Z_q[x]}{x^n+1}$，其中 $n$ 是 2 的幂；</li>
+<li>环算术是对 $x^n+1$ 和 $q$ 求模的；</li>
+<li>从集合 $S$ 中对 $a$ 进行统一采样表示为 $a \stackrel{$}{\leftarrow} S$；</li>
+</ul>
+<h3 id="多项式的残数系统表示"><a href="#多项式的残数系统表示" class="headerlink" title="多项式的残数系统表示"></a>多项式的残数系统表示</h3><p>问题产生及解决方式：</p>
+<ul>
+<li>对于安全设置和高深度乘法支持，环 $\frac{Z_q[x]}{x^n+1}$ 包含系数较大的长多项式。特别是当 $|q|$ 是几百位时，n 可以是几千了。这些多项式执行基本算术运算（加法和乘法）可以通过多精度算术完成，尽管此方法更直观，并且可能更易于实现，但效率不高，尤其是对于大型参数来说。</li>
+<li>其他模块化技术和代数工具可用于实现更有效的解决方案。<strong>基本思想是基于分而治之</strong>。较大的计算问题分为几个较小的独立子问题，可以并行有效地解决这些子问题。 然后将子解决方案合并以形成原始问题的最终解决方案。</li>
+</ul>
+<p>将其应用于多项式算术：</p>
+<ul>
+<li>CRT/RNS 可用于将系数较大的多项式 $a(x)$ 分解为系数较小的多项式集合；</li>
+<li>首先，我们需要选择一组互质数模 $M = \{m_0,m_1,\dots,m_{r-1}\}$；</li>
+<li>模数取决于两个主要因素：<ul>
+<li>选择 $m_i$ 使其适合基础机器字；</li>
+<li>$m = \prod_{i=0}^{r-1}$，$m_i$ 大于或等于系数模数 $q$； </li>
+</ul>
+</li>
+<li>映射 $a(x)(mod) \rightarrow (a(x)(mod\ m_0),a(x)(mod\ m_1),\dots,a(x)(mod\ m_{r-1}))$，定义了环同构 $\frac{Z_m[x]}{x^n+1} \cong \frac{Z_{m_0}[x]}{x^n+1} \times \frac{Z_{m_1}[x]}{x^n+1} \times \dots \times \frac{Z_{m_{r-1}}[x]}{x^n+1}$；</li>
+<li>换句话说，可以在每个环 $\frac{Z_{m_i}[x]}{x^n+1}$ 中并行执行计算，并使用 CRT 重建算法以 $\frac{Z_m[x]}{x^n+1}$ 重建所需结果。如下所示： <ul>
+<li>设 $(x_0,x_1,\dots,x_{r-1})$ 是整数 $x$ 模 $M$ 的残差，可以通过下面重建整数 $x$：<script type="math/tex">x = \sum_{i=0}^{r-1} \frac{m}{m_i} \times ((\frac{m}{m_i})^{-1}x_i\ (mod\ m_i))\ (mod\ m)</script></li>
+</ul>
+</li>
+<li>通过对每个系数残基进行 CRT 重构，可以从其残基重构多项式。可以清楚地注意到，该运算对于每个系数都是完全独立的，这使其非常适合 GPU 平台。 </li>
+</ul>
+<h3 id="多项式的数论变换表示"><a href="#多项式的数论变换表示" class="headerlink" title="多项式的数论变换表示"></a>多项式的数论变换表示</h3><ul>
+<li>通过按系数逐项增加/减少多项式残差，CRT 表示可用于有效地增加或减少多项式；</li>
+<li>不幸的是，乘法不是这种情况。为了迎合有效的乘法，可以用点和值而不是标准系数表示来表示多项式：</li>
+<li>这可以使用 DFT-like 变换（长度为 2n 的数论变换（NTT））来评估一组点上的多项式（degree 度 &lt; n）来完成：<ul>
+<li>两个多项式 NTT 表示的逐点相乘对应于多项式不进行归约的乘积的 NTT 表示；</li>
+<li>仍然需要以环多项式模为模的归约算法；</li>
+<li>但是，由于我们在 $\frac{Z_q[x]}{x^{2^k}+1}$ 中进行工作，因此可以使用负包绕卷积而无需归约。这可以通过离散加权变换（DWT）有效地进行计算。此外，对于负包裹卷积，仅需要长度为 n 的 DWT 变换。</li>
+</ul>
+</li>
+<li>为了进一步改善，可以使用 Crandall 的离散伽罗瓦变换（ Discrete Galois Transform，DGT）使用 n/2 变换数据路径来计算 NTT 等效表示，在 $GF(p^2)$ 中称为 DGT 表示；<ul>
+<li>Crandall 最初提出了他的算法，假设 p 必须是高斯素数，即 $p \equiv 3(mod 4)$；</li>
+<li>但是，在另一项工作中，我们推广了他的算法，使其也可以用于非高斯素数，即 $p \equiv 1(mod 4)$；</li>
+<li>在这里使用基于广义 DGT 的算法来计算具有类似 n/2 FFT 数据路径的 DGT 表示。使用我们的通用算法，CRT 模数不再受到其他限制。下面的算法显示了基于 DGT 的多项式乘法算法：<br><img src="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/DGTAlgorithm.png" alt="DGTAlgorithm"></li>
+<li>该算法显示：给定 DGT 表示的两个多项式，它们的乘积可通过逐系数乘法以 $O(n)$ 计算。应指出的是，在可以开始乘法之前，应将每个多项式残差（在 RNS/CRT 域中）转换为 DGT。</li>
+<li>请注意，DWT/DGT 需要在上述算法中用一些扭曲因子 h 加权多项式。这些扭曲器应与变换中使用的扭曲因子 g 区分开。</li>
+</ul>
+</li>
+</ul>
+<h3 id="使用环-frac-Z-x-x-2-k-1-的局限性"><a href="#使用环-frac-Z-x-x-2-k-1-的局限性" class="headerlink" title="使用环 $\frac{Z[x]}{x^{2^k}+1}$ 的局限性"></a>使用环 $\frac{Z[x]}{x^{2^k}+1}$ 的局限性</h3><p>尽管此处使用的多项式环提供了快速的环乘法，但它遇到了与明文批处理有关的关键问题。明文批处理（也称为 <strong>CRT 批处理</strong>）是 Brakerski 等人提出的一种常见技术，以降低 HE 的计算复杂度。这项技术可以将多个明文打包在一个密文中。密文上的操作以 SIMD 方式影响打包的明文。为了突出使用环 $\frac{Z[x]}{x^{2^k}+1}$ 的局限性，我们需要提供一个简单的明文批处理概述。</p>
+<ul>
+<li>正如后续章节会看到那样，明文空间是多项式环 $R_t = \frac{Z_t[x]}{x^{2^k}+1}$。对于某些 $(k，t)$，$x^{2^k} + 1$ 可以以 t 为模分解为一组互互质数多项式，例如 $f_i(x)，0 \leq i &lt; s$。使用 CRT，可以通过以下映射对 $R_t$ 进行分区：<script type="math/tex">R_t = \frac{Z_t[x]}{x^{2^k}+1} \cong \frac{Z_t[x]}{f_0(x)} \times \dots \times \frac{Z_t[x]}{f_{s-1}(x)}</script>   </li>
+<li>这意味着我们可以编码 s 明文消息，使用 $f_i(x)$ 作为模数应用 CRT，假设 $f_i(x)$ 是互质数，并生成一个编码 s 消息的单多项式。 $R_t$ 中的问题在于仅考虑 $t=2$ 才将其分解为一个因子。这是重要的情况，因为它允许使用同态加法和乘法来处理布尔门 XOR 和 AND，这使得构造布尔电路非常简单。</li>
+<li>然而，可以通过选择较大的 t 值来解决该问题，但代价是 XOR 的成本与 AND 的噪声增长相同。可以通过以下示例说明其原因：   <ul>
+<li>示例：假设 $c_0$，$c_1$ 是两个 1 的加密数。假设我们要评估 $c_0$，$c_1$ 上的 XOR 门。注意，较大的 t 值意味着多项式系数可以增长到 $t-1$。对输入进行同态加法运算得出的加密值为 2。可以通过减去（$2 \times c_0 \times c_1$）进行校正。因此，考虑到可以高效地乘以 2，几乎免费的同态加法变得与同态乘法一样昂贵。</li>
+</ul>
+</li>
+</ul>
+<h1 id="Textbook-FV-及其-RNS-变体"><a href="#Textbook-FV-及其-RNS-变体" class="headerlink" title="Textbook FV 及其 RNS 变体"></a>Textbook FV 及其 RNS 变体</h1><h2 id="明文和密文空间"><a href="#明文和密文空间" class="headerlink" title="明文和密文空间"></a>明文和密文空间</h2><ul>
+<li>明文和密文空间是由明文模数 t 和密文模数 q （$both \in Z$）决定的多项式环，其中 $2 \leq t \ll q$。</li>
+<li>我们将这些环称为 $R_t:\ \frac{Z_t[x]}{x^n+1}$ 和 $R_q:\ \frac{Z_q[x]}{x^n+1}$。</li>
+<li>尽管明文是单个元素 $m \in R_t$，但是密文是一对两个元素 $(ct[0],ct[1])$，其中 $ct[i] \in R_q$。</li>
+<li>比率 $\Delta = \lfloor \frac{q}{t} \rfloor$ 决定方案的乘法深度。</li>
+<li>$n$，$q$ 的选择通过定义潜在的 RLWE 问题的难度来影响安全级别。</li>
+</ul>
+<h2 id="Textbook-FV-方案"><a href="#Textbook-FV-方案" class="headerlink" title="Textbook FV 方案"></a>Textbook FV 方案</h2><p>Textbook FV 方案是一个由 5 个过程组成的元组：密钥生成，加密，解密，同态加法和同态乘法。除了明文和密文空间参数外，该方案还定义了以下描述的其他参数：</p>
+<ul>
+<li>$\lambda$：一元表示法表示的安全性参数；</li>
+<li>$\omega$：一个分解基，用于根据基 $w \in Z$ 中的 $l+1$ 个多项式来表示 $R_q$ 中的多项式，其中 $l = \lfloor log^q_w \rfloor$；</li>
+<li>$\chi_{err+}$：截短的零均值离散高斯分布，用于对误差多项式进行采样。通过标准偏差 $\sigma$ 和误差范围 $\beta_{err}$ 对分布进行参数化；</li>
+</ul>
+<p>该方案的主要过程：<br><img src="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/TextbookFV.png" alt="TextbookFV"></p>
+<ul>
+<li>可以看出，所有过程都在多项式环中合并了算术。多项式很长，并且系数很大。因此，可以使用多精度算法或模块化算法来处理它们。模块化算法可提供更好的性能，特别是如果它们并行执行。一种基于 CRT/RNS 的已知模块化算法有助于将长多项式和大多项式分解为一组具有小系数的独立多项式。系数的大小可以通过改变 CRT 模数的大小来控制。通常，选择 CRT 的模数大小以使模量可以适合一个机器字，以实现高效实现。</li>
+<li>模块化方法在处理多项式算术上吸引人的特性源于以下事实：所生成的多项式是独立的，并且可以并行操作，从而使该问题适合于并行平台。CRT/RNS 方法的唯一问题是某些操作变得更加困难，例如除法和舍入以及基数分解。对 Textbook FV 的仔细检查表明，解密和同态乘法需要这些操作。<ul>
+<li>这里应该指出：关于除法和舍入，问题不在于可以通过模逆转换为乘法的除法，而是舍入需要比较，而这与 RNS 几乎不兼容。</li>
+<li>正如之前第 4 节提到的，多项式以两种表示形式表示：① CRT/RNS；② NTT 表示形式。乘法后，多项式在 NTT 域中表示。还不知道是否有可能在 NTT 表示中进行四舍五入，从而迫使转换成 CRT 表示。即使在 CRT 表示中，舍入也不便宜，并且需要复杂的实现。因此，需要对多项式的典范系数表示进行另一种转换，以执行多精度比较。相同的论点适用于基本分解。</li>
+</ul>
+</li>
+<li>幸运的是，Bajard 等人提出了一种巧妙的方法，即利用下限功能在 RNS 域中执行近似舍入。由于 FV 是基于噪声/错误的加密方案，因此只要控制错误，引入额外的错误就不会违反其功能。他们改编了 textbook Dec 和 EvalMul 以在 CRT/RNS 域中执行近似取整。此外，他们通过分解 CRT 模中的多项式来避免碱基分解。Bajard 等人的改进的 Dec 和 EvalMul 程序。效率更高，并且对方案支持的最大乘法深度影响不大。之后将回顾它们的过程，并介绍如何将它们映射到 GPU。</li>
+</ul>
+<p>实用说明：重新线性化过程（EvalMul 中的第 2 步和第 3 步）对于减少同态评估期间的密文长度和错误增长至关重要。此外，可以通过 Karatsuba 乘法算法将步骤 1 中的乘积 $c_1$ 计算出来，以将乘法次数从 4 减少到 3。</p>
+<h2 id="FV-的-RNS-变体"><a href="#FV-的-RNS-变体" class="headerlink" title="FV 的 RNS 变体"></a>FV 的 RNS 变体</h2><p>Bajard 等人提出的 RNS FV 的核心组件是在下面方程式中提供的称为快速基数转换（FastBconv）的 RNS 基数之间进行转换的有效方法：<script type="math/tex">FastBconv(x,q,B)=(\sum_{i=1}^r\ {|x_i\frac{q_i}{q}|}_{q_i} \times \frac{q}{q_i}\ (mod\ b))_{b \in B}</script> </p>
+<ul>
+<li>FastBconv 将基数 q 中具有 r 模数的整数 x 转换为基数 B 中的 RNS 表示；</li>
+<li>它还可以用于多项式，其中将运算应用于每个系数；</li>
+<li>FastBconv 与 CRT 重建相似，除了不需要模块化的降低模数。这意味着转换是近似的，并引入了可以通过某些校正技术（例如 Shenoy-Kumaresan 算法）通过冗余模量消除的误差。  </li>
+</ul>
+<p>RNS FV 的另一个重要方面是逐轮替换：</p>
+<ul>
+<li>四舍五入需要与 RNS 比较几乎不兼容的比较，相反，如果除数是 RNS 模数子集的乘积，则可以有效地进行平整；</li>
+<li>对于解密，他们使用下层函数的基本定义（$\lfloor \frac{a}{q} \rfloor = \frac{a-(a\ mod\ q)}{q}$）来计算 $[\lfloor \frac{t}{q} [ct[0]+ct[1]sk]_q \rfloor]_t$ 的近似值；</li>
+<li>冗余模量 $\gamma$ 被选为与 q 互质，并且大于或等于 r 在 q 中的 CRT 模数；</li>
+<li>为了纠正由于快速基数转换以及向下取整而不是四舍五入而导致的错误，他们应用了 Shenoy-Kumaresan 算法。算法 2 中显示了新的解密过程：<br><img src="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/DecRNSAlgorithm.png" alt="DecRNSAlgorithm"></li>
+</ul>
+<p>同态乘法更多的是通过下面四个步骤进行：</p>
+<ol>
+<li>将更大 RNS 模的多项式扩展为包含 $\frac{Z[x]}{x^n+1}$ 的多项式乘积，即不对系数进行模减少。</li>
+<li>在 NTT 域中乘以扩展多项式；</li>
+<li>通过向下取整进行近似四舍五入；</li>
+<li>通过分解 q 的 RNS 模中的 $c_2$ 而不是 $\omega$ 来进行线性化；</li>
+</ol>
+<p><img src="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/FlowDivideAndRoundinRNSFV.png" alt="FlowDivideAndRoundinRNSFV"></p>
+<ul>
+<li>上图显示了如何执行步骤 1-3 以计算 $c_0 = [\lfloor \frac{t}{q}ct_0[0]ct_1[0] \rfloor]_q$:<ul>
+<li>最初，我们在多项式的基数 q 中有 RNS 表示：$ct_0[0]$ 和 $ct_1[0]$。每个多项式以辅助模 $B_{sk} = B \cup m_{sk}$ 为模扩展。选择 B 中的模与 q 互质，使得 $\prod_{i=1}^l m_i \geq 4(q-1)^2n \cdot t,\forall m_i \in \{q \cup B\}$。这将包含乘积 $c_0$，$c_1$ 和 $c_2$，就好像它们是按 $\frac{Z[x]}{x^n+1}$ 计算的一样，即没有减少模 q。冗余模数 $m_{sk}$ 必须是 $\{q \cup B\}$ 的素数，并且必须大于 $2(|B|+\lceil \tau \rceil)$，其中 $\tau$ 是多项式积在任何计算点都可能包含的 B 的最大倍数。<ul>
+<li>应当指出的是，当我们进行从基数 q 到 $B_{sk}$ 的快速转换时，可能会产生 q 的溢出，因此会产生额外的模数 $\tilde{m} &gt;|q|$。用于使用 Shenoy-Kumaresan 算法消除这些溢出。</li>
+</ul>
+</li>
+<li>接下来，将 NTT 域中的扩展多项式相乘。乘积被转换回 RNS 基数 $\{q∪B_{sk}\}$。</li>
+<li>在步骤 3 中，通过除以 q 进行向下取整。尽管除法与 RNS 几乎不兼容，但除以模子集的乘积（也称为缩放）要简单得多。 Bajard 等使用了 Barsi 和 Pinotti 缩放算法。在计算下限函数时，将多项式乘以 t，如图中步骤 3 所示。至此，我们有了底数为 $B_{sk}$ 的底多项式。</li>
+<li>最后，我们使用 Shenoy-Kumaresan 算法和冗余模数 $m_{sk}$ 将乘积转换回基数 q。所得乘积包含一个额外的误差 e，其中 $||e||_{\infty} \leq |q|$。</li>
+</ul>
+</li>
+</ul>
+<p>为了绕过 EvalMul 中的基本分解，他们采用了如下的线性化步骤：</p>
+<ol>
+<li>$\xi_q(c_2) = \sum_{i=1}^k |c_2 \frac{q_i}{q}|_{q_i}$；</li>
+<li>$P_{RNS,q}(sk^2)=(|sk^2 \frac{q}{q_1}|_q,\dots,|sk^2 \frac{q}{q_k}|_q)$；</li>
+<li>用 $evk_{RNS}[i] = (| P_{RNS,q}(sk^2)[i]-(e_i+a_i \cdot sk)]_q,a_i)$ 来取代 evk；</li>
+</ol>
+<p>为了完整起见，算法3中列出了 RNS EvalMul 过程：<br><img src="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/EvalMulRNSAlgorithm.png" alt="EvalMulRNSAlgorithm"></p>
+<p><img src="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/PerformanceTextbookFVRNSVariant.png" alt="PerformanceTextbookFVRNSVariant"></p>
+<h1 id="实施方案"><a href="#实施方案" class="headerlink" title="实施方案"></a>实施方案</h1><p>我们的 GPU 实现受到 cuHE（基于 CUDA 的多项式算法库）的启发。cuHE 专为在 CUDA GPU 上的任意环中执行多项式算法而设计。该库将 NTL 用于 CPU 接口，并使用 CRT，NTT 和多项式 Barrett 约简。cuHE 本身仅支持三个多项式度：{8192、16384、32768}，即，不同度的多项式将零填充为更高的支持度。由于库处理任意多项式环，因此在计算 NTT 之前，将多项式长度加倍并补零。乘法之后，使用 Barrett 约简来减少环中的乘积。下面我们描述我们的实现，指出与 cuHE 的异同。</p>
+<h2 id="多项式表示"><a href="#多项式表示" class="headerlink" title="多项式表示"></a>多项式表示</h2><ul>
+<li>在 CPU 上使用 NTL 初始化多项式。我们主要使用 NTL 初始化加密密钥。最终，所有密钥都会转换为 CRT 和 NTT 域，并存储在 GPU 全局内存中。</li>
+<li>在 GPU 上，我们将以双 CRT 表示的多项式存储在数组结构（SOA）布局中。 这允许合并访问模式，从而允许每个线程一次处理一个多项式系数/残差。</li>
+</ul>
+<h2 id="中国剩余定理及其重构"><a href="#中国剩余定理及其重构" class="headerlink" title="中国剩余定理及其重构"></a>中国剩余定理及其重构</h2><p>CRT 操作采用具有较大多字系数的多项式，并生成一组系数较小的多项式残差，可以适合一个机器字。CRT 重建是 CRT 的逆过程，它应用中国余数定理并从其残差重建多项式。</p>
+<ul>
+<li>CUDA cards 中的字长为 32 位。在这种情况下，理想的解决方案是选择 32 位 CRT 模数以最大程度地减少残数并避免使用多精度算法。<ul>
+<li>请注意，如果硬件/软件支持有效的 4 字算术，则可以使用 2 字模数。</li>
+</ul>
+</li>
+<li>影响 CRT 模数选择的另一个因素是模数运算的效率。<ul>
+<li>精心选择的模数比任意模数提供更有效的模数运算。</li>
+<li>我们使用 32 位素数形成 CRT 模，并使用本机 CUDA 模运算执行模运算。实际上，在 30 位素数上使用 32 位素数可能会导致表示 q 的模数减少，从而导致 NTT 过程数量减少。</li>
+</ul>
+</li>
+</ul>
+<h3 id="CRT"><a href="#CRT" class="headerlink" title="CRT"></a>CRT</h3><p>我们启动 n 个线程来减少以 CRT 模为模的度数小于 n 的多项式。每个线程以单精度 CRT 模为模减少多精度整数。</p>
+<ul>
+<li>令 x 为 d 字整数；</li>
+<li>在基数 $2^{32}$ 中分解 x 会得到 $x_{d-1}(2^{32})^{d-1} + x_{d-2}(2^{32})^{d-2} + \dots + x_0(2^{32})^0$，其中 $x_i$ 是一个 32 位数字；</li>
+<li>可以将 x 模的降幅 $m_j$ 分别应用于每个项.由于 CUDA 支持 doubleprecision 运算，因此我们独立减少 x 的每个项，并对余数取模 $m_j$ 求和;</li>
+<li>为了获得更有效的实现，可以选择预先计算常数 $(2^{32})^i\ (mod\ m_j)$ 并将其存储在 GPU 常数存储器中；</li>
+</ul>
+<h3 id="CRT-重构"><a href="#CRT-重构" class="headerlink" title="CRT 重构"></a>CRT 重构</h3><p>CRT 重建可以通过两种方法执行：① 使用前面介绍过得两个等式展示的中文余数定理；② 使用混合基数系统。两种方法都可以在 GPU 上实现，但是我们认为第二种方法更适合 GPU 平台。为了证明这一点，首先需要介绍采用混合基数系统的 Garner 算法。指出，cuHE 实现了经典的 CRT 重建。</p>
+<p><img src="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/GarnerAlgorithm.png" alt="GarnerAlgorithm"></p>
+<ul>
+<li>算法显示了两个主要步骤：① 常数 $C_i$ 的预计算和 ② 重构；</li>
+<li>由于我们处理的是固定模 M，因此在程序初始化时会进行预计算，并且常量 $C_i$ 会存储在 GPU 常量内存中。$C_i$ 的存储要求是 $O(r)$，其中 r 是 CRT 模数;</li>
+<li>然而，重建步骤涉及更多，并且必须应用于每个系数。此步骤所需的操作如下：① 2 个以单精度整数 $m_i$ 为模的多精度减法/加法；② 1 个多精度整数（$\prod_{j=0}^{i-1}$）与单精度整数 u 的乘积。我们通过 CUDA PTX 语言执行这些操作以获得对进位的访问；</li>
+<li>此处使用的另一种优化方法是将常数 $K_i = \prod_{j=0}^{i-1}$ 存储在 GPU 常数存储器中。乘积 $K_i$ 需要 i 的存储词。假设 CRT 素数的最大数量为 z，我们分配大小为 $\frac{(z-1) \cdot z}{2}$ 的常量内存。<ul>
+<li>下图说明了 $K_i$ 的存储和索引。注意：我们使用 z 而不是 r，因为在编译时应该知道恒定的内存大小。<br><img src="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/GarnerCRTReconstructMemLayout.png" alt="GarnerCRTReconstructMemLayout"></li>
+</ul>
+</li>
+</ul>
+<p>Garner 算法在 GPU 上的效率：</p>
+<ul>
+<li>与使用等式 1 进行的经典 CRT 重建相比，Garner 的 CRT 重建更适合 GPU：</li>
+<li>首先，经典 CRT 重建需要对另一个多精度整数 m 取模的多精度整数（总和）减少。该操作不仅成本高昂，而且需要复杂的实现。通过利用在每次迭代中总和小于 2m 的事实可以避免这种代价昂贵的减少，即可以通过检查总和是否大于或等于 m 并在条件为真的情况下减去m来代替减少。尽管这种方法的成本较低，但由于条件检查可能会在线程执行中产生差异，进而导致线程扭曲中的顺序执行，因此它不适用于 GPU 平台。</li>
+<li>此外，经典 CRT 重构中使用的常量的存储要求比 Garner 算法中的要高。在经典的 CRT 重构中，必须存储 r 个多精度数 $m/m_i$ 的值和 r 单精度数的 r，而在 Garner 算法中，存储要求是 $\frac{r(r-1)}{2}$ 和 r 单精度的 r 数字。</li>
+</ul>
+<h2 id="离散伽罗瓦变换（DGT）及其逆"><a href="#离散伽罗瓦变换（DGT）及其逆" class="headerlink" title="离散伽罗瓦变换（DGT）及其逆"></a>离散伽罗瓦变换（DGT）及其逆</h2><p>DGT 及其逆用于计算多项式的 NTT 表示。正如之前提到的，此转换允许使用类似 n/2 FFT 的数据路径来计算 NTT（或更准确地说是 DGT）表示。因此，我们只需要存储 n/2 个旋转根。另一方面，扭曲因子是高斯整数，每个实数和虚数部分都需要两个整数。 由于不同的存储器访问模式，我们在纹理存储器中存储旋转，而在全局存储器中存储旋转因子。</p>
+<p>算法调整与分析：</p>
+<ul>
+<li>DGT 和 IDGT 通过多基数 Stockham 算法进行计算。我们调整了算法以在 $GF(m^2_i)$ 中工作。</li>
+<li>应该指出，cuHE 使用单个特殊的 64 位 Solinas 素数 $\hat{p} = 2^{64} - 2^{32}+1$ 计算 NTT 表示形式，它提供了有效的 128 位整数约简。实际上，此质数最初由 Emmart 和 Weems 在其大型整数 GPU 乘法器中使用。</li>
+<li>在一个素数中计算 NTT 具有以下优点：① 一个人可以针对一个模数优化模运算，并且② 仅需要预先计算的旋转和单个素数的扭曲因子。</li>
+<li>但是，这种方法具有明显的缺点： CRT 模数 $m_i$ 必须 $\leq \lfloor | \sqrt{\hat{p}/(2n)} | \rfloor$，以便以 $\hat{p}$ 模数支持最大卷积值。此界限仅覆盖两个多项式的单个乘法，如果要在 NTT 域中相乘两个以上的多项式，则界限将更小。较小的 CRT 模数会增加 NTT 转换的次数，从而降低性能。</li>
+</ul>
+<p>具体实现：</p>
+<ul>
+<li>对于较小的多项式度（$\leq 4k$），我们启动了一个用于计算 DGT/IDGT 的内核。整个计算由一个块完成，这使我们能够同步所有线程并以多次通过处理多项式。</li>
+<li>对于更大的程度，可能需要 2-3 个内核，因为一起启动了几个块。</li>
+<li>线程之间的全局同步是通过在同一流上启动连续的内核来实现的。</li>
+<li>应该指出，我们同时对所有多项式残差执行 DGT/IDGT 计算。我们将所有多项式残差打包在一起，只启动一次转换内核。这减少了昂贵的内核启动总数。只需通过启动 2D 螺纹块网格即可完成打包。网格尺寸为 x 和 y，其中 x 是计算单个残基的 DGT/IDGT 所需的线程块数，而 y=r 是 CRT 模数中的质数。</li>
+</ul>
+<p>对比 cuHE：</p>
+<ul>
+<li>在 cuHE 中，NTT/INTT 计算是使用 3 个针对每个多项式度进行硬编码的内核进行的，而无需进行批处理。我们注意到内核启动时间比内核计算花费更多。通过减少内核启动次数，可以实现明显的改进。此外，可以在 cuHE 中一次完成一次 NTT/INTT 转换。 这是由于使用单个共享缓冲区作为 NTT 计算的临时存储。我们为每个 DGT/IDGT 启动提供一个单独的缓冲区，允许并发 DGT/IDGT 调用。</li>
+</ul>
+<h2 id="快速基转换"><a href="#快速基转换" class="headerlink" title="快速基转换"></a>快速基转换</h2><p>对快速基本转换的仔细检查显示出它与 CRT 重建之间的相似性。 但是，由于求和是对 $b \in B$ 取模，即单个单词模数，因此常数 $\frac{q}{q_i}(mod\ b)$ 可以预先计算并存储在常数存储器中。它们的存储要求是 $O(z \cdot v)$ 字，其中 z 和 v 是为基数 q 和 B 选择的最大模数。类似地，常数 $\frac{q_i}{q}(mod\ q_i)$ 被预先计算并存储在需要 $O(z)$ 个字的常数存储器中。</p>
+<p>在更受约束的设备上，可以选择通过不计算与 CRT 重建相似的常数的方法来计算转换，方法是从其残差中重建数量，然后进行多精度模 b 重建。唯一的区别是不需要动态范围的多精度减法。然而，这种方法需要昂贵的多精度乘法。</p>
+<h2 id="随机数生成"><a href="#随机数生成" class="headerlink" title="随机数生成"></a>随机数生成</h2><p>密钥生成和加密所需的随机多项式是通过 CUDA cuRAND 在 GPU 上生成的。确定了三个分布：$\chi_2$、$\chi_q$ 和 $\chi_{err}$。前两个是均匀分布，而第三个是离散的截断的高斯分布。</p>
+<ul>
+<li>要从 $\chi_2$ 采样随机多项式，我们启动 n 个线程。每个线程从模 2 的 cuRAND 统一随机数生成器中采样一个数字：</li>
+<li>对于 $\chi_q$，每个线程生成 r 个随机数并以 CRT 表示形式构造一个随机系数。最后；</li>
+<li>对于 $\chi_{err}$，我们启动 n/2 个线程，每个线程使用其自己的统一随机数使用 Box-Muller 方法生成一对独立的标准正态分布随机数。</li>
+</ul>
+<h2 id="多个-CUDA-流"><a href="#多个-CUDA-流" class="headerlink" title="多个 CUDA 流"></a>多个 CUDA 流</h2><p>为了充分利用 GPU 并提高吞吐量，我们在多个流上启动了独立的内核。这允许独立操作的并发和交错执行。一个清楚的例子是同态乘法过程。计算 $c_0$，$c_1$ 和 $c_2$ 是独立的，可以同时完成。我们还通过使用固定的内存分配将内存传输的延迟隐藏在内核执行之后。</p>
+<h2 id="内存池"><a href="#内存池" class="headerlink" title="内存池"></a>内存池</h2><p>处理多项式的几种表示形式需要在计算过程中分配和取消分配大量内存。另外，对同态乘法的求值需要大量的临时存储以用于基本转换。为了降低成本，我们在系统初始化时采用了内存池机制在 GPU 上预分配内存。</p>
+<h1 id="实验和结果"><a href="#实验和结果" class="headerlink" title="实验和结果"></a>实验和结果</h1><p><img src="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/TestEnvironmentAndParameter.png" alt="TestEnvironmentAndParameter">  </p>
+<p><img src="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/ResultPowerUtilization.png" alt="ResultPowerUtilization"></p>
+<p><img src="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/ResultLatency.png" alt="ResultLatency"></p>
+<p><img src="http://img.thebetterkong.cn/blog/High-Performance-FV-Somewhat-HE-on-GPUs/ResuiltLatency2.png" alt="ResuiltLatency2"></p>
+<h1 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h1><ul>
+<li>在这项工作中，介绍了 FV SHE 方案的 GPU 实现的详细信息。我们为多项式环 $\frac{Z_q[x]}{x^{2^k}+1}$ 开发了一个高性能的模块化算法库。在该库中，我们使用了几种代数工具，例如 CRT，RNS 和 DGT/IDGT，以对具有大系数的长多项式进行算术运算。</li>
+<li>我们证明，由于需要 positional numbering system，textbook FV 方案中的除法和基数分解需要多精度算法。在 GPU 上处理起来更加困难。为了克服这个问题，我们采用了 Bajard 等人的快速碱基转换技术。在 GPU上 的 CRT/RNS 域中进行计算，而无需将计算工作转移到 CPU。</li>
+<li>这里使用的 RNS 技术需要将 NTT 格式转换为 RNS 域。如果直接在 NTT 域中进行除法和基数分解，将导致更有效的解决方案。此外，其他 CUDA 编程模型可能适用于进一步改进我们的实现，例如通过线程的扭曲或半扭曲而不是单个线程来处理多项式系数。</li>
+<li>将我们的实现与 textbook FV 的成熟的最新实现进行了比较，并提供了所实现的加速。</li>
+<li>作为这项工作的直接扩展，我们认为我们的实现可以移植到其他硬件加速器上，例如 FPGA 和 ASIC。这些平台比 GPU 提供更高的计算能力。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+      
+    </div>
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>TheBetterKong
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://www.thebetterkong.cn/2020/08/20/Literature-reading-notes/High-Performance-FV-Somewhat-HE-on-GPUs/" title="《High Performance FV Somewhat Homomorphic Encryption on GPUs:An Implementation using CUDA》阅读笔记">http://www.thebetterkong.cn/2020/08/20/Literature-reading-notes/High-Performance-FV-Somewhat-HE-on-GPUs/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/CUDA/" rel="tag"><i class="fa fa-tag"></i> CUDA</a>
+              <a href="/tags/Homomorphic-Encryption/" rel="tag"><i class="fa fa-tag"></i> Homomorphic Encryption</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/07/09/DataStructure-Algorithm/DataStructure-Tree/" rel="prev" title="java 数据结构之树">
+      <i class="fa fa-chevron-left"></i> java 数据结构之树
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/08/24/Black%20Hole/LongestHolidayEver/" rel="next" title="2020 | 最长 “小” 假期">
+      2020 | 最长 “小” 假期 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#引言"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#文献回顾"><span class="nav-number">2.</span> <span class="nav-text">文献回顾</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#知识准备（代数知识）"><span class="nav-number">3.</span> <span class="nav-text">知识准备（代数知识）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#CUDA-编程范例"><span class="nav-number">3.1.</span> <span class="nav-text">CUDA 编程范例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数学知识"><span class="nav-number">3.2.</span> <span class="nav-text">数学知识</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#符号（Notation）表示"><span class="nav-number">3.2.1.</span> <span class="nav-text">符号（Notation）表示</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#多项式的残数系统表示"><span class="nav-number">3.2.2.</span> <span class="nav-text">多项式的残数系统表示</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#多项式的数论变换表示"><span class="nav-number">3.2.3.</span> <span class="nav-text">多项式的数论变换表示</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用环-frac-Z-x-x-2-k-1-的局限性"><span class="nav-number">3.2.4.</span> <span class="nav-text">使用环 $\frac{Z[x]}{x^{2^k}+1}$ 的局限性</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Textbook-FV-及其-RNS-变体"><span class="nav-number">4.</span> <span class="nav-text">Textbook FV 及其 RNS 变体</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#明文和密文空间"><span class="nav-number">4.1.</span> <span class="nav-text">明文和密文空间</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Textbook-FV-方案"><span class="nav-number">4.2.</span> <span class="nav-text">Textbook FV 方案</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#FV-的-RNS-变体"><span class="nav-number">4.3.</span> <span class="nav-text">FV 的 RNS 变体</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#实施方案"><span class="nav-number">5.</span> <span class="nav-text">实施方案</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#多项式表示"><span class="nav-number">5.1.</span> <span class="nav-text">多项式表示</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#中国剩余定理及其重构"><span class="nav-number">5.2.</span> <span class="nav-text">中国剩余定理及其重构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#CRT"><span class="nav-number">5.2.1.</span> <span class="nav-text">CRT</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CRT-重构"><span class="nav-number">5.2.2.</span> <span class="nav-text">CRT 重构</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#离散伽罗瓦变换（DGT）及其逆"><span class="nav-number">5.3.</span> <span class="nav-text">离散伽罗瓦变换（DGT）及其逆</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#快速基转换"><span class="nav-number">5.4.</span> <span class="nav-text">快速基转换</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#随机数生成"><span class="nav-number">5.5.</span> <span class="nav-text">随机数生成</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#多个-CUDA-流"><span class="nav-number">5.6.</span> <span class="nav-text">多个 CUDA 流</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#内存池"><span class="nav-number">5.7.</span> <span class="nav-text">内存池</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#实验和结果"><span class="nav-number">6.</span> <span class="nav-text">实验和结果</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#结论"><span class="nav-number">7.</span> <span class="nav-text">结论</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
+  </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+
+<div class="statistics">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
+  <span id="busuanzi_value_site_uv"></span>
+</span>
+<span class ="post-meta-divider">|</span>
+<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
+  <span id="busuanzi_value_site_pv"></span>
+</span>
+</div>
+
+<div class="theme-info">
+  <div class="powered-by"></div>
+  <span class="post-count">博客全站共236.4k字</span>
+  <span class ="post-time-divider">|</span>
+    <span>运行<span id="showDays"></span></span>
+  <script>
+    var seconds = 1000;
+    var minutes = seconds * 60;
+    var hours = minutes * 60;
+    var days = hours * 24;
+    var years = days * 365;
+    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
+    setInterval(function() {
+      var today = new Date();
+      var todayYear = today.getFullYear();
+      var todayMonth = today.getMonth()+1;
+      var todayDate = today.getDate();
+      var todayHour = today.getHours();
+      var todayMinute = today.getMinutes();
+      var todaySecond = today.getSeconds();
+      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
+      var diff = now - birthDay;
+      var diffYears = Math.floor(diff/years);
+      var diffDays = Math.floor((diff/days)-diffYears*365);
+      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
+      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
+      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
+      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
+    }, 1000);
+  </script>
+</div>
+
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
+      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
+      placeholder: "期待您的留言！",
+      avatar     : '',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

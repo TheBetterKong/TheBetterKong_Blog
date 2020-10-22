@@ -708,6 +708,13 @@ x,\quad x>0
 <td>$\Phi$</td>
 <td><code>\Phi</code></td>
 </tr>
+<tr>
+<td>$\varphi$</td>
+<td><code>\varphi</code></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -16261,6 +16268,174 @@ R_{upstream}(m)+R(switch)+R_{metal}(n),\quad if\ a\ pass\ transistor
         <tag>java</tag>
         <tag>Algorithm</tag>
         <tag>python</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>RSA 算法详讲</title>
+    <url>/2020/10/22/Cryptography/RSA-Algorithm/</url>
+    <content><![CDATA[<div align="center"> <img src="http://img.thebetterkong.cn/blog/RSA-Algorithm/header.png" width="100%" alt="header.png" /> </div>   
+
+<p>RSA 说它是 “地球最重要的算法”，应该也不过分。它是 1978 年由 R.Rivest、A.Shamir 和 L.Adleman 提出的一种用数论构造的、也是迄今为止理论上最为成熟、完善的公钥密码体制，它已经得到了广泛的应用。</p>
+<a id="more"></a>
+<h1 id="背景介绍"><a href="#背景介绍" class="headerlink" title="背景介绍"></a>背景介绍</h1><p>在 1976 年以前，所有的加密方法都使用<strong>对称加密算法</strong>，即：加密和解密使用同一套规则。</p>
+<ul>
+<li>举例来说：甲使用密钥 A 加密，将密文传递给乙，乙仍使用密钥 A 解密。如果密钥 A 在甲传递给乙的过程中泄露，或者根据已知的几次密文和明文推导出密钥 A，则甲乙之间的通讯将毫无秘密。</li>
+</ul>
+<p>1976 年，两位美国计算机学家 Whitfield Diffie 和 Martin Hellman，提出了一种崭新构思，可以在不传递密钥的情况下，完成解密，这被称为 <strong>Diffie-Hellman 密钥交换算法</strong>。 </p>
+<ul>
+<li>假如甲要和乙通讯，甲使用公钥 A 加密，将密文传递给乙，乙使用私钥 B 解密得到明文。其中公钥在网络上传递，私钥只有乙自己拥有，不在网络上传递，这样即使知道了公钥 A 也无法解密。反过来通讯也一样。只要私钥不泄漏，通信就是安全的，这就是<strong>非对称加密算法</strong>。</li>
+</ul>
+<p>1977 年，三位数学家 Rivest、Shamir 和 Adleman 设计了一种算法，可以实现非对称加密。算法用他们三个人的名字命名，叫做 RSA 算法。直到现在，RSA 算法仍是最广泛使用的”非对称加密算法”。毫不夸张地说，只要有计算机网络的地方，就有 RSA。</p>
+<h1 id="算法介绍"><a href="#算法介绍" class="headerlink" title="算法介绍"></a>算法介绍</h1><h2 id="密钥对的生成"><a href="#密钥对的生成" class="headerlink" title="密钥对的生成"></a>密钥对的生成</h2><ol>
+<li><strong>选两个保密的大素数 p 和 q （越大越安全）；</strong></li>
+<li><strong>计算 $n = p \ast q$；</strong><ul>
+<li>比如 $P = 67$，$Q = 71$。计算他们的乘积 $n = P * Q = 4757$，转化为二进为  1 0010 1001 0101，该加密算法即为 13 位；</li>
+<li>实际算法是 1024 位 或 2048 位，位数越长，算法越难被破解；</li>
+</ul>
+</li>
+<li><strong>计算 n 的欧拉函数，即：$\varphi (n) = (p-1)(q-1)$；</strong><ul>
+<li>$\varphi(n)$ 表示在小于等于 n 的正整数之中，与 n 构成互质关系的数的个数；<ul>
+<li>例如：在 1 到 8 之中，与 8 形成互质关系的是1、3、5、7，所以 $\varphi(n)$ = 4；</li>
+</ul>
+</li>
+<li>如果 $n = P \ast Q$，P 与 Q 均为质数，则 $\varphi(n) = \varphi(P \ast Q)= \varphi(P)\varphi(Q) = (P - 1)(Q - 1)$；<ul>
+<li>本例中 $\varphi(n) = 66 \ast 70 = 4620$，这里记为 m， $m = \varphi(n) = 4620$；</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>选择一个整数 $e$，满足 $1 &lt; e &lt; \varphi(n)$，且 $gcd(\varphi(n),e)=1$；</strong><ul>
+<li>$gcd$ 函数是求最大公约数，其值为 1 表示 $e$ 与 $\varphi(n)$ 互质；<ul>
+<li>这里我们随机选择 e = 101。注意：不要选择 4619，如果选这个，则公钥和私钥将变得相同；</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>计算 $d$，满足 $d \cdot e \equiv1\ mod\ \varphi(n)$；</strong><ul>
+<li>即 d 是 e 在模 $\varphi(n)$ 下的乘法逆元，因为 e 与 $\varphi(n)$ 互素，由模运算知，它的乘法逆元一定存在；<ul>
+<li>即找一个整数 d，使得 $(d \ast e)\ \%\ m = 1$。等价于 $d \ast e - 1 = y \ast m$ (y 为整数）；</li>
+<li>找到 d ，实质就是对下面二元一次方程求解：$e \ast x - m \ast y =1$，<ul>
+<li>其中: $e = 101，m = 4620$；</li>
+<li>$101x - 4620y =1$ 这个方程可以用 “扩展欧几里得算法” 求解，最后算出一组整数解 $(x，y)=(1601，35)$，即 d = 1601；</li>
+<li>到此密钥对生成完毕。不同的 e 生成不同的 d，因此可以生成多个密钥对；</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>以 $\{e,n\}$ 为公钥，$\{d,n\}$ 为私钥；</strong><ul>
+<li>本例中公钥为 （n，e) = (4757 , 101)，私钥为 （n，d) = (4757 ，1601)；</li>
+<li>仅（n，e) = (4757 , 101) 是公开的，其余数字均不公开。可以想像如果只有 n 和 e，如何推导出 d，目前只能靠暴力破解，位数越长，暴力破解的时间越长；</li>
+</ul>
+</li>
+</ol>
+<h2 id="加密"><a href="#加密" class="headerlink" title="加密"></a>加密</h2><p><strong>加密是首先将明文比特串分组，使得每个分组对应的十进制数小于 $n$，即分组长度小于 $log_2\ n$。然后对每个明文分组 $m$，作加密运算，即</strong>：<script type="math/tex">c \equiv m^e\ mod\ n</script></p>
+<ul>
+<li>以汉字 “中” 为例，取 ascii 值或 unicode 值折为三个字节 $[228,184,173]$，分别对三个字节加密：<ul>
+<li>$228^{101}\ \%\ 4757 = 4296$</li>
+<li>$184^{101}\ \%\ 4757 = 2458$</li>
+<li>$173^{101}\ \%\ 4757 = 3263$</li>
+</ul>
+</li>
+<li>即 $[228,184,173]$ 加密后得到密文 $[4296，2458，3263]$，如果没有私钥 d ,神仙也无法从 $[4296，2458，3263]$ 中恢复 $[228,184,173]$；</li>
+</ul>
+<h2 id="解密"><a href="#解密" class="headerlink" title="解密"></a>解密</h2><p><strong>对密文分组的解密运算为</strong>：<script type="math/tex">m \equiv c^d\ mod\ n</script></p>
+<ul>
+<li>密文 $[4296，2458，3263]$ 的明文如下：<ul>
+<li>$4296^{1601}\ \%\ 4757 = 228$</li>
+<li>$2458^{1601}\ \%\ 4757 = 184$</li>
+<li>$3263^{1601}\ \%\ 4757 = 173$</li>
+</ul>
+</li>
+<li>即密文 $[4296，2458，3263]$ 解密后得到 $[228,184,173]$ 将 $[228,184,173]$ 再按 utf-8 解码为汉字 “中”，至此解密完毕；</li>
+</ul>
+<h1 id="解密的正确性证明"><a href="#解密的正确性证明" class="headerlink" title="解密的正确性证明"></a>解密的正确性证明</h1><p>由加密过程知： $c \equiv m^e\ mod\ n$，则 $c^d\ mod\ n \equiv m^{ed}\ mod\ n \equiv m^{k\varphi (n) +1}\ mod\ n$；   </p>
+<p>分两种情况考虑：</p>
+<ol>
+<li>m 与 n 互为素数：<ul>
+<li>则由 Euler 定理：$m^{\varphi (n)}\equiv 1\ mod\ n,\ m^{k \varphi (n)}\equiv 1\ mod\ n,\ m^{k\varphi (n)+1}\equiv 1\ mod\ n$，也即：$c^d\ mod\ n \equiv m$；</li>
+</ul>
+</li>
+<li>m 与 n 不互为素数：<ul>
+<li>即 $gcd(m,n) \neq 1$，$n=pq$ 这也就意味着 m 是 p 或者 q 的倍数；</li>
+<li>令 $m=tp$，其中 t 为一个正整数。此时，必有 $gcd(m,q) = 1$；<ul>
+<li>不然，m 也是 q 的倍数，从而 m 是 pq 的倍数，与 $m &lt; n = pq$ 矛盾；</li>
+</ul>
+</li>
+<li>由 $gcd(m,q) = 1$ 即 Euler 定理得 $m^{\varphi (n)} \equiv 1\ mod\ q$；因此：$m^{k \varphi (q)}\equiv 1\ mod\ q,\ [m^{k\varphi (q)}]^{\varphi (p)}\equiv 1\ mod\ q$，$m^{k\varphi (n)} \equiv 1\ mod\ q$；</li>
+<li>那么也就存在一个整数 r 使得 $m^{k\varphi (n)} = 1+rq$，两边同时乘以 $m=tp$ 得：$m^{k\varphi (n) +1} = m+rtpq = m+rtn$。即：$m^{k\varphi (n) +1} \equiv m\ mod\ n$，所以 $c^d\ mod\ n \equiv m$；</li>
+</ul>
+</li>
+</ol>
+<h1 id="安全性说明"><a href="#安全性说明" class="headerlink" title="安全性说明"></a>安全性说明</h1><p>问题：有没有可能在已知 （n，e) 的情况下，推导出 d。</p>
+<ul>
+<li>根据以上密钥对的生成过程：<ul>
+<li>如果想知道 $d$ 需要知道欧拉函数 $\varphi(n)$；</li>
+<li>如果想知道欧拉函数 $\varphi(n)$ 需要知道 $P$ 和 $Q$；</li>
+<li>要知道 $P$ 和 $Q$ 需要对 $n$ 进行因数分解；</li>
+</ul>
+</li>
+<li>对于本例中的 4757 你可以轻松进行因数分解，但对于大整数的因数分解，是一件很困难的事情，目前除了暴力破解，还没有更好的办法，如果以目前的计算速度，破解需要 50 年以上，则这个算法就是安全的。</li>
+</ul>
+<p>维基百科这样描述：</p>
+<blockquote>
+<p>“对极大整数做因数分解的难度决定了 RSA 算法的可靠性。换言之，对一极大整数做因数分解愈困难，RSA 算法愈可靠。假如有人找到一种快速因数分解的算法，那么 RSA 的可靠性就会极度下降。但找到这样的算法的可能性是非常小的。今天只有短的 RSA 密钥才可能被暴力破解。到 2008 年为止，世界上还没有任何可靠的攻击 RSA 算法的方式。只要密钥长度足够长，用 RSA 加密的信息实际上是不能被解破的。”</p>
+</blockquote>
+<p>目前已经破解的最大整数：（232 个十进制位，768 个二进制位），目前被破解的最长 RSA 密钥就是 768 位。实际应用中 RSA 的密钥长度为 1024 位，重要场合 2048 位，未来半个世纪不可能破解。</p>
+<h1 id="RSA-算法中的计算问题"><a href="#RSA-算法中的计算问题" class="headerlink" title="RSA 算法中的计算问题"></a>RSA 算法中的计算问题</h1><h2 id="RSA-加、解密过程"><a href="#RSA-加、解密过程" class="headerlink" title="RSA 加、解密过程"></a>RSA 加、解密过程</h2><h3 id="问题一"><a href="#问题一" class="headerlink" title="问题一"></a>问题一</h3><p>由前面的定义，我们知道 RSA 算法的加解密过程都为求一个整数的整数次幂，再取模。如果，直接按其含义计算，则中间结果会非常大，有可能超出计算机所允许的整数取值范围。</p>
+<ul>
+<li>例如：$66^{77} mod\ 119$ ，$66^{77}$ 已经远超出了计算机所能表示的范围。</li>
+</ul>
+<p>这时候利用 mod 运算的性质：<script type="math/tex">(a \times b)\ mod\ n = [(a\ mod\ n) \times (b\ mod\ n)]\ mod\ n</script>  就可以减小中间结果。</p>
+<h3 id="问题二"><a href="#问题二" class="headerlink" title="问题二"></a>问题二</h3><p>如何提高加解密运算中指数运算的有效性？</p>
+<ul>
+<li>例如：求 $x^{16}$ ，直接计算需要做 15 次乘法。如果重复对每个部分结果做平方运算，即：求 $x.x^2,x^4,x^8,x^{16}$ 就只需要 4 次乘法；</li>
+</ul>
+<p>一般的，求 $a^m$（其中 a，m 为正整数）可按如下过程进行：</p>
+<ul>
+<li>将 m 表示为二进制形式 $b_kb_{k-1}…b_0$ 则：$m=b_k2^k+b_{k-1}2^{k-1}+…+b_12+b_0$，因此：<script type="math/tex">a^m = (...(\ (\ (a^{b_k})^2\ a^{b_{k-1}}\ )^2\ a^{b_{k-2}})^2...a^{b_1})^2\ a^{b_0}</script></li>
+</ul>
+<p>得到以下快速指数算法：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">c&#x3D;0; d&#x3D;1;</span><br><span class="line">for i&#x3D;k downto 0 do &#123;</span><br><span class="line">    c &#x3D; 2 *c;           &#x2F;&#x2F; 指数的部分结果</span><br><span class="line">    d &#x3D; (d*d) mod n;    &#x2F;&#x2F; 中间结果，终值即为所求</span><br><span class="line">    if b_i&#x3D;1 then &#123;</span><br><span class="line">        c &#x3D; c+1;</span><br><span class="line">        d &#x3D; (d*a) mod n;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">return d;</span><br></pre></td></tr></table></figure>
+<h2 id="密钥的产生"><a href="#密钥的产生" class="headerlink" title="密钥的产生"></a>密钥的产生</h2><p>产生密钥时，需要考虑两个大素数 p、q 的选取，以及 e 的选取和 d 的计算；</p>
+<ul>
+<li>寻找大素数时，一般先随机选取一个大的奇数（用伪随机数产生器），然后用素性检验算法检验这一奇数是否为素数，如果不是则选取另一大奇数，重复这一过程，直到找到素数为止。<ul>
+<li>这是一项十分繁琐的工作，幸运的是在 RSA 体制中只有在产生新密钥时才需要这一工作；</li>
+</ul>
+</li>
+<li>p 和 q 决定后，关于如何选取满足 $1 &lt; e &lt; \varphi (n)$ 和 $gcd(\varphi(n),e)=1$ 的 $e$，并计算满足 $d \cdot e \equiv 1\ mod\ \varphi(n)$ 的 $d$。这一问题可由推广的 Euclid 算法完成；</li>
+</ul>
+<h1 id="改进的-RSA-实现"><a href="#改进的-RSA-实现" class="headerlink" title="改进的 RSA 实现"></a>改进的 RSA 实现</h1><p>利用中国剩余定理，可极大的提高解密运算的速度。方法：</p>
+<ul>
+<li>解密方需要计算如下值：<ul>
+<li>$d_p \equiv d\ mod\ (p-1)$，$d_q \equiv d\ mod\ (q-1)$；</li>
+<li>$m_p \equiv c^{d_p}\ mod\ p$，$m_q \equiv c^{d_q}\ mod\ q$；</li>
+</ul>
+</li>
+<li>正确性由中国剩余定理可证：<ul>
+<li>$m_p \equiv c^{d_p}\ mod\ p \equiv c^d\ mod\ p \equiv m\ mod\ p$；</li>
+<li>$m_q \equiv c^{d_q}\ mod\ q \equiv c^d\ mod\ q \equiv m\ mod\ q$</li>
+</ul>
+</li>
+</ul>
+<p>已证明：</p>
+<ul>
+<li>如果不考虑中国剩余定理的计算代价，则改进后的解密运算速度是原解密运算速度的 4 倍；</li>
+<li>若考虑，则改进后的解密运算速度分别是原解密运算速度的 3.24 倍（模为 768 bit）、3.32 倍（模为 1024 bit）、3.47 倍（模为 2048 bit）；</li>
+</ul>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><ul>
+<li><a href="https://zhuanlan.zhihu.com/p/44185847" target="_blank" rel="noopener">一文搞懂 RSA 算法</a></li>
+<li>《现代密码学（第 3 版）》</li>
+</ul>
+]]></content>
+      <categories>
+        <category>Cryptography</category>
+      </categories>
+      <tags>
+        <tag>Algorithm</tag>
+        <tag>Cryptography</tag>
+        <tag>Security</tag>
       </tags>
   </entry>
 </search>

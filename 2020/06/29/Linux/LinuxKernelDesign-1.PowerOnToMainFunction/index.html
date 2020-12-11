@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
 <meta name="theme-color" content="#222">
 <meta name="generator" content="Hexo 4.2.1">
+
+
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
@@ -12,14 +14,14 @@
 
 <link rel="stylesheet" href="/css/main.css">
 
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic|Lobster:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
 
-<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
 
-
-
-<script id="hexo-configurations">
+<script class="hexo-configurations">
     var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"manual"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+    var CONFIG = {"hostname":"www.thebetterkong.cn","root":"/","images":"/images","scheme":"Mist","version":"8.0.2","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
   </script>
 
   <meta name="description" content="这里提到的 linux 版本是 0.11，在当时，操作系统都是存在软盘里的，而 CPU 的逻辑电路被设计为只能运行内存中的程序。电路刚通电时，内存（RAM）里什么都没有，那么计算机是怎样将操作系统运行起来的呢？">
@@ -57,10 +59,11 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/Mem-BIOS.png">
 
+
 <link rel="canonical" href="http://www.thebetterkong.cn/2020/06/29/Linux/LinuxKernelDesign-1.PowerOnToMainFunction/">
 
 
-<script id="page-configurations">
+<script class="page-configurations">
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
@@ -80,50 +83,62 @@
 
   <noscript>
   <style>
-  .use-motion .brand,
+  body { margin-top: 2rem; }
+
   .use-motion .menu-item,
-  .sidebar-inner,
+  .use-motion .sidebar,
   .use-motion .post-block,
   .use-motion .pagination,
   .use-motion .comments,
   .use-motion .post-header,
   .use-motion .post-body,
-  .use-motion .collection-header { opacity: initial; }
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
 
   .use-motion .site-title,
-  .use-motion .site-subtitle {
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
     opacity: initial;
     top: initial;
   }
 
-  .use-motion .logo-line-before i { left: initial; }
-  .use-motion .logo-line-after i { right: initial; }
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
   </style>
 </noscript>
 
 <link rel="alternate" href="/atom.xml" title="TheBetterKong" type="application/atom+xml">
 </head>
 
-<body itemscope itemtype="http://schema.org/WebPage">
-  <div class="container use-motion">
-    <div class="headband"></div>
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
 
+  <main class="main">
     <header class="header" itemscope itemtype="http://schema.org/WPHeader">
       <div class="header-inner"><div class="site-brand-container">
   <div class="site-nav-toggle">
     <div class="toggle" aria-label="切换导航栏">
-      <span class="toggle-line toggle-line-first"></span>
-      <span class="toggle-line toggle-line-middle"></span>
-      <span class="toggle-line toggle-line-last"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
     </div>
   </div>
 
   <div class="site-meta">
 
     <a href="/" class="brand" rel="start">
-      <span class="logo-line-before"><i></i></span>
+      <i class="logo-line"></i>
       <h1 class="site-title">TheBetterKong</h1>
-      <span class="logo-line-after"><i></i></span>
+      <i class="logo-line"></i>
     </a>
       <p class="site-subtitle" itemprop="description">自律即自由</p>
   </div>
@@ -137,9 +152,8 @@
 
 
 
-
 <nav class="site-nav">
-  <ul id="menu" class="main-menu menu">
+  <ul class="main-menu menu">
         <li class="menu-item menu-item-home">
 
     <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
@@ -165,6 +179,11 @@
     <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
 
   </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>日程表</a>
+
+  </li>
       <li class="menu-item menu-item-search">
         <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
         </a>
@@ -181,7 +200,7 @@
     <i class="fa fa-search"></i>
   </span>
   <div class="search-input-container">
-    <input autocomplete="off" autocapitalize="off"
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
            placeholder="搜索..." spellcheck="false"
            type="search" class="search-input">
   </div>
@@ -189,9 +208,9 @@
     <i class="fa fa-times-circle"></i>
   </span>
 </div>
-<div id="search-result">
-  <div id="no-result">
-    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
   </div>
 </div>
 
@@ -199,24 +218,145 @@
   </div>
 
 </div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#写在前面"><span class="nav-number">1.</span> <span class="nav-text">写在前面</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#BIOS-启动"><span class="nav-number">2.</span> <span class="nav-text">BIOS 启动</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#BIOS-执行"><span class="nav-number">3.</span> <span class="nav-text">BIOS 执行</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#bootsect-s"><span class="nav-number">4.</span> <span class="nav-text">bootsect.s</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#setup-s"><span class="nav-number">5.</span> <span class="nav-text">setup.s</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#head-s"><span class="nav-number">6.</span> <span class="nav-text">head.s</span></a></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">TheBetterKong</p>
+  <div class="site-description" itemprop="description">知行合一</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">55</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">28</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
+        </li>
+    </ul>
+  </div>
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
     </header>
 
     
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
   <a role="button" class="book-mark-link book-mark-link-fixed"></a>
 
+  <a href="https://github.com/TheBetterKong" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
 
-    <main class="main">
-      <div class="main-inner">
-        <div class="content-wrap">
-          
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
 
-          <div class="content post posts-expand">
-            
 
-    
+    <div class="main-inner post posts-expand">
+      
+
+      
+
+  
+
+
+<div class="post-block">
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/06/29/Linux/LinuxKernelDesign-1.PowerOnToMainFunction/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -233,40 +373,41 @@
           Linux 内核设计 | （1）从开机到 main 函数执行
         </h1>
 
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2020-06-29 16:04:25" itemprop="dateCreated datePublished" datetime="2020-06-29T16:04:25+08:00">2020-06-29</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-08-14 17:32:26" itemprop="dateModified" datetime="2020-08-14T17:32:26+08:00">2020-08-14</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
-                </span>
-            </span>
+      <time title="创建时间：2020-06-29 16:04:25" itemprop="dateCreated datePublished" datetime="2020-06-29T16:04:25+08:00">2020-06-29</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2020-08-14 17:32:26" itemprop="dateModified" datetime="2020-08-14T17:32:26+08:00">2020-08-14</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
+        </span>
+    </span>
 
-          
-            <span id="/2020/06/29/Linux/LinuxKernelDesign-1.PowerOnToMainFunction/" class="post-meta-item leancloud_visitors" data-flag-title="Linux 内核设计 | （1）从开机到 main 函数执行" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
+  
+    <span id="/2020/06/29/Linux/LinuxKernelDesign-1.PowerOnToMainFunction/" class="post-meta-item leancloud_visitors" data-flag-title="Linux 内核设计 | （1）从开机到 main 函数执行" title="阅读次数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
   
   <span class="post-meta-item">
     
@@ -281,6 +422,23 @@
   </span>
   
   
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>7.6k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>7 分钟</span>
+    </span>
+</div>
 
         </div>
       </header>
@@ -289,8 +447,6 @@
     
     
     <div class="post-body" itemprop="articleBody">
-
-      
         <p>这里提到的 linux 版本是 0.11，在当时，操作系统都是存在软盘里的，而 CPU 的逻辑电路被设计为只能运行内存中的程序。电路刚通电时，内存（RAM）里什么都没有，那么计算机是怎样将操作系统运行起来的呢？</p>
 <a id="more"></a>
 <h1 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h1><p>这里约定的计算机是基于 IA-32 系列 CPU，安装了标准单色显示器、标准键盘、一个软盘、一块硬盘、16 MB 内存，在内存中开辟了 2 MB 内存作为虚拟盘，并在 BIOS 中设置软驱为启动设备。    </p>
@@ -323,9 +479,11 @@
 <h1 id="BIOS-启动"><a href="#BIOS-启动" class="headerlink" title="BIOS 启动"></a>BIOS 启动</h1><p>前面说到 CPU 只能执行内存里的程序，而刚通电时，计算机内存为空，OS 处在软盘。那么，自然就需要由某个部分将 OS 加载到内存，而完成这项工作的就是 <strong>BIOS</strong>。    </p>
 <p>问题就来了，BIOS 自身也是一段程序，那它最开始又是如何执行的呢？      </p>
 <p>这一过程得益于硬件 CPU 强制执行 BIOS。CPU 都被设计为<strong>加电即进入 16 位实模式状态运行</strong>，其硬件逻辑在加电瞬间就会设置 CS（<code>0xF000</code>）和 IP（<code>0xFFF0</code>），这样 CS:IP 也就指向 <strong><code>0xFFFF0</code></strong> 这个地址，而这里就处在 BIOS 中，是 <strong>BIOS 程序的入口地址</strong>。    </p>
-<div class="note warning">
-            <ul><li>CPU 将要执行的指令的内存地址是由 IP（偏移）和 CS（段基址）组合来指定。实模式下该地址为绝对地址，指令指针为 16 位；保护模式下为线性地址，指令指针为 32 位，即 EIP。    </li><li>BIOS 是固化在计算机主板上一块很小的 ROM 芯片里的程序。不同主板会有所不同，这里的 BIOS 是 8KB，所占地址段为 <code>0xFE000 ~ 0xFFFFF</code>。</li></ul>
-          </div>
+<div class="note warning"><ul>
+<li>CPU 将要执行的指令的内存地址是由 IP（偏移）和 CS（段基址）组合来指定。实模式下该地址为绝对地址，指令指针为 16 位；保护模式下为线性地址，指令指针为 32 位，即 EIP。    </li>
+<li>BIOS 是固化在计算机主板上一块很小的 ROM 芯片里的程序。不同主板会有所不同，这里的 BIOS 是 8KB，所占地址段为 <code>0xFE000 ~ 0xFFFFF</code>。</li>
+</ul>
+</div>
 <h1 id="BIOS-执行"><a href="#BIOS-执行" class="headerlink" title="BIOS 执行"></a>BIOS 执行</h1><p>BIOS 启动后，开始执行一系列 BIOS 代码，完成自检等操作。检测显卡、内存等，并在屏幕上显示这些机器系统数据（显卡信息、内存信息等）。而这个过程需要重点说的就是：<strong>BIOS 在内存里建立中断向量表和中断服务程序</strong>。     </p>
 <p>具体来说就是：<br><img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/Mem-BIOS.png" alt="Mem-BIOS"></p>
 <ul>
@@ -337,9 +495,12 @@
 <li>在接着大约 57 KB 之后的位置 <code>0x0E05B</code> 处加载了 8 KB 左右的与中断向量表相对应的<strong>中断服务程序</strong>；</li>
 </ul>
 <p>在上述自检过程完成后，计算机硬件（体系结构的设计）和 BIOS 一同产生一个 <strong><code>int 0x19</code></strong> 中断。CPU 收到此中断后，查找中断向量表，并找到 <code>int 0x19 中断向量</code>。这个中断向量就将 CPU 指向 <strong><code>0x0E6F2</code></strong> 这个地址执行（<code>int 0x19</code> 对应的中断服务程序的入口地址）。这个中断服务程序是 BIOS 事先设计好的（代码固定，与 OS 无关），它的工作就是：<strong>把软盘第一扇区中的程序 <code>bootsect.s</code>（512 B，因此两个扇区为 1 KB）加载到内存指定位置（<code>0x07C00</code>）</strong>。    </p>
-<div class="note warning">
-            <p>这个过程就需要 OS 设计者和 BIOS 的设计者完成一种两头约定：   </p><ul><li>操作系统：必须把最开始执行的程序 “定位” 在启动扇区（软盘中的 0 盘面 0 磁道 1 扇区）；   </li><li>BIOS：“约定” 接到启动操作系统的命令，就 “定位识别” 只从启动扇区把代码加载到 <code>0x7C00</code>（BOOTSEG）这个位置；</li></ul>
-          </div>
+<div class="note warning"><p>这个过程就需要 OS 设计者和 BIOS 的设计者完成一种两头约定：   </p>
+<ul>
+<li>操作系统：必须把最开始执行的程序 “定位” 在启动扇区（软盘中的 0 盘面 0 磁道 1 扇区）；   </li>
+<li>BIOS：“约定” 接到启动操作系统的命令，就 “定位识别” 只从启动扇区把代码加载到 <code>0x7C00</code>（BOOTSEG）这个位置；</li>
+</ul>
+</div>
 <h1 id="bootsect-s"><a href="#bootsect-s" class="headerlink" title="bootsect.s"></a>bootsect.s</h1><p>在实模式下，指令指针 CS 和 IP 都是 16 位的，它们组合的内存寻址最大范围为 1 MB（20 位）。而 <strong>bootsect.s 首先的工作就是对这 1 MB 的内存空间进行规划</strong>，来确保后续代码的加载与已加载的代码互不干扰，并且都有足够大的内存空间可用；<br><img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/MemPlanning-bootsect.png" alt="MemPlanning-bootsect"></p>
 <ul>
 <li>bootsect.s 的开头会设定一段代码来设置相应的内存位置：<ul>
@@ -368,9 +529,13 @@
 </ul>
 </li>
 </ul>
-<div class="note warning">
-            <ul><li><strong>system 模块</strong>是整个 OS 的核心部分，它由两部分构成：head.s 和 main 函数。</li><li><strong>head.s</strong> 同之前加载的 bootsect.s 和 setup.s 一样，是由汇编代码生成的程序，它处在 system 的开头位置，在内存中占有 25 KB + 184 B 的空间；</li><li><strong>main 函数</strong>紧接着 head.s 存在，它是由 c 语言编写的内核程序，可以说它才是真正的操作系统，在它之前执行的 bootsect.s、setup.s 和 head.s 都是为它做准备的；</li><li>这种特殊性，也让 syetem 模块和 bootsect.s、setup.s 的加载方式不同。<strong>大致的过程</strong>是：先将 head.s 汇编成目标代码，将用 c 语言编写的内核程序编译成目标代码，然后再将它们链接成 system 模块。</li></ul>
-          </div>
+<div class="note warning"><ul>
+<li><strong>system 模块</strong>是整个 OS 的核心部分，它由两部分构成：head.s 和 main 函数。</li>
+<li><strong>head.s</strong> 同之前加载的 bootsect.s 和 setup.s 一样，是由汇编代码生成的程序，它处在 system 的开头位置，在内存中占有 25 KB + 184 B 的空间；</li>
+<li><strong>main 函数</strong>紧接着 head.s 存在，它是由 c 语言编写的内核程序，可以说它才是真正的操作系统，在它之前执行的 bootsect.s、setup.s 和 head.s 都是为它做准备的；</li>
+<li>这种特殊性，也让 syetem 模块和 bootsect.s、setup.s 的加载方式不同。<strong>大致的过程</strong>是：先将 head.s 汇编成目标代码，将用 c 语言编写的内核程序编译成目标代码，然后再将它们链接成 system 模块。</li>
+</ul>
+</div>
 <p>至此，<mark>整个 OS 的代码都已被加载进内存</mark>。最后，由 bootsect 确认根设备号。根据开始处假设的计算机组成，这里经过一系列检测后，会确认计算机中实际安装的软盘驱动器为根设备，并将此信息写入机器系统数据。    </p>
 <p>bootsect.s 的工作已全部完成。</p>
 <h1 id="setup-s"><a href="#setup-s" class="headerlink" title="setup.s"></a>setup.s</h1><p>在 bootsect.s 完成它所有的任务后，会<strong>执行 <code>jmpi 0,SETUPSEG</code> 跳转</strong>至 <code>0x90200</code> 处（setup.s 所在的位置），也即 CS:IP 指向 setup 程序的第一条指令，<strong>setup.s 开始执行</strong>。</p>
@@ -380,17 +545,23 @@
 </ul>
 <p>至此，<mark>整个操作系统内核程序所需的加载工作都已完成，通过内存中的这些代码数据，将开始实现从实模式到保护模式的转变</mark>。</p>
 <p>之前，我们所有用到的中断服务都是由 BIOS 提供，而之后 OS 会接管整个系统，它自身也会提供一套的中断服务系统。为了完全这个转变，不让接下来的工作出错，此时就得<strong>先关中断（cli）</strong>。即：<strong>将 CPU 的标志寄存器（EFLAGS）中的中断允许标志（IF）置 0</strong>；</p>
-<div class="note warning">
-            <ul><li>关中断（cli）和开中断（sti）它们在 OS 里总是成对出现的，目的就是为了防止中断在某个过程中介入；   </li><li>此处，即将进行的是实模式下中断向量表和保护模式下中断描述符表（IDT）的交接。如果在此期间，用户不小心碰到键盘等引入了中断，就会导致不可预估的后果；</li></ul>
-          </div>
+<div class="note warning"><ul>
+<li>关中断（cli）和开中断（sti）它们在 OS 里总是成对出现的，目的就是为了防止中断在某个过程中介入；   </li>
+<li>此处，即将进行的是实模式下中断向量表和保护模式下中断描述符表（IDT）的交接。如果在此期间，用户不小心碰到键盘等引入了中断，就会导致不可预估的后果；</li>
+</ul>
+</div>
 <p>接下来，setup 程序会<strong>将位于 <code>0x10000</code> 的内核程序复制至内存的起始地址 <code>0x00000</code> 处</strong>（由 DS 和 ES 配合完成）。</p>
 <ul>
 <li>这个过程也就意味着，原先 BIOS 提供的中断向量表、BIOS 数据区以及相应的中断服务程序都完全被覆盖，旧的中断体系已经失效，系统准备向 32 位的保护模式转变；</li>
 </ul>
 <p>然后，setup 程序利用自身提供的数据信息<strong>对中断描述符表寄存器（IDTR）和全局描述符表寄存器（GDTR）进行初始化设置</strong>，进而完成<strong>中断描述符比表（IDT）和全局描述符表（GDT）的初始化</strong>；   </p>
-<div class="note ">
-            <ul><li><strong>GDT（全局描述符表）</strong>：是一个存放段寄存器内容（段描述符）的数组，用来配合程序进行保护模式下的段寻址。在 OS 中进程切换具有重要意义，可理解为所有进程的总目录表，其中存放着每一个任务（task）局部描述符表（LDT）地址和任务状态段（TSS）地址，完成进程中各段的寻址、现场保护与现场恢复；   </li><li><strong>GDTR（GDT 基址寄存器）</strong>：GDT 可以存放在内存中任意位置，而 GDTR 的内容就是标识 GDT 的入口地址；</li><li><strong>IDT（中断描述符表）</strong>：保存保护模式下所有中断服务程序的入口地址；</li><li><strong>IDTR（IDT 基址寄存器）</strong>：保存 IDT 起始地址；</li></ul>
-          </div>
+<div class="note "><ul>
+<li><strong>GDT（全局描述符表）</strong>：是一个存放段寄存器内容（段描述符）的数组，用来配合程序进行保护模式下的段寻址。在 OS 中进程切换具有重要意义，可理解为所有进程的总目录表，其中存放着每一个任务（task）局部描述符表（LDT）地址和任务状态段（TSS）地址，完成进程中各段的寻址、现场保护与现场恢复；   </li>
+<li><strong>GDTR（GDT 基址寄存器）</strong>：GDT 可以存放在内存中任意位置，而 GDTR 的内容就是标识 GDT 的入口地址；</li>
+<li><strong>IDT（中断描述符表）</strong>：保存保护模式下所有中断服务程序的入口地址；</li>
+<li><strong>IDTR（IDT 基址寄存器）</strong>：保存 IDT 起始地址；</li>
+</ul>
+</div>
 <ul>
 <li>这个过程可以理解为：内核设计时，已经将两个表（包括所需的初始数据）写好，随着 OS 代码一起已经被加载到了内存，之后程序通过 <code>lidt</code> 和 <code>lgdt</code> 指令将两个专用寄存器指向这两个表（即 idt_48 和 gdt_48 对应的标号处）即可；<br><img src="http://img.thebetterkong.cn/blog/LinuxKernelDesign-1.PowerOnToMainFunction/SetGDTRAndIDTR.png" alt="SetGDTRAndIDTR"><ul>
 <li>由图可以看到：IDTR 指向了 <code>0x00000</code> 位置（IDT 基址），此时出于关中断状态，IDT 还是一张空表；</li>
@@ -469,45 +640,35 @@
     
     
 
-    <div>
-      
-        <div>
-    
-        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
-    
-</div>
-      
-    </div>
-        <div class="reward-container">
+    <footer class="post-footer">
+          <div class="reward-container">
   <div></div>
-  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
-    打赏
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
   </button>
-  <div id="qr" style="display: none;">
-      
-      <div style="display: inline-block;">
-        <img src="/images/wechatpay.png" alt="TheBetterKong 微信支付">
-        <p>微信支付</p>
+  <div class="post-reward">
+      <div>
+        <img src="/images/wechatpay.png" alt="TheBetterKong 微信">
+        <span>微信</span>
       </div>
-      
-      <div style="display: inline-block;">
+      <div>
         <img src="/images/alipay.png" alt="TheBetterKong 支付宝">
-        <p>支付宝</p>
+        <span>支付宝</span>
       </div>
 
   </div>
 </div>
 
-        
+          
 
-<div>
-<ul class="post-copyright">
+<div class="post-copyright">
+<ul>
   <li class="post-copyright-author">
-    <strong>本文作者： </strong>TheBetterKong
+      <strong>本文作者： </strong>TheBetterKong
   </li>
   <li class="post-copyright-link">
-    <strong>本文链接：</strong>
-    <a href="http://www.thebetterkong.cn/2020/06/29/Linux/LinuxKernelDesign-1.PowerOnToMainFunction/" title="Linux 内核设计 | （1）从开机到 main 函数执行">http://www.thebetterkong.cn/2020/06/29/Linux/LinuxKernelDesign-1.PowerOnToMainFunction/</a>
+      <strong>本文链接：</strong>
+      <a href="http://www.thebetterkong.cn/2020/06/29/Linux/LinuxKernelDesign-1.PowerOnToMainFunction/" title="Linux 内核设计 | （1）从开机到 main 函数执行">http://www.thebetterkong.cn/2020/06/29/Linux/LinuxKernelDesign-1.PowerOnToMainFunction/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -515,8 +676,6 @@
 </ul>
 </div>
 
-
-      <footer class="post-footer">
           <div class="post-tags">
               <a href="/tags/%E5%9B%BD%E7%A7%91%E5%A4%A7%E7%A0%94%E7%A9%B6%E7%94%9F%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/" rel="tag"><i class="fa fa-tag"></i> 国科大研究生课程笔记</a>
               <a href="/tags/Linux-Kernel/" rel="tag"><i class="fa fa-tag"></i> Linux Kernel</a>
@@ -524,29 +683,28 @@
 
         
 
-
-        
-    <div class="post-nav">
-      <div class="post-nav-item">
-    <a href="/2020/06/27/DataStructure-Algorithm/DataStructure-LinearList/" rel="prev" title="java 数据结构之线性表">
-      <i class="fa fa-chevron-left"></i> java 数据结构之线性表
-    </a></div>
-      <div class="post-nav-item">
-    <a href="/2020/07/02/DataStructure-Algorithm/DataStructure-String/" rel="next" title="java 数据结构之字符串">
-      java 数据结构之字符串 <i class="fa fa-chevron-right"></i>
-    </a></div>
-    </div>
-      </footer>
-    
-  </article>
-  
-  
-  
-
-
-
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2020/06/27/DataStructure-Algorithm/DataStructure-LinearList/" rel="prev" title="java 数据结构之线性表">
+                  <i class="fa fa-chevron-left"></i> java 数据结构之线性表
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2020/07/02/DataStructure-Algorithm/DataStructure-String/" rel="next" title="java 数据结构之字符串">
+                  java 数据结构之字符串 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
           </div>
-          
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+      
     <div class="comments" id="valine-comments"></div>
 
 <script>
@@ -556,7 +714,7 @@
       activeClass = localStorage.getItem('comments_active') || activeClass;
     }
     if (activeClass) {
-      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
       if (activeTab) {
         activeTab.click();
       }
@@ -565,231 +723,85 @@
   if (CONFIG.comments.storage) {
     window.addEventListener('tabs:click', event => {
       if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
-      let commentClass = event.target.classList[1];
+      const commentClass = event.target.classList[1];
       localStorage.setItem('comments_active', commentClass);
     });
   }
 </script>
 
-        </div>
-          
-  
-  <div class="toggle sidebar-toggle">
-    <span class="toggle-line toggle-line-first"></span>
-    <span class="toggle-line toggle-line-middle"></span>
-    <span class="toggle-line toggle-line-last"></span>
-  </div>
-
-  <aside class="sidebar">
-    <div class="sidebar-inner">
-
-      <ul class="sidebar-nav motion-element">
-        <li class="sidebar-nav-toc">
-          文章目录
-        </li>
-        <li class="sidebar-nav-overview">
-          站点概览
-        </li>
-      </ul>
-
-      <!--noindex-->
-      <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#写在前面"><span class="nav-number">1.</span> <span class="nav-text">写在前面</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#BIOS-启动"><span class="nav-number">2.</span> <span class="nav-text">BIOS 启动</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#BIOS-执行"><span class="nav-number">3.</span> <span class="nav-text">BIOS 执行</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#bootsect-s"><span class="nav-number">4.</span> <span class="nav-text">bootsect.s</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#setup-s"><span class="nav-number">5.</span> <span class="nav-text">setup.s</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#head-s"><span class="nav-number">6.</span> <span class="nav-text">head.s</span></a></li></ol></div>
-      </div>
-      <!--/noindex-->
-
-      <div class="site-overview-wrap sidebar-panel">
-        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <img class="site-author-image" itemprop="image" alt="TheBetterKong"
-      src="/images/avatar.png">
-  <p class="site-author-name" itemprop="name">TheBetterKong</p>
-  <div class="site-description" itemprop="description">知行合一</div>
-</div>
-<div class="site-state-wrap motion-element">
-  <nav class="site-state">
-      <div class="site-state-item site-state-posts">
-          <a href="/archives/">
-        
-          <span class="site-state-item-count">55</span>
-          <span class="site-state-item-name">日志</span>
-        </a>
-      </div>
-      <div class="site-state-item site-state-categories">
-            <a href="/categories/">
-          
-        <span class="site-state-item-count">13</span>
-        <span class="site-state-item-name">分类</span></a>
-      </div>
-      <div class="site-state-item site-state-tags">
-            <a href="/tags/">
-          
-        <span class="site-state-item-count">28</span>
-        <span class="site-state-item-name">标签</span></a>
-      </div>
-  </nav>
-</div>
-  <div class="links-of-author motion-element">
-      <span class="links-of-author-item">
-        <a href="https://github.com/TheBetterKong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;TheBetterKong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
-      </span>
-      <span class="links-of-author-item">
-        <a href="mailto:kongxiangfeng@iie.ac.cn" title="E-Mail → mailto:kongxiangfeng@iie.ac.cn" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
-      </span>
-      <span class="links-of-author-item">
-        <a href="https://blog.csdn.net/weixin_44849403" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;weixin_44849403" rel="noopener" target="_blank"><i class="fa fa-copyright fa-fw"></i>CSDN</a>
-      </span>
-      <span class="links-of-author-item">
-        <a href="https://weibo.com/u/6460669623" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;6460669623" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
-      </span>
-      <span class="links-of-author-item">
-        <a href="/atom.xml" title="RSS → &#x2F;atom.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
-      </span>
-  </div>
-
-
-  <div class="links-of-blogroll motion-element">
-    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
-      Links
     </div>
-    <ul class="links-of-blogroll-list">
-        <li class="links-of-blogroll-item">
-          <a href="https://blog.cugxuan.cn/" title="https:&#x2F;&#x2F;blog.cugxuan.cn&#x2F;" rel="noopener" target="_blank">泫</a>
-        </li>
-        <li class="links-of-blogroll-item">
-          <a href="https://paper.seebug.org/" title="https:&#x2F;&#x2F;paper.seebug.org&#x2F;" rel="noopener" target="_blank">Paper seebug</a>
-        </li>
-        <li class="links-of-blogroll-item">
-          <a href="https://www.runoob.com/" title="https:&#x2F;&#x2F;www.runoob.com&#x2F;" rel="noopener" target="_blank">菜鸟教程</a>
-        </li>
-        <li class="links-of-blogroll-item">
-          <a href="https://wiki.jikexueyuan.com/" title="https:&#x2F;&#x2F;wiki.jikexueyuan.com&#x2F;" rel="noopener" target="_blank">极客学院Wiki</a>
-        </li>
-        <li class="links-of-blogroll-item">
-          <a href="https://man.linuxde.net/" title="https:&#x2F;&#x2F;man.linuxde.net&#x2F;" rel="noopener" target="_blank">Linux大全</a>
-        </li>
-    </ul>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      
+
+      
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
   </div>
-
-      </div>
-        <div class="back-to-top motion-element">
-          <i class="fa fa-arrow-up"></i>
-          <span>0%</span>
-        </div>
-
-    </div>
-  </aside>
-  <div id="sidebar-dimmer"></div>
-
-
-      </div>
-    </main>
-
-    <footer class="footer">
-      <div class="footer-inner">
-        
-
-        
-  <div class="beian"><a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">鄂ICP备20005224号 </a>
-  </div>
-
-<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 
 <div class="copyright">
   
-  &copy; 
+  &copy; 2019 – 
   <span itemprop="copyrightYear">2020</span>
   <span class="with-love">
-    <i class="fa fa-heart"></i>
+    <i class="fa fa-heartbeat"></i>
   </span>
   <span class="author" itemprop="copyrightHolder">TheBetterKong</span>
 </div>
-  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
-  </div>
-
-
-<div class="statistics">
-<i class="fa fa-user-md"></i><span id="busuanzi_container_site_uv">
-  <span id="busuanzi_value_site_uv"></span>
-</span>
-<span class ="post-meta-divider">|</span>
-<i class="fa fa-eye"></i><span id="busuanzi_container_site_pv">
-  <span id="busuanzi_value_site_pv"></span>
-</span>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">476k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">7:12</span>
+  </span>
 </div>
-
-<div class="theme-info">
-  <div class="powered-by"></div>
-  <span class="post-count">博客全站共253.8k字</span>
-  <span class ="post-time-divider">|</span>
-    <span>运行<span id="showDays"></span></span>
-  <script>
-    var seconds = 1000;
-    var minutes = seconds * 60;
-    var hours = minutes * 60;
-    var days = hours * 24;
-    var years = days * 365;
-    var birthDay = Date.UTC(2020,04,20,18,00,00); // 这里设置建站时间
-    setInterval(function() {
-      var today = new Date();
-      var todayYear = today.getFullYear();
-      var todayMonth = today.getMonth()+1;
-      var todayDate = today.getDate();
-      var todayHour = today.getHours();
-      var todayMinute = today.getMinutes();
-      var todaySecond = today.getSeconds();
-      var now = Date.UTC(todayYear,todayMonth,todayDate,todayHour,todayMinute,todaySecond);
-      var diff = now - birthDay;
-      var diffYears = Math.floor(diff/years);
-      var diffDays = Math.floor((diff/days)-diffYears*365);
-      var diffHours = Math.floor((diff-(diffYears*365+diffDays)*days)/hours);
-      var diffMinutes = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours)/minutes);
-      var diffSeconds = Math.floor((diff-(diffYears*365+diffDays)*days-diffHours*hours-diffMinutes*minutes)/seconds);
-      document.getElementById('showDays').innerHTML=""+diffYears+"年"+diffDays+"天"+diffHours+"小时"+diffMinutes+"分钟"+diffSeconds+"秒";
-    }, 1000);
-  </script>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
 </div>
 
 
-        
+<script color="105,105,105" opacity="0.5" zIndex="-1" count="99" src="https://cdn.jsdelivr.net/npm/canvas-nest.js@1/dist/canvas-nest.js"></script>
 
 
 
-
-
-
-
-
-      </div>
-    </footer>
-  </div>
+    </div>
+  </footer>
 
   
-  <script src="/lib/anime.min.js"></script>
-  <script src="/lib/velocity/velocity.min.js"></script>
-  <script src="/lib/velocity/velocity.ui.min.js"></script>
-
-<script src="/js/utils.js"></script>
-
-<script src="/js/motion.js"></script>
-
-
-<script src="/js/schemes/pisces.js"></script>
-
-
-<script src="/js/next-boot.js"></script>
-
-<script src="/js/bookmark.js"></script>
-
-
-
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script><script src="/js/bookmark.js"></script>
 
   
 
 
 
 
-  
-<script src="/js/local-search.js"></script>
+  <script src="/js/local-search.js"></script>
+
+
 
 
 
@@ -804,19 +816,21 @@
 
 
   
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+
+
 
   
-      
 
-<script>
+  
+      <script>
   if (typeof MathJax === 'undefined') {
     window.MathJax = {
-      loader: {
-        source: {
-          '[tex]/amsCd': '[tex]/amscd',
-          '[tex]/AMScd': '[tex]/amscd'
-        }
-      },
       tex: {
         inlineMath: {'[+]': [['$', '$']]},
         tags: 'ams'
@@ -836,7 +850,7 @@
           }, '', false],
           insertedScript: [200, () => {
             document.querySelectorAll('mjx-container').forEach(node => {
-              let target = node.parentNode;
+              const target = node.parentNode;
               if (target.nodeName.toLowerCase() === 'li') {
                 target.parentNode.classList.add('has-jax');
               }
@@ -845,14 +859,13 @@
         }
       }
     };
-    (function () {
-      var script = document.createElement('script');
-      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
-      script.defer = true;
-      document.head.appendChild(script);
-    })();
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
   } else {
     MathJax.startup.document.state(0);
+    MathJax.typesetClear();
     MathJax.texReset();
     MathJax.typeset();
   }
@@ -862,31 +875,14 @@
 
   
 
-
 <script>
-NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
-  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
-    var GUEST = ['nick', 'mail', 'link'];
-    var guest = 'nick,mail,link';
-    guest = guest.split(',').filter(item => {
-      return GUEST.includes(item);
-    });
-    new Valine({
-      el         : '#valine-comments',
-      verify     : false,
-      notify     : false,
-      appId      : 'FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va',
-      appKey     : 'aTVY6lFVOvNPNgaDGtgHVoQy',
-      placeholder: "期待您的留言！",
-      avatar     : '',
-      meta       : guest,
-      pageSize   : '10' || 10,
-      visitor    : true,
-      lang       : 'zh-cn' || 'zh-cn',
-      path       : location.pathname,
-      recordIP   : false,
-      serverURLs : ''
-    });
+NexT.utils.loadComments('#valine-comments', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js', () => {
+    new Valine(Object.assign({"enable":true,"appId":"FzJ2kTqyh92urg7N9KHkL0RA-9Nh9j0Va","appKey":"aTVY6lFVOvNPNgaDGtgHVoQy","serverURLs":null,"placeholder":"Just go go","avatar":"","meta":["nick","mail","link"],"pageSize":10,"lang":"zh-cn","visitor":true,"comment_count":true,"recordIP":false,"enableQQ":false,"requiredFields":[]}, {
+      el: '#valine-comments',
+      path: "/2020/06/29/Linux/LinuxKernelDesign-1.PowerOnToMainFunction/",
+      serverURLs: "https://fzj2ktqy.api.lncldglobal.com"
+    }));
   }, window.Valine);
 });
 </script>

@@ -32,7 +32,7 @@
 <meta property="og:description" content="Blog 主体变更    时间 内容 备注     2020-11-15 主题升级 升级 NexT 至 8.0.2     功能添加Hexo 给的一个 next 扩展：awesome-next （1）添加 Theme NexT Canvas Nest 时间：2020-11-16 功能：动态背景 方法：https:&#x2F;&#x2F;github.com&#x2F;theme-next&#x2F;theme-next-canvas-n">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2020-11-15T08:11:44.000Z">
-<meta property="article:modified_time" content="2020-12-17T02:12:11.181Z">
+<meta property="article:modified_time" content="2020-12-17T03:13:06.968Z">
 <meta property="article:author" content="TheBetterKong">
 <meta name="twitter:card" content="summary">
 
@@ -219,7 +219,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <section class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Blog-主体变更"><span class="nav-number">1.</span> <span class="nav-text">Blog 主体变更</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#功能添加"><span class="nav-number">2.</span> <span class="nav-text">功能添加</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#（1）添加-Theme-NexT-Canvas-Nest"><span class="nav-number">2.1.</span> <span class="nav-text">（1）添加 Theme NexT Canvas Nest</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#（2）添加-hexo-filter-emoji"><span class="nav-number">2.2.</span> <span class="nav-text">（2）添加 hexo-filter-emoji</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#（3）添加-hexo-generator-indexed"><span class="nav-number">2.3.</span> <span class="nav-text">（3）添加 hexo-generator-indexed</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#（4）添加-Blog-背景图"><span class="nav-number">2.4.</span> <span class="nav-text">（4）添加 Blog 背景图</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#（5）主页文章添加阴影效果"><span class="nav-number">2.5.</span> <span class="nav-text">（5）主页文章添加阴影效果</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#（6）主题深色模式手动切换"><span class="nav-number">2.6.</span> <span class="nav-text">（6）主题深色模式手动切换</span></a></li></ol></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Blog-主体变更"><span class="nav-number">1.</span> <span class="nav-text">Blog 主体变更</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#功能添加"><span class="nav-number">2.</span> <span class="nav-text">功能添加</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#（1）添加-Theme-NexT-Canvas-Nest"><span class="nav-number">2.1.</span> <span class="nav-text">（1）添加 Theme NexT Canvas Nest</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#（2）添加-hexo-filter-emoji"><span class="nav-number">2.2.</span> <span class="nav-text">（2）添加 hexo-filter-emoji</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#（3）添加-hexo-generator-indexed"><span class="nav-number">2.3.</span> <span class="nav-text">（3）添加 hexo-generator-indexed</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#（4）添加-Blog-背景图"><span class="nav-number">2.4.</span> <span class="nav-text">（4）添加 Blog 背景图</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#（5）主页文章添加阴影效果"><span class="nav-number">2.5.</span> <span class="nav-text">（5）主页文章添加阴影效果</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#（6）主题深色模式手动切换"><span class="nav-number">2.6.</span> <span class="nav-text">（6）主题深色模式手动切换</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#（7）添加看板娘"><span class="nav-number">2.7.</span> <span class="nav-text">（7）添加看板娘</span></a></li></ol></li></ol></div>
         </section>
         <!--/noindex-->
 
@@ -426,6 +426,21 @@
 </ul>
 </li>
 </ul>
+<h2 id="（7）添加看板娘"><a href="#（7）添加看板娘" class="headerlink" title="（7）添加看板娘"></a>（7）添加看板娘</h2><ul>
+<li>时间：2020-12-17</li>
+<li>功能：在 blog 里加入动态小宠物</li>
+<li>状态：开启</li>
+<li>方法：<ul>
+<li>在 blog 根目录安装插件：<code>npm install --save hexo-helper-live2d</code></li>
+<li>下载你喜欢的模型，例如：<code>npm install live2d-widget-model-wanko</code><ul>
+<li><a href="https://github.com/xiazeyu/live2d-widget-models" target="_blank" rel="noopener">博客宠物模型</a></li>
+<li><a href="https://huaji8.top/post/live2d-plugin-2.0/" target="_blank" rel="noopener">模型对应的动画效果</a>，在这里挑选喜欢的 model；</li>
+</ul>
+</li>
+<li>在博客根目录下的配置文件中，添加如下配置：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">live2d:</span><br><span class="line">enable: true</span><br><span class="line">scriptFrom: local</span><br><span class="line">model:</span><br><span class="line">  use: live2d-widget-model-hijiki</span><br><span class="line">display:</span><br><span class="line">  position: right</span><br><span class="line">  width: 150</span><br><span class="line">  height: 300</span><br><span class="line">mobile:</span><br><span class="line">  show: true</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+</ul>
 
       </div>
       
@@ -622,5 +637,5 @@ NexT.utils.loadComments('#valine-comments', () => {
 });
 </script>
 
-</body>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":false},"log":false,"pluginJsPath":"lib/","pluginModelPath":"assets/","pluginRootPath":"live2dw/","tagMode":false});</script></body>
 </html>

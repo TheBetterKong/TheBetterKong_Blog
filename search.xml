@@ -13213,6 +13213,8 @@ R_{upstream}(m)+R(switch)+R_{metal}(n),\quad if\ a\ pass\ transistor
 </li>
 <li>结束</li>
 </ol>
+<h3 id="设置-git-代理"><a href="#设置-git-代理" class="headerlink" title="设置 git 代理"></a>设置 git 代理</h3><p>有时在客户公司办公，需要上外网，临时查一下资料，设置办法如下：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 设置代理:</span></span><br><span class="line">git config --global http.proxy http://IP:Port</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 代理设置完成后，查看设置是否生效：</span></span><br><span class="line">git config -–get -–global http.proxy</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 删除代理设置</span></span><br><span class="line">git config --global --unset http.proxy</span><br></pre></td></tr></table></figure>
 <h1 id="使用规范"><a href="#使用规范" class="headerlink" title="使用规范"></a>使用规范</h1><h2 id="Branch-管理"><a href="#Branch-管理" class="headerlink" title="Branch 管理"></a>Branch 管理</h2><p>推荐使用如下 5 个分支开发管理：</p>
 <p><img src="http://img.thebetterkong.cn/blog/GitStart/BranchManage.png" alt="BranchManage"></p>
 <div class="table-container">

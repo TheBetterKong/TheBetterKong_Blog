@@ -609,7 +609,7 @@
 <ul>
 <li><code>$\left|\begin{matrix}1 &amp; 2\\\\3 &amp;4\end{matrix}\right|$</code>，显示：$\left|\begin{matrix}1 &amp; 2\\\\3 &amp;4\end{matrix}\right|$</li>
 </ul>
-<p>类似于 left/right，这里是 begin/end；<br><strong>具体的矩阵语法，<code>&amp;</code> 区分行间元素，<code>\\\\</code> 代表换行；</strong>    </p>
+<p>类似于 left/right，这里是 begin/end；<br><strong>具体的矩阵语法，<code>&amp;</code> 区分行间元素，多行时用来对其该符号修饰的字符，<code>\\</code> 代表换行；</strong>    </p>
 <h3 id="高级用法"><a href="#高级用法" class="headerlink" title="高级用法"></a>高级用法</h3><h4 id="数组排版"><a href="#数组排版" class="headerlink" title="数组排版"></a>数组排版</h4><p>效果：</p>
 <script type="math/tex; mode=display">
 \mathbf{X} =
@@ -629,6 +629,13 @@ x\_{21} & x\_{22} & \ldots \\\\
 3 & 4 \\\\
 \hline
 \end{array}</script><p>写法:<br><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$$</span><br><span class="line">\mathbf&#123;X&#125; &#x3D;</span><br><span class="line">\left( \begin&#123;array&#125;&#123;ccc&#125;</span><br><span class="line">x\_&#123;11&#125; &amp; x\_&#123;12&#125; &amp; \ldots \\\\</span><br><span class="line">x\_&#123;21&#125; &amp; x\_&#123;22&#125; &amp; \ldots \\\\</span><br><span class="line">\vdots &amp; \vdots &amp; \ddots</span><br><span class="line">\end&#123;array&#125; \right)</span><br><span class="line">$$</span><br><span class="line"></span><br><span class="line">$$</span><br><span class="line">\left(\begin&#123;array&#125;&#123;|c|c|&#125;</span><br><span class="line">1 &amp; 2 \\\\</span><br><span class="line">3 &amp; 4</span><br><span class="line">\end&#123;array&#125;\right)</span><br><span class="line">$$</span><br><span class="line"></span><br><span class="line">$$</span><br><span class="line">\begin&#123;array&#125;&#123;|c|c|&#125;</span><br><span class="line">\hline</span><br><span class="line">&#123;1111111111&#125; &amp; 2 \\\\</span><br><span class="line">\hline</span><br><span class="line">3 &amp; 4 \\\\</span><br><span class="line">\hline</span><br><span class="line">\end&#123;array&#125;</span><br><span class="line">$$</span><br></pre></td></tr></table></figure></p>
+<h4 id="多行公式"><a href="#多行公式" class="headerlink" title="多行公式"></a>多行公式</h4><p>效果：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    3^{10} &= 3 \ast 3 \ast 3 \ast 3 \ast 3 \ast 3 \ast 3 \ast 3 \ast 3 \ast 3 \\
+    &= (3 \ast 3) \ast (3 \ast 3) \ast (3 \ast 3) \ast (3 \ast 3) \ast (3 \ast 3) \\
+    &= (3 \ast 3)^5
+\end{aligned}</script><p>写法：<br><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$$</span><br><span class="line">\begin&#123;aligned&#125;</span><br><span class="line">    3^&#123;10&#125; &amp;&#x3D; 3 \ast 3 \ast 3 \ast 3 \ast 3 \ast 3 \ast 3 \ast 3 \ast 3 \ast 3 \\</span><br><span class="line">    &amp;&#x3D; (3 \ast 3) \ast (3 \ast 3) \ast (3 \ast 3) \ast (3 \ast 3) \ast (3 \ast 3) \\</span><br><span class="line">    &amp;&#x3D; (3 \ast 3)^5</span><br><span class="line">\end&#123;aligned&#125;</span><br><span class="line">$$</span><br></pre></td></tr></table></figure></p>
 <h4 id="分段函数"><a href="#分段函数" class="headerlink" title="分段函数"></a>分段函数</h4><p>效果：</p>
 <script type="math/tex; mode=display">
 y=\begin{cases}
@@ -13214,7 +13221,7 @@ R_{upstream}(m)+R(switch)+R_{metal}(n),\quad if\ a\ pass\ transistor
 <li>结束</li>
 </ol>
 <h3 id="设置-git-代理"><a href="#设置-git-代理" class="headerlink" title="设置 git 代理"></a>设置 git 代理</h3><p>有时在客户公司办公，需要上外网，临时查一下资料，设置办法如下：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 设置代理:</span></span><br><span class="line">git config --global http.proxy http://IP:Port</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 代理设置完成后，查看设置是否生效：</span></span><br><span class="line">git config -–get -–global http.proxy</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 删除代理设置</span></span><br><span class="line">git config --global --unset http.proxy</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># 设置代理:</span><br><span class="line">$ git config --global http.proxy http:&#x2F;&#x2F;IP:Port</span><br><span class="line"></span><br><span class="line"># 代理设置完成后，查看设置是否生效：</span><br><span class="line">$ git config -–get -–global http.proxy</span><br><span class="line"></span><br><span class="line"># 删除代理设置</span><br><span class="line">$ git config --global --unset http.proxy</span><br></pre></td></tr></table></figure>
 <h1 id="使用规范"><a href="#使用规范" class="headerlink" title="使用规范"></a>使用规范</h1><h2 id="Branch-管理"><a href="#Branch-管理" class="headerlink" title="Branch 管理"></a>Branch 管理</h2><p>推荐使用如下 5 个分支开发管理：</p>
 <p><img src="http://img.thebetterkong.cn/blog/GitStart/BranchManage.png" alt="BranchManage"></p>
 <div class="table-container">
@@ -16499,6 +16506,141 @@ R_{upstream}(m)+R(switch)+R_{metal}(n),\quad if\ a\ pass\ transistor
         <tag>java</tag>
         <tag>Algorithm</tag>
         <tag>python</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>一文搞透快速幂算法</title>
+    <url>/2021/03/13/DataStructure-Algorithm/FastEponentiation-Algorithm/</url>
+    <content><![CDATA[<div align="center"> <img src="http://img.thebetterkong.cn/blog/FastEponentiation-Algorithm/header.png" width="100%" alt="header.png" /> </div>  
+
+<p>快速幂算法是算法中使用十分广泛的一中基础算法，它能将幂指运算的时间复杂度由 $O(n)$ 降为 $O(log\ n)$。</p>
+<a id="more"></a> 
+<h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>我们首先来看一道 『<a href="http://acm.hdu.edu.cn/showproblem.php?pid=2035" target="_blank" rel="noopener">ACM 程序设计题</a>』，题目大致如下：   </p>
+<blockquote>
+<p>求 A^B 的最后三位数表示的整数。<br>说明：A^B 的含义是 “A 的 B 次方”</p>
+</blockquote>
+<p>这道题，咋眼看上去很简单，直接用一个循环累积即可：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        Solution solution = <span class="keyword">new</span> Test().<span class="keyword">new</span> Solution();</span><br><span class="line">        <span class="keyword">long</span> base = <span class="number">2</span>;</span><br><span class="line">        <span class="keyword">long</span> power = <span class="number">100</span>;</span><br><span class="line">        <span class="keyword">long</span> answer = solution.normalPower(base, power);</span><br><span class="line">        System.out.print(answer); <span class="comment">// 0</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">long</span> <span class="title">normalPower</span><span class="params">(<span class="keyword">long</span> base, <span class="keyword">long</span> power)</span></span>&#123;</span><br><span class="line">            <span class="keyword">long</span> result=<span class="number">1</span>;</span><br><span class="line">            <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>; i &lt;= power; i++)&#123;</span><br><span class="line">                result= result * base;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> result % <span class="number">1000</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>结果令人很意外，输出竟然为 0，可是我们的算法并没有错啊。再回顾一下题目，有个很奇怪的地方，为啥让我们输出的是结果的最后三位数，按理来说，直接输出结果不行吗？这样是不是有点多次一举。    </p>
+<p>出题人当然不会这么无聊。想想我们在学习指数运算的时候，一定听过一个词叫 <code>指数爆炸</code>。这是什么意思呢？   </p>
+<blockquote>
+<p>我们小时候一定都做过这样一个游戏：给你一张纸，如何做到让它不能被轻易撕破？ 很简单，就是将这张纸不停的对折。一张纸对折一次，厚度变成原来的 2 倍。再对折第二次，变为原来的 4 倍。以此类推，假设纸的厚度为 0.1mm，则对折 24 次以后，厚度超过 1 千米；对折 39 次达 55000 千米，超过地球赤道长度；对折 42 次达 44 万千米，超过地球至月球的距离；对折 51 次达 22 亿千米，超过地球至太阳的距离；对折 82 次为 51113 光年，超过银河系半径的长度。</p>
+</blockquote>
+<p>再回到这个题目，我们的测试用例是求 $2^{100}$，这个结果有多大，反正 java 里 64 位的 long 类型一定会发生溢出。这也就解释了为什么我们输出的结果会是 0。   </p>
+<p>既然我们无法算出最终的结果，那我们应该怎样算结果的最后三位数呢？   </p>
+<p>关于 “取模” 运算，有三条很重要的运算规则：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    (a + b) \% p &= (a \% p + b \% p) \% p \\
+    (a - b) \% p &= (a \% p - b \% p) \% p \\
+    (a * b) \% p &= (a \% p \ast b \% p) \% p
+\end{aligned}</script><p>再回到这个题目，很明显，我们就借助第 3 条运算规则来求解。具体做法即：在每次循环求积时，都对中间结果做一个 “取模”，这个效果等效于对最后的结果进行 “取模”。代码如下：<br><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        Solution solution = <span class="keyword">new</span> Test().<span class="keyword">new</span> Solution();</span><br><span class="line">        <span class="keyword">long</span> base = <span class="number">2</span>;</span><br><span class="line">        <span class="keyword">long</span> power = <span class="number">2000000000</span>;</span><br><span class="line">        <span class="keyword">long</span> startTime = System.currentTimeMillis();</span><br><span class="line">        <span class="keyword">long</span> answer = solution.normalPower(base, power);</span><br><span class="line">        <span class="keyword">long</span> endTime = System.currentTimeMillis();</span><br><span class="line">        System.out.println(<span class="string">"执行结果："</span> + answer);</span><br><span class="line">        System.out.println(<span class="string">"执行时间："</span> + (endTime - startTime) + <span class="string">"ms"</span>);</span><br><span class="line">        <span class="comment">// 执行结果：376</span></span><br><span class="line">        <span class="comment">// 执行时间：6450ms</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">long</span> <span class="title">normalPower</span><span class="params">(<span class="keyword">long</span> base, <span class="keyword">long</span> power)</span></span>&#123;</span><br><span class="line">            <span class="keyword">long</span> result = <span class="number">1</span>;</span><br><span class="line">            <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>; i &lt;= power; i++)&#123;</span><br><span class="line">                result = result * base;</span><br><span class="line">                result = result % <span class="number">1000</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> result % <span class="number">1000</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>提交，通过。这下问题是得以解决了。但是有一点需要注意的是，这一次我夸张的求到了 $2^{2000000000}$，代码的执行时间既然达到了 6450ms，这是一个很夸张的数字了。在实际生产过程中，如果这样求幂指运算，效率自然是极低的。   </p>
+<p>那我们应该怎么办呢？这时候 <code>『快速幂算法』</code> 就派上用场了。</p>
+<h1 id="算法主要原理"><a href="#算法主要原理" class="headerlink" title="算法主要原理"></a>算法主要原理</h1><p>传统求幂指运算算法的时间复杂度（$O(n)$）之所以很高，是因为当指数 n 很大时，需要执行的循环次数非常大。因此，快速幂算法的核心思想在于<mark>用类似二叉树的方式，不断的二分指数，而相应的底数做平方运算</mark>。这样就可以将大指数不断减小，相应的循环次数也就可以降低，时间复杂度可以降至 $O(log\ n)$。   </p>
+<p>上述描述比较抽象，你也许不能理解，我们来看一个实例：</p>
+<blockquote>
+<p>① 先对计算做一个简单的变形，如下：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    3^{10} &= 3 \ast 3 \ast 3 \ast 3 \ast 3 \ast 3 \ast 3 \ast 3 \ast 3 \ast 3 \\
+    &= (3 \ast 3) \ast (3 \ast 3) \ast (3 \ast 3) \ast (3 \ast 3) \ast (3 \ast 3) \\
+    &= (3 \ast 3)^5 \\
+    &= 9^5
+\end{aligned}
+$$可以发现，此时，指数从 10 缩减为了原来的一半 5，底数变成了原来底数的平方。算法在求解过程中，循环次数也会减半，当幂很大的时候，运算效率的提高是十分显著的。
+
+② 我们再重复一次上面的过程。这一次发现 “幂=5”，是一个奇数，我们没法直接二分。那就换个思路，拆分如下：</script><p>\begin{aligned}<br>    3^{10} &amp;= 9^5 \\<br>    &amp;= (9^4) \ast (9^1) \\<br>    &amp;= ((9 \ast 9) \ast (9 \ast 9)) \ast 9^1 \\<br>    &amp;= (9 \ast 9)^2 \ast 9^1 \\<br>    &amp;= 81^2 \ast 9^1<br>\end{aligned}</p>
+<script type="math/tex; mode=display">这一次，我们先抽出了一个底数的一次方 $9^1$，那么剩下的 $9^4$，也就能继续进行 “指数二分” 了。
+
+③ 发现还可以继续 “指数缩减”，如下：</script><p>\begin{aligned}<br>    3^{10} &amp;= 81^2 \ast 9^1 \\<br>    &amp;= (81 \ast 81) \ast 9^1 \\<br>    &amp;= 6561^1 \ast 9^1<br>\end{aligned}</p>
+<script type="math/tex; mode=display">
+
+④ 幂再次成为一个奇数，同样抽取底数的一次方 $6561^1$，此时，拆分如下：</script><p>\begin{aligned}<br>    3^{10} &amp;= 6561^1 \ast 9^1 \\<br>    &amp;= 6561^0 \ast 6561^1 \ast 9^1 \\<br>\end{aligned}</p>
+<script type="math/tex; mode=display">这一次抽出底数的一次方后，剩下的 $6561^0$，幂已经为 0，不再需要进行二分，算法到此结束。此时的计算式为：</script><p>3^{10} = 6561^0 \ast 6561^1 \ast 9^1 = 6561 \ast 9 = 59049</p>
+<p>$$</p>
+</blockquote>
+<p>观察上面这个例子，可以发现一个规律：<mark>最后求出的幂结果实际上就是在变化过程中所有当指数为奇数时底数的乘积</mark>。    </p>
+<p>基于上述实例的分析，我们给出 <code>『快速幂算法』</code> 的代码实现：<br><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        Solution solution = <span class="keyword">new</span> Test().<span class="keyword">new</span> Solution();</span><br><span class="line">        <span class="keyword">long</span> base = <span class="number">2</span>;</span><br><span class="line">        <span class="keyword">long</span> power = <span class="number">2000000000</span>;</span><br><span class="line">        <span class="keyword">long</span> startTime = System.nanoTime();</span><br><span class="line">        <span class="keyword">long</span> answer = solution.fastPower(base, power);</span><br><span class="line">        <span class="keyword">long</span> endTime = System.nanoTime();</span><br><span class="line">        System.out.println(<span class="string">"执行结果："</span> + answer);</span><br><span class="line">        System.out.println(<span class="string">"执行时间："</span> + (endTime - startTime) + <span class="string">"ns"</span>);</span><br><span class="line">        <span class="comment">// 执行结果：376</span></span><br><span class="line">        <span class="comment">// 执行时间：2800ns</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">long</span> <span class="title">fastPower</span><span class="params">(<span class="keyword">long</span> base, <span class="keyword">long</span> power)</span></span>&#123;</span><br><span class="line">            <span class="keyword">long</span> result = <span class="number">1</span>;</span><br><span class="line">            <span class="keyword">while</span> (power &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">if</span> (power % <span class="number">2</span> == <span class="number">0</span>) &#123;</span><br><span class="line">                    power = power / <span class="number">2</span>;              <span class="comment">// 把指数缩小为一半</span></span><br><span class="line">                    base = base * base % <span class="number">1000</span>;      <span class="comment">// 底数变大成原来的平方</span></span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    power = power - <span class="number">1</span>;              <span class="comment">// 把指数减去 1，使其变成一个偶数</span></span><br><span class="line">                    result = result * base % <span class="number">1000</span>;  <span class="comment">// 指数为奇数时分离出来的底数的一次方要参与到结果的运算中</span></span><br><span class="line">                    power = power / <span class="number">2</span>;              <span class="comment">// 此时指数为偶数，继续执行二分操作</span></span><br><span class="line">                    base = base * base % <span class="number">1000</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> result;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 上述代码是为了便于理解，但是它的两条分支间存在代码冗余，可以进行合并：</span></span><br><span class="line">        <span class="comment">//      这样代码更加整洁，而且分支数减少，汇编出来的跳转指令数也会减少，</span></span><br><span class="line">        <span class="comment">//      从某种程度上来说也是可以提高性能的。</span></span><br><span class="line">        <span class="comment">//</span></span><br><span class="line">        <span class="comment">// public long fastPower(long base, long power)&#123;</span></span><br><span class="line">        <span class="comment">//     long result = 1;</span></span><br><span class="line">        <span class="comment">//     while (power &gt; 0) &#123;</span></span><br><span class="line">        <span class="comment">//         if (power % 2 == 1) &#123;</span></span><br><span class="line">        <span class="comment">//             result = result * base % 1000;</span></span><br><span class="line">        <span class="comment">//         &#125;</span></span><br><span class="line">        <span class="comment">//         power = power / 2;</span></span><br><span class="line">        <span class="comment">//         base = base * base % 1000;</span></span><br><span class="line">        <span class="comment">//     &#125;</span></span><br><span class="line">        <span class="comment">//     return result;</span></span><br><span class="line">        <span class="comment">// &#125;</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 该代码还有一种写法，就是利用 “位运算” 来替代 “%” 和 “/” 运算</span></span><br><span class="line">        <span class="comment">//      </span></span><br><span class="line">        <span class="comment">// public long fastPower(long base, long power)&#123;</span></span><br><span class="line">        <span class="comment">//     long result = 1;</span></span><br><span class="line">        <span class="comment">//     while (power &gt; 0) &#123;</span></span><br><span class="line">        <span class="comment">//         if ((power &amp; 1) == 1) &#123;</span></span><br><span class="line">        <span class="comment">//             result = result * base % 1000;</span></span><br><span class="line">        <span class="comment">//         &#125;</span></span><br><span class="line">        <span class="comment">//         power = power &gt;&gt; 1;</span></span><br><span class="line">        <span class="comment">//         base = base * base % 1000;</span></span><br><span class="line">        <span class="comment">//     &#125;</span></span><br><span class="line">        <span class="comment">//     return result;</span></span><br><span class="line">        <span class="comment">// &#125;</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><br>计算同样的数据，结果相同，但是我们计算所需的时间从 <code>6450ms</code> 降至了 <code>2800ns</code>，计算效率得到了大大的提高。</p>
+<h1 id="运用"><a href="#运用" class="headerlink" title="运用"></a>运用</h1><p>通过上文对算法原理的讲解，我们看到了 “快速幂算法” 的优势，但你也许会说，我们平常求 “幂指运算” 时，用的语言就已经帮我们优化好了，我们直接调用相关 API 即可（例如：java 的 <code>Math.pow()</code>），那它是不是就没有其他用了呢？    </p>
+<p>俗话说的好，<mark>算法学的是思维，要活以致用，灵活多变才是王道！</mark>   </p>
+<p>我们看这样一道例子：<code>斐波拉契数列的求解</code>，问题如下：</p>
+<blockquote>
+<p>斐波拉契数列的每一项数字都是前两项数字的和：<br><code>1,1,2,3,5,8,13,21,34,...</code><br>现在，要求该数列的第 n 项</p>
+</blockquote>
+<p>这是一个非常常见的问题，通常我们的解法如下：<br><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        Solution solution = <span class="keyword">new</span> Test().<span class="keyword">new</span> Solution();</span><br><span class="line">        <span class="keyword">int</span> n = <span class="number">7</span>;</span><br><span class="line">        <span class="keyword">int</span> answer = solution.Fibonacci(n);</span><br><span class="line">        System.out.println(<span class="string">"执行结果："</span> + answer);</span><br><span class="line">        <span class="comment">// 执行结果：13</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">Fibonacci</span><span class="params">(<span class="keyword">int</span> n)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">if</span> (n == <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (n == <span class="number">1</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">int</span> a = <span class="number">0</span>, b = <span class="number">1</span>;</span><br><span class="line">            <span class="keyword">int</span> c = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">2</span>; i &lt;= n; i ++) &#123;</span><br><span class="line">                c = a + b;</span><br><span class="line">                a = b;</span><br><span class="line">                b = c;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> c;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><br>这个算法的时间复杂度也是 $O(n)$。这必然不是我们想要的结果，我们回顾一下斐波拉契数列的定义：</p>
+<script type="math/tex; mode=display">
+F_n = \begin{cases}
+    1, \quad (n \leq 2) \\
+    F_{n-1} + F_{n-2}, \quad (n \geq 3)
+\end{cases}</script><blockquote>
+<p>假设，我们有一个矩阵 $A = \begin{bmatrix}0 &amp; 1 \\ 1 &amp;1\end{bmatrix}$，有 $A \begin{bmatrix}F_n \\ F_{n+1}\end{bmatrix} = \begin{bmatrix}F_{n+1} \\ F_n + F_{n+1}\end{bmatrix} = \begin{bmatrix}F_{n+1} \\ F_{n+2}\end{bmatrix}$，于是可推导出：</p>
+<script type="math/tex; mode=display">
+\begin{bmatrix}F_n \\ F_{n+1} \end{bmatrix} 
+= A \begin{bmatrix}F_{n-1} \\ F_n \end{bmatrix}
+= A^2 \begin{bmatrix}F_{n-2} \\ F_{n-1} \end{bmatrix}
+= ... 
+= A^{n-1} \begin{bmatrix}F_1 \\ F_2 \end{bmatrix}
+= A^{n-1} \begin{bmatrix}1 \\ 1 \end{bmatrix}</script></blockquote>
+<p>这样我们就把原来复杂的问题转化为了<strong>求某个矩阵的幂</strong>的问题，这个时候，我们的 “快速幂算法” 也就派上用场了。有一点点不一样的是，这一次是<strong>矩阵的幂指运算</strong>，我们只需要在原先的算法上稍作修改即可：<br><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        Solution solution = <span class="keyword">new</span> Test().<span class="keyword">new</span> Solution();</span><br><span class="line">        <span class="keyword">int</span> n = <span class="number">7</span>;</span><br><span class="line">        <span class="keyword">int</span> answer = solution.Fibonacci(n);</span><br><span class="line">        System.out.println(answer); <span class="comment">// 13</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">Fibonacci</span><span class="params">(<span class="keyword">int</span> n)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">int</span>[][] A = &#123;&#123;<span class="number">0</span>, <span class="number">1</span>&#125;, &#123;<span class="number">1</span>, <span class="number">1</span>&#125;&#125;;</span><br><span class="line">            <span class="keyword">int</span>[][] res = pow(A, n-<span class="number">1</span>);</span><br><span class="line">            <span class="keyword">return</span> res[<span class="number">0</span>][<span class="number">0</span>] + res[<span class="number">0</span>][<span class="number">1</span>]; <span class="comment">// 相当于最后还需要乘的列向量 [[1],[1]]</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 矩阵的快速幂算法</span></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">int</span>[][] pow(<span class="keyword">int</span>[][] A, <span class="keyword">int</span> n) &#123;</span><br><span class="line">            <span class="keyword">int</span>[][] ans = &#123;&#123;<span class="number">1</span>, <span class="number">0</span>&#125;, &#123;<span class="number">0</span>, <span class="number">1</span>&#125;&#125;;</span><br><span class="line">            <span class="keyword">while</span> (n &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">if</span> ((n &amp; <span class="number">1</span>) == <span class="number">1</span>) &#123;</span><br><span class="line">                    ans = multiply(ans, A);</span><br><span class="line">                &#125;</span><br><span class="line">                n &gt;&gt;= <span class="number">1</span>;</span><br><span class="line">                A = multiply(A, A);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> ans;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 辅助函数：用来求两个矩阵相乘</span></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">int</span>[][] multiply(<span class="keyword">int</span>[][] a, <span class="keyword">int</span>[][] b) &#123;</span><br><span class="line">            <span class="keyword">int</span>[][] c = <span class="keyword">new</span> <span class="keyword">int</span>[<span class="number">2</span>][<span class="number">2</span>];</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">2</span>; i++) &#123;</span><br><span class="line">                <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; <span class="number">2</span>; j++) &#123;</span><br><span class="line">                    c[i][j] = a[i][<span class="number">0</span>] * b[<span class="number">0</span>][j] + a[i][<span class="number">1</span>] * b[<span class="number">1</span>][j];</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> c;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>现在问题总算是得到了解决。但是，在上面的过程中，有一个很关键的问题在于，<mark>如何找到幂矩阵 A</mark>？   </p>
+<p><strong>构造这个幂矩阵的方法是多种多样的，并不唯一，只需要满足能让所有包含变量 n 的项递减即可</strong>。这里给出一些常见的例子：   </p>
+<p>（1）对于 $f_n = a \ast f_{n-1} + b \ast f_{n-2} + c$，其中 $a,b,c$ 为常数，有：</p>
+<script type="math/tex; mode=display">
+\begin{bmatrix}a & b & c\\ 1 & 0 & 0 \\ 0 & 0 & 1\end{bmatrix} \ast \begin{bmatrix}f_{n-1} \\ f_{n-2} \\ 1 \end{bmatrix} = \begin{bmatrix}f_n \\ f_{n-1} \\ 1 \end{bmatrix}</script><p>（2）对于 $f_n = a \ast f_{n-1} + b \ast f_{n-2} + c^n$，其中 $a,b,c$ 为常数，有：</p>
+<script type="math/tex; mode=display">
+\begin{bmatrix}a & b & c\\ 1 & 0 & 0 \\ 0 & 0 & c\end{bmatrix} \ast \begin{bmatrix}f_{n-1} \\ f_{n-2} \\ c^{n-1} \end{bmatrix} = \begin{bmatrix}f_n \\ f_{n-1} \\ c^n \end{bmatrix}</script><p>（3）对于 $f_n = f_{n-1} + f_{n-2} + n^2$，有：</p>
+<script type="math/tex; mode=display">
+\begin{bmatrix}1 & 1 & 1 & 2 & 1\\ 1 & 0 & 0 & 0 & 0\\ 0 & 0 & 1 & 2 & 1\\ 0 & 0 & 0 & 1 & 1 \\ 0 & 0 & 0 & 0 & 1\end{bmatrix} \ast \begin{bmatrix}f_n \\ f_{n-1} \\ n^2 \\ n \\ 1 \end{bmatrix} = \begin{bmatrix}f_{n+1} \\ f_n \\ (n+1)^2 \\ (n+1) \\ 1 \end{bmatrix}</script><p>看了这几个例子，如果你还是很懵的话，这里给一个比较形式化的求矩阵 A 的方法，见下图：   </p>
+<p><img src="http://img.thebetterkong.cn/blog/FastEponentiation-Algorithm/findA.png" alt="findA">   </p>
+<p>其实上面这些步骤里，最难的就是<mark>构造递减关系</mark>，解决这个问题最常用的方法就是 <mark>二项式展开</mark>。  </p>
+<p> 我们再来看看更复杂的例子：</p>
+<p>（4）计算 k 次方和：$S_n = \sum_{i=1}^n\ i^k$，表示为递推式 $S_n = n^k + S_{n-1}$：</p>
+<blockquote>
+<p>利用二项式展开，展开递推式：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    S_n &= [(n-1)+1]^k + S_{n-1} \\
+        &= C_k^0(n-1)^k + C_k^1(n-1)^{k-1} + ... + C_k^k + S_{n-1}
+\end{aligned}</script><p>此时，令 $X_{n-1} = \begin{bmatrix} (n-1)^k \\ (n-1)^{k-1} \\ \vdots \\ (n-1)^0 \\ S_{n-1}\end{bmatrix}$，则有 $X_n = \begin{bmatrix} n^k \\ n^{k-1} \\ \vdots \\ n^0 \\ S_n\end{bmatrix}$，现在的问题在于找到 A 使得 $A \ast X_{n-1} = X_n$。  </p>
+<p>上面的递推公式就指明了 A 的最后一行，至于其他行，利用二项式展开也很容易得到，有：</p>
+<script type="math/tex; mode=display">
+\begin{bmatrix} C_k^0 & C_k^1 & \ldots & C_k^k & 0 \\ 0 & C_{k-1}^0 & \ldots & C_{k-1}^{k-1} & 0 \\ \vdots & \vdots & \ddots & \vdots & \vdots \\ 0 & \ldots & \ldots & C_0^0 & 0 \\ C_k^0 & C_k^1 & \ldots & C_k^k & 1 \end{bmatrix} \ast \begin{bmatrix} (n-1)^k \\ (n-1)^{k-1} \\ \vdots \\ (n-1)^0 \\ S_{n-1}\end{bmatrix} = \begin{bmatrix} n^k \\ n^{k-1} \\ \vdots \\ n^0 \\ S_n\end{bmatrix}</script><p>其中，$X_1 = \{1\ 1\ \ldots\ 1\}^T$ </p>
+</blockquote>
+<p>（5）计算：$S_n = \sum_{i=1}^n\ (ai+b)^k$，表示为递推式 $S_n = (an+b)^k + S_{n-1}$：  </p>
+<blockquote>
+<p>利用二项式展开，展开递推式：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    S_n &= [a(n-1)+(a+b)]^k + S_{n-1} \\
+        &= C_k^0a^k(n-1)^k + C_k^1a^{k-1}(a+b)(n-1)^{k-1} + ... + C_k^k(a+b)^k + S_{n-1}
+\end{aligned}</script><p>接下来的步骤和之前的一样，这里直接给出结论：</p>
+<script type="math/tex; mode=display">
+\begin{bmatrix} C_k^0 & C_k^1 & \ldots & C_k^k & 0 \\ 0 & C_{k-1}^0 & \ldots & C_{k-1}^{k-1} & 0 \\ \vdots & \vdots & \ddots & \vdots & \vdots \\ 0 & \ldots & \ldots & C_0^0 & 0 \\ C_k^0a^k & C_k^1a^{k-1}(a+b) & \ldots & C_k^k(a+b)^k & 1 \end{bmatrix} \ast \begin{bmatrix} (n-1)^k \\ (n-1)^{k-1} \\ \vdots \\ (n-1)^0 \\ S_{n-1}\end{bmatrix} = \begin{bmatrix} n^k \\ n^{k-1} \\ \vdots \\ n^0 \\ S_n\end{bmatrix}</script></blockquote>
+<p>（6）计算：$S_n = \sum_{i=1}^n\ i^kk^i$，表示为递推式 $S_n = n^kk^n + S_{n-1}$：  </p>
+<blockquote>
+<p>利用二项式展开，展开递推式：</p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+    S_n &= [(n-1)+1]^kk^{[(n-1)+1]} + S_{n-1} \\
+        &= C_k^0(n-1)^kk^{(n-1)+1} + C_k^1(n-1)^{k-1}k^{(n-1)+1} + ... + C_k^kk^{(n-1)+1} + S_{n-1}
+\end{aligned}</script><p>此时，令 $X_{n-1} = \begin{bmatrix} (n-1)^kk^{(n-1)+1} \\ (n-1)^{k-1}k^{(n-1)+1} \\ \vdots \\ (n-1)^0k^{(n-1)+1} \\ S_{n-1}\end{bmatrix}$，则有 $X_n = \begin{bmatrix} n^kk^{n+1} \\ n^{k-1}k^{n+1} \\ \vdots \\ n^0k^{n+1} \\ S_n\end{bmatrix}$</p>
+<p>同样，上面的递推公式就指明了 A 的最后一行，至于其他行，利用二项式展开也很容易得到，只是相差了一个系数 k。有：</p>
+<script type="math/tex; mode=display">
+\begin{bmatrix} kC_k^0 & kC_k^1 & \ldots & kC_k^k & 0 \\ 0 & kC_{k-1}^0 & \ldots & kC_{k-1}^{k-1} & 0 \\ \vdots & \vdots & \ddots & \vdots & \vdots \\ 0 & \ldots & \ldots & kC_0^0 & 0 \\ C_k^0 & C_k^1 & \ldots & C_k^k & 1 \end{bmatrix} \ast \begin{bmatrix} (n-1)^kk^{(n-1)+1} \\ (n-1)^{k-1}k^{(n-1)+1} \\ \vdots \\ (n-1)^0k^{(n-1)+1} \\ S_{n-1}\end{bmatrix} = \begin{bmatrix} n^kk^{n+1} \\ n^{k-1}k^{n+1} \\ \vdots \\ n^0k^{n+1} \\ S_n\end{bmatrix}</script></blockquote>
+<p>说了这么多例子，看着这些复杂的公式，并不是为了要你记住它们。真实的使用场景是千变万化的，这里肯定不能涵盖到所有情况。所以关键在于理解这些公式的推导方法，具体情况具体分析。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>其实快速幂算法的思想很简单，实现起来也不难。这里之所以花了这么大的篇幅介绍实际运用，是为了告诫我们，算法的精髓不在于它本身，而是在于这种思想的灵活运用。懂了不代表会了，一定要多总结多悟！在我们刷 leetcode 时，也一定要保持这种心态，不要一味的求多！</p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><ul>
+<li><a href="https://blog.csdn.net/qq_19782019/article/details/85621386" target="_blank" rel="noopener">快速幂算法（全网最详细地带你从零开始一步一步优化）</a></li>
+<li><a href="https://blog.csdn.net/qq_40061421/article/details/82625338" target="_blank" rel="noopener">快速幂和矩阵快速幂(取模)算法</a></li>
+</ul>
+]]></content>
+      <categories>
+        <category>DataStructure &amp; Algorithm</category>
+      </categories>
+      <tags>
+        <tag>DataStructure</tag>
+        <tag>java</tag>
       </tags>
   </entry>
 </search>

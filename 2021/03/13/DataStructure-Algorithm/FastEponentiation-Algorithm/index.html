@@ -239,7 +239,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">56</span>
+          <span class="site-state-item-count">57</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -503,7 +503,7 @@ F_n = \begin{cases}
     1, \quad (n \leq 2) \\
     F_{n-1} + F_{n-2}, \quad (n \geq 3)
 \end{cases}</script><blockquote>
-<p>假设，我们有一个矩阵 $A = \begin{bmatrix}0 &amp; 1 \\ 1 &amp;1\end{bmatrix}$，有 $A \begin{bmatrix}F_n \\ F_{n+1}\end{bmatrix} = \begin{bmatrix}F_{n+1} \\ F_n + F_{n+1}\end{bmatrix} = \begin{bmatrix}F_{n+1} \\ F_{n+2}\end{bmatrix}$，于是可推导出：</p>
+<p>假设，我们有一个矩阵 $A = \begin{bmatrix}0 &amp; 1 \ 1 &amp;1\end{bmatrix}$，有 $A \begin{bmatrix}F<em>n \ F</em>{n+1}\end{bmatrix} = \begin{bmatrix}F<em>{n+1} \ F_n + F</em>{n+1}\end{bmatrix} = \begin{bmatrix}F<em>{n+1} \ F</em>{n+2}\end{bmatrix}$，于是可推导出：</p>
 <script type="math/tex; mode=display">
 \begin{bmatrix}F_n \\ F_{n+1} \end{bmatrix} 
 = A \begin{bmatrix}F_{n-1} \\ F_n \end{bmatrix}
@@ -514,29 +514,29 @@ F_n = \begin{cases}
 <p>这样我们就把原来复杂的问题转化为了<strong>求某个矩阵的幂</strong>的问题，这个时候，我们的 “快速幂算法” 也就派上用场了。有一点点不一样的是，这一次是<strong>矩阵的幂指运算</strong>，我们只需要在原先的算法上稍作修改即可：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        Solution solution = <span class="keyword">new</span> Test().<span class="keyword">new</span> Solution();</span><br><span class="line">        <span class="keyword">int</span> n = <span class="number">7</span>;</span><br><span class="line">        <span class="keyword">int</span> answer = solution.Fibonacci(n);</span><br><span class="line">        System.out.println(answer); <span class="comment">// 13</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">Fibonacci</span><span class="params">(<span class="keyword">int</span> n)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">int</span>[][] A = &#123;&#123;<span class="number">0</span>, <span class="number">1</span>&#125;, &#123;<span class="number">1</span>, <span class="number">1</span>&#125;&#125;;</span><br><span class="line">            <span class="keyword">int</span>[][] res = pow(A, n-<span class="number">1</span>);</span><br><span class="line">            <span class="keyword">return</span> res[<span class="number">0</span>][<span class="number">0</span>] + res[<span class="number">0</span>][<span class="number">1</span>]; <span class="comment">// 相当于最后还需要乘的列向量 [[1],[1]]</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 矩阵的快速幂算法</span></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">int</span>[][] pow(<span class="keyword">int</span>[][] A, <span class="keyword">int</span> n) &#123;</span><br><span class="line">            <span class="keyword">int</span>[][] ans = &#123;&#123;<span class="number">1</span>, <span class="number">0</span>&#125;, &#123;<span class="number">0</span>, <span class="number">1</span>&#125;&#125;;</span><br><span class="line">            <span class="keyword">while</span> (n &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">if</span> ((n &amp; <span class="number">1</span>) == <span class="number">1</span>) &#123;</span><br><span class="line">                    ans = multiply(ans, A);</span><br><span class="line">                &#125;</span><br><span class="line">                n &gt;&gt;= <span class="number">1</span>;</span><br><span class="line">                A = multiply(A, A);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> ans;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 辅助函数：用来求两个矩阵相乘</span></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">int</span>[][] multiply(<span class="keyword">int</span>[][] a, <span class="keyword">int</span>[][] b) &#123;</span><br><span class="line">            <span class="keyword">int</span>[][] c = <span class="keyword">new</span> <span class="keyword">int</span>[<span class="number">2</span>][<span class="number">2</span>];</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">2</span>; i++) &#123;</span><br><span class="line">                <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; <span class="number">2</span>; j++) &#123;</span><br><span class="line">                    c[i][j] = a[i][<span class="number">0</span>] * b[<span class="number">0</span>][j] + a[i][<span class="number">1</span>] * b[<span class="number">1</span>][j];</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> c;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>现在问题总算是得到了解决。但是在上面的过程中，有一个很关键的问题在于<mark>如何找到幂矩阵 A</mark>？   </p>
 <p><strong>构造这个幂矩阵的方法是多种多样的，并不唯一，只需要满足能让所有包含变量 n 的项递减即可</strong>。这里给出一些常见的例子：   </p>
-<p>（1）对于 $f_n = a \ast f_{n-1} + b \ast f_{n-2} + c$，其中 $a,b,c$ 为常数，有：</p>
+<p>（1）对于 $f<em>n = a \ast f</em>{n-1} + b \ast f_{n-2} + c$，其中 $a,b,c$ 为常数，有：</p>
 <script type="math/tex; mode=display">
-\begin{bmatrix}a & b & c\\ 1 & 0 & 0 \\ 0 & 0 & 1\end{bmatrix} \ast \begin{bmatrix}f_{n-1} \\ f_{n-2} \\ 1 \end{bmatrix} = \begin{bmatrix}f_n \\ f_{n-1} \\ 1 \end{bmatrix}</script><p>（2）对于 $f_n = a \ast f_{n-1} + b \ast f_{n-2} + c^n$，其中 $a,b,c$ 为常数，有：</p>
+\begin{bmatrix}a & b & c\\ 1 & 0 & 0 \\ 0 & 0 & 1\end{bmatrix} \ast \begin{bmatrix}f_{n-1} \\ f_{n-2} \\ 1 \end{bmatrix} = \begin{bmatrix}f_n \\ f_{n-1} \\ 1 \end{bmatrix}</script><p>（2）对于 $f<em>n = a \ast f</em>{n-1} + b \ast f_{n-2} + c^n$，其中 $a,b,c$ 为常数，有：</p>
 <script type="math/tex; mode=display">
-\begin{bmatrix}a & b & c\\ 1 & 0 & 0 \\ 0 & 0 & c\end{bmatrix} \ast \begin{bmatrix}f_{n-1} \\ f_{n-2} \\ c^{n-1} \end{bmatrix} = \begin{bmatrix}f_n \\ f_{n-1} \\ c^n \end{bmatrix}</script><p>（3）对于 $f_n = f_{n-1} + f_{n-2} + n^2$，有：</p>
+\begin{bmatrix}a & b & c\\ 1 & 0 & 0 \\ 0 & 0 & c\end{bmatrix} \ast \begin{bmatrix}f_{n-1} \\ f_{n-2} \\ c^{n-1} \end{bmatrix} = \begin{bmatrix}f_n \\ f_{n-1} \\ c^n \end{bmatrix}</script><p>（3）对于 $f<em>n = f</em>{n-1} + f_{n-2} + n^2$，有：</p>
 <script type="math/tex; mode=display">
 \begin{bmatrix}1 & 1 & 1 & 2 & 1\\ 1 & 0 & 0 & 0 & 0\\ 0 & 0 & 1 & 2 & 1\\ 0 & 0 & 0 & 1 & 1 \\ 0 & 0 & 0 & 0 & 1\end{bmatrix} \ast \begin{bmatrix}f_n \\ f_{n-1} \\ n^2 \\ n \\ 1 \end{bmatrix} = \begin{bmatrix}f_{n+1} \\ f_n \\ (n+1)^2 \\ (n+1) \\ 1 \end{bmatrix}</script><p>看了这几个例子，如果你还是很懵的话，这里给一个比较形式化的求矩阵 A 的方法，见下图：   </p>
 <p><img src="http://img.thebetterkong.cn/blog/FastEponentiation-Algorithm/findA.png" alt="findA">   </p>
 <p>其实上面这些步骤里，最难的就是<mark>构造递减关系</mark>，解决这个问题最常用的方法就是 <mark>二项式展开</mark>。  </p>
 <p> 我们再来看看更复杂的例子：</p>
-<p>（4）计算 k 次方和：$S_n = \sum_{i=1}^n\ i^k$，表示为递推式 $S_n = n^k + S_{n-1}$：</p>
+<p>（4）计算 k 次方和：$S<em>n = \sum</em>{i=1}^n\ i^k$，表示为递推式 $S<em>n = n^k + S</em>{n-1}$：</p>
 <blockquote>
 <p>利用二项式展开，展开递推式：</p>
 <script type="math/tex; mode=display">
 \begin{aligned}
     S_n &= [(n-1)+1]^k + S_{n-1} \\
         &= C_k^0(n-1)^k + C_k^1(n-1)^{k-1} + ... + C_k^k + S_{n-1}
-\end{aligned}</script><p>此时，令 $X_{n-1} = \begin{bmatrix} (n-1)^k \\ (n-1)^{k-1} \\ \vdots \\ (n-1)^0 \\ S_{n-1}\end{bmatrix}$，则有 $X_n = \begin{bmatrix} n^k \\ n^{k-1} \\ \vdots \\ n^0 \\ S_n\end{bmatrix}$，现在的问题在于找到 A 使得 $A \ast X_{n-1} = X_n$。  </p>
+\end{aligned}</script><p>此时，令 $X<em>{n-1} = \begin{bmatrix} (n-1)^k \ (n-1)^{k-1} \ \vdots \ (n-1)^0 \ S</em>{n-1}\end{bmatrix}$，则有 $X<em>n = \begin{bmatrix} n^k \ n^{k-1} \ \vdots \ n^0 \ S_n\end{bmatrix}$，现在的问题在于找到 A 使得 $A \ast X</em>{n-1} = X_n$。  </p>
 <p>上面的递推公式就指明了 A 的最后一行，至于其他行，利用二项式展开也很容易得到，有：</p>
 <script type="math/tex; mode=display">
-\begin{bmatrix} C_k^0 & C_k^1 & \ldots & C_k^k & 0 \\ 0 & C_{k-1}^0 & \ldots & C_{k-1}^{k-1} & 0 \\ \vdots & \vdots & \ddots & \vdots & \vdots \\ 0 & \ldots & \ldots & C_0^0 & 0 \\ C_k^0 & C_k^1 & \ldots & C_k^k & 1 \end{bmatrix} \ast \begin{bmatrix} (n-1)^k \\ (n-1)^{k-1} \\ \vdots \\ (n-1)^0 \\ S_{n-1}\end{bmatrix} = \begin{bmatrix} n^k \\ n^{k-1} \\ \vdots \\ n^0 \\ S_n\end{bmatrix}</script><p>其中，$X_1 = \{1\ 1\ \ldots\ 1\}^T$ </p>
+\begin{bmatrix} C_k^0 & C_k^1 & \ldots & C_k^k & 0 \\ 0 & C_{k-1}^0 & \ldots & C_{k-1}^{k-1} & 0 \\ \vdots & \vdots & \ddots & \vdots & \vdots \\ 0 & \ldots & \ldots & C_0^0 & 0 \\ C_k^0 & C_k^1 & \ldots & C_k^k & 1 \end{bmatrix} \ast \begin{bmatrix} (n-1)^k \\ (n-1)^{k-1} \\ \vdots \\ (n-1)^0 \\ S_{n-1}\end{bmatrix} = \begin{bmatrix} n^k \\ n^{k-1} \\ \vdots \\ n^0 \\ S_n\end{bmatrix}</script><p>其中，$X_1 = {1\ 1\ \ldots\ 1}^T$ </p>
 </blockquote>
-<p>（5）计算：$S_n = \sum_{i=1}^n\ (ai+b)^k$，表示为递推式 $S_n = (an+b)^k + S_{n-1}$：  </p>
+<p>（5）计算：$S<em>n = \sum</em>{i=1}^n\ (ai+b)^k$，表示为递推式 $S<em>n = (an+b)^k + S</em>{n-1}$：  </p>
 <blockquote>
 <p>利用二项式展开，展开递推式：</p>
 <script type="math/tex; mode=display">
@@ -546,14 +546,14 @@ F_n = \begin{cases}
 \end{aligned}</script><p>接下来的步骤和之前的一样，这里直接给出结论：</p>
 <script type="math/tex; mode=display">
 \begin{bmatrix} C_k^0 & C_k^1 & \ldots & C_k^k & 0 \\ 0 & C_{k-1}^0 & \ldots & C_{k-1}^{k-1} & 0 \\ \vdots & \vdots & \ddots & \vdots & \vdots \\ 0 & \ldots & \ldots & C_0^0 & 0 \\ C_k^0a^k & C_k^1a^{k-1}(a+b) & \ldots & C_k^k(a+b)^k & 1 \end{bmatrix} \ast \begin{bmatrix} (n-1)^k \\ (n-1)^{k-1} \\ \vdots \\ (n-1)^0 \\ S_{n-1}\end{bmatrix} = \begin{bmatrix} n^k \\ n^{k-1} \\ \vdots \\ n^0 \\ S_n\end{bmatrix}</script></blockquote>
-<p>（6）计算：$S_n = \sum_{i=1}^n\ i^kk^i$，表示为递推式 $S_n = n^kk^n + S_{n-1}$：  </p>
+<p>（6）计算：$S<em>n = \sum</em>{i=1}^n\ i^kk^i$，表示为递推式 $S<em>n = n^kk^n + S</em>{n-1}$：  </p>
 <blockquote>
 <p>利用二项式展开，展开递推式：</p>
 <script type="math/tex; mode=display">
 \begin{aligned}
     S_n &= [(n-1)+1]^kk^{[(n-1)+1]} + S_{n-1} \\
         &= C_k^0(n-1)^kk^{(n-1)+1} + C_k^1(n-1)^{k-1}k^{(n-1)+1} + ... + C_k^kk^{(n-1)+1} + S_{n-1}
-\end{aligned}</script><p>此时，令 $X_{n-1} = \begin{bmatrix} (n-1)^kk^{(n-1)+1} \\ (n-1)^{k-1}k^{(n-1)+1} \\ \vdots \\ (n-1)^0k^{(n-1)+1} \\ S_{n-1}\end{bmatrix}$，则有 $X_n = \begin{bmatrix} n^kk^{n+1} \\ n^{k-1}k^{n+1} \\ \vdots \\ n^0k^{n+1} \\ S_n\end{bmatrix}$</p>
+\end{aligned}</script><p>此时，令 $X<em>{n-1} = \begin{bmatrix} (n-1)^kk^{(n-1)+1} \ (n-1)^{k-1}k^{(n-1)+1} \ \vdots \ (n-1)^0k^{(n-1)+1} \ S</em>{n-1}\end{bmatrix}$，则有 $X_n = \begin{bmatrix} n^kk^{n+1} \ n^{k-1}k^{n+1} \ \vdots \ n^0k^{n+1} \ S_n\end{bmatrix}$</p>
 <p>同样，上面的递推公式就指明了 A 的最后一行，至于其他行，利用二项式展开也很容易得到，只是相差了一个系数 k。有：</p>
 <script type="math/tex; mode=display">
 \begin{bmatrix} kC_k^0 & kC_k^1 & \ldots & kC_k^k & 0 \\ 0 & kC_{k-1}^0 & \ldots & kC_{k-1}^{k-1} & 0 \\ \vdots & \vdots & \ddots & \vdots & \vdots \\ 0 & \ldots & \ldots & kC_0^0 & 0 \\ C_k^0 & C_k^1 & \ldots & C_k^k & 1 \end{bmatrix} \ast \begin{bmatrix} (n-1)^kk^{(n-1)+1} \\ (n-1)^{k-1}k^{(n-1)+1} \\ \vdots \\ (n-1)^0k^{(n-1)+1} \\ S_{n-1}\end{bmatrix} = \begin{bmatrix} n^kk^{n+1} \\ n^{k-1}k^{n+1} \\ \vdots \\ n^0k^{n+1} \\ S_n\end{bmatrix}</script></blockquote>
@@ -620,6 +620,9 @@ F_n = \begin{cases}
                 </a>
             </div>
             <div class="post-nav-item">
+                <a href="/2021/03/21/DataStructure-Algorithm/TOP-K/" rel="next" title="有关 TOP-K 你到底了解多少？">
+                  有关 TOP-K 你到底了解多少？ <i class="fa fa-chevron-right"></i>
+                </a>
             </div>
           </div>
     </footer>
@@ -681,13 +684,13 @@ F_n = \begin{cases}
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">486k</span>
+    <span title="站点总字数">494k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">7:21</span>
+    <span title="站点阅读时长">7:30</span>
   </span>
 </div>
 <div class="busuanzi-count">

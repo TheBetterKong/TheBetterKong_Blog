@@ -60,10 +60,10 @@
 <meta property="og:image" content="http://img.thebetterkong.cn/blog/SearchingAlgorithm/TrieTree.png">
 <meta property="og:image" content="http://img.thebetterkong.cn/blog/SearchingAlgorithm/ChainAddressMethod.png">
 <meta property="article:published_time" content="2020-06-15T04:53:23.000Z">
-<meta property="article:modified_time" content="2020-08-14T09:29:03.045Z">
+<meta property="article:modified_time" content="2020-08-14T09:29:03.000Z">
 <meta property="article:author" content="TheBetterKong">
-<meta property="article:tag" content="java">
 <meta property="article:tag" content="Algorithm">
+<meta property="article:tag" content="java">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://img.thebetterkong.cn/blog/SearchingAlgorithm/header.png">
 
@@ -265,7 +265,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">56</span>
+          <span class="site-state-item-count">57</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -491,7 +491,7 @@
 <p>对于含有 n 个记录的表，查找成功时的平均查找长度为：   </p>
 <script type="math/tex; mode=display">ASL\ =\ \sum^n_{i=1}\ P_iC_i</script><p>其中：</p>
 <ul>
-<li>$P_i$ 为查找表中第 i 个记录的概率，且 $\sum^n_{i=1}\ P_i=1$；</li>
+<li>$P<em>i$ 为查找表中第 i 个记录的概率，且 $\sum^n</em>{i=1}\ P_i=1$；</li>
 <li>$C_i$ 为找到表中期关键字与给定值相等的第 i 个记录时，和给定值已进行过比较的关键字个数。它随查找过程不同而不同；</li>
 </ul>
 <h1 id="静态线性表查找"><a href="#静态线性表查找" class="headerlink" title="静态线性表查找"></a>静态线性表查找</h1><p><img src="http://img.thebetterkong.cn/blog/SearchingAlgorithm/DataStructure.png" alt="DataStructure"> </p>
@@ -513,7 +513,7 @@
 <ul>
 <li>除待查找表本身外，新建一个 “索引表”：<ul>
 <li><img src="http://img.thebetterkong.cn/blog/SearchingAlgorithm/IndexTable.png" alt="IndexTable"> </li>
-<li>上图中，将 18 个记录分为了 3 个子表：$(R_1,R_2,…,R_6)$、$(R_7,R_8,…,R_{12})$、$(R_{13},R_{14},…,R_{18})$；</li>
+<li>上图中，将 18 个记录分为了 3 个子表：$(R<em>1,R_2,…,R_6)$、$(R_7,R_8,…,R</em>{12})$、$(R<em>{13},R</em>{14},…,R_{18})$；</li>
 <li>对每个子表（块）建立一个索引项，其包括两个内容：最大关键字（子表内的最大关键字）、指针项（指示该子表的第一个记录在表中的位置）；</li>
 <li>索引表按关键字有序，则表要么有序要么分块有序（是指：第二个子表中所有记录的关键字均大于第一个子表中的关键字，依次类推…）</li>
 </ul>
@@ -544,7 +544,7 @@
 </ul>
 </li>
 <li>若用顺序查找确定所在块，则分块查找的平均长度为：<ul>
-<li>$ASL_{bs}=L_b+L_w=\frac{1}{b}\sum^b_{j=1}j+\frac{1}{s}\sum^s_{i=1}i=\frac{b+1}{2}+\frac{s+1}{2}=\frac{1}{2}(\frac{n}{s}+s)+1$</li>
+<li>$ASL<em>{bs}=L_b+L_w=\frac{1}{b}\sum^b</em>{j=1}j+\frac{1}{s}\sum^s_{i=1}i=\frac{b+1}{2}+\frac{s+1}{2}=\frac{1}{2}(\frac{n}{s}+s)+1$</li>
 </ul>
 </li>
 <li>若用折半查找确定所在块，则分块查找的平均长度为：<ul>
@@ -800,8 +800,8 @@ ASL_{bs}&=\sum^n_{i=1}\ P_iC_i=\frac{1}{n}\ \sum^h_{j=1}\ j \cdot 2^{j-1}\\\\
 <li>若根节点不是叶子结点，则至少有两棵子树；</li>
 <li>除根节点之外的所有非终端结点至少有 $\lceil m/2 \rceil$ 棵子树；</li>
 <li>所有的非终端节点包含以下信息数据：$(n,A_0,K_1,A_1,K_2,A_2,…,K_n,A_n)$<ul>
-<li>$K_i\ (i=1,…,n)$ 为关键字，且 $K_i&lt;K_{i+1}\ (i=1,…,n-1)$；</li>
-<li>$A_i\ (i=1,…,n)$ 为指向子树根节点的指针，且指针 $A_{i-1}$ 所指子树中所有结点的关键字均小于 $K_i(i=1,…,n)$，$A_n$ 所指子树中所有结点的关键字均大于 $K_n$；</li>
+<li>$K<em>i\ (i=1,…,n)$ 为关键字，且 $K_i&lt;K</em>{i+1}\ (i=1,…,n-1)$；</li>
+<li>$A<em>i\ (i=1,…,n)$ 为指向子树根节点的指针，且指针 $A</em>{i-1}$ 所指子树中所有结点的关键字均小于 $K_i(i=1,…,n)$，$A_n$ 所指子树中所有结点的关键字均大于 $K_n$；</li>
 <li>$n\ (\lceil m/2 \rceil-1 \leq n \leq m-1)$  </li>
 </ul>
 </li>
@@ -1079,8 +1079,8 @@ ASL_{bs}&=\sum^n_{i=1}\ P_iC_i=\frac{1}{n}\ \sum^h_{j=1}\ j \cdot 2^{j-1}\\\\
 </div>
 
           <div class="post-tags">
-              <a href="/tags/java/" rel="tag"><i class="fa fa-tag"></i> java</a>
               <a href="/tags/Algorithm/" rel="tag"><i class="fa fa-tag"></i> Algorithm</a>
+              <a href="/tags/java/" rel="tag"><i class="fa fa-tag"></i> java</a>
           </div>
 
         
@@ -1156,13 +1156,13 @@ ASL_{bs}&=\sum^n_{i=1}\ P_iC_i=\frac{1}{n}\ \sum^h_{j=1}\ j \cdot 2^{j-1}\\\\
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">486k</span>
+    <span title="站点总字数">494k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">7:21</span>
+    <span title="站点阅读时长">7:30</span>
   </span>
 </div>
 <div class="busuanzi-count">

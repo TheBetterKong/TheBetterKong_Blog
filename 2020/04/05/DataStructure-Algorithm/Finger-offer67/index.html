@@ -42,10 +42,10 @@
 <meta property="og:image" content="http://www.thebetterkong.cn/2020/04/05/_images/Algorithm/Finger-offer67/BinaryTreeNextNode.png">
 <meta property="og:image" content="http://img.thebetterkong.cn/blog/Finger-offer67/Cutshengzi.png">
 <meta property="article:published_time" content="2020-04-05T06:58:23.000Z">
-<meta property="article:modified_time" content="2020-08-14T09:28:51.176Z">
+<meta property="article:modified_time" content="2020-08-14T09:28:51.000Z">
 <meta property="article:author" content="TheBetterKong">
-<meta property="article:tag" content="java">
 <meta property="article:tag" content="Algorithm">
+<meta property="article:tag" content="java">
 <meta property="article:tag" content="python">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://img.thebetterkong.cn/blog/Finger-offer67/header.png">
@@ -248,7 +248,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">56</span>
+          <span class="site-state-item-count">57</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -549,7 +549,7 @@
 <h2 id="算法评价-2"><a href="#算法评价-2" class="headerlink" title="算法评价"></a>算法评价</h2><p>时间复杂度为：<code>O(n)</code><br>空间复杂度为：<code>3n</code>，此参数仅供参考，还不够准确</p>
 <hr>
 <h1 id="重建二叉树"><a href="#重建二叉树" class="headerlink" title="重建二叉树"></a>重建二叉树</h1><h2 id="题目描述-3"><a href="#题目描述-3" class="headerlink" title="题目描述"></a>题目描述</h2><p>输入某二叉树的前序遍历和中序遍历的结果，请重建出该二叉树。假设输入的前序遍历和中序遍历的结果中都不含重复的数字。    </p>
-<p>例如：输入前序遍历序列 $\{1,2,4,7,3,5,6,8\}$ 和中序遍历序列 $\{4,7,2,1,5,3,8,6\}$，则重建二叉树并返回。    </p>
+<p>例如：输入前序遍历序列 ${1,2,4,7,3,5,6,8}$ 和中序遍历序列 ${4,7,2,1,5,3,8,6}$，则重建二叉树并返回。    </p>
 <p>时间限制：C/C++ 1秒，其他语言2秒<br>空间限制：C/C++ 32M，其他语言64M<br>本题知识点： <code>树</code></p>
 <h2 id="解题思路-3"><a href="#解题思路-3" class="headerlink" title="解题思路"></a>解题思路</h2><p>这是一道十分基础的和 <code>树</code> 有关的题，在学习的时候，我们就知道树的遍历一般都是用递归实现的，本题自然也不例外。     </p>
 <p>其实只需要将平常解这种题的过程用算法描述出来即可。<br>![例子][<img src="http://img.thebetterkong.cn/blog/Finger-offer67/Rebuild-Binary-Tree.jpeg" alt="mark">]</p>
@@ -576,7 +576,7 @@
 <hr>
 <h1 id="旋转数组的最小数字"><a href="#旋转数组的最小数字" class="headerlink" title="旋转数组的最小数字"></a>旋转数组的最小数字</h1><h2 id="题目描述-5"><a href="#题目描述-5" class="headerlink" title="题目描述"></a>题目描述</h2><p>『数组的旋转』：把一个数组最开始的若干个元素搬到数组的末尾；    </p>
 <p>现要求：输入一个非递减排序的数组的一个旋转，输出旋转数组的最小元素。   </p>
-<p>例如：数组 $\{3,4,5,1,2\}$ 为 $\{1,2,3,4,5\}$ 的一个旋转，该数组的最小值为 1。    </p>
+<p>例如：数组 ${3,4,5,1,2}$ 为 ${1,2,3,4,5}$ 的一个旋转，该数组的最小值为 1。    </p>
 <p>注意：给出的所有元素都大于 0，若数组大小为 0，请返回 0。    </p>
 <p>时间限制：C/C++ 3秒，其他语言6秒<br>空间限制：C/C++ 32M，其他语言64M<br>本题知识点： <code>查找</code></p>
 <h2 id="解题思路-5"><a href="#解题思路-5" class="headerlink" title="解题思路"></a>解题思路</h2><p>第一思路：直接从头往后遍历数组，如果出现 <code>array[i]&gt;array[i+1]</code>，那么 <code>array[i+1]</code> 一定就是最小元素，如果一直遍历结束也没出现这种结果，那么最小元素就是 <code>array[0]</code>；   </p>
@@ -813,9 +813,9 @@
 <hr>
 <h1 id="栈的压入、弹出序列"><a href="#栈的压入、弹出序列" class="headerlink" title="栈的压入、弹出序列"></a>栈的压入、弹出序列</h1><h2 id="题目描述-17"><a href="#题目描述-17" class="headerlink" title="题目描述"></a>题目描述</h2><p>输入两个整数序列，第一个序列表示栈的压入顺序，请判断第二个序列是否可能为该栈的弹出序列。假设压入栈的所有数字均不相等。（注意：这两个序列的长度是相等的）<br>例如：</p>
 <ul>
-<li>序列 $\{1,2,3,4,5\}$ 是某栈的压入顺序；</li>
-<li>序列 $\{4,5,3,2,1\}$ 是该压栈序列对应的一个弹出序列；</li>
-<li>但 $\{4,3,5,1,2\}$ 就不可能是该压栈序列的弹出序列。</li>
+<li>序列 ${1,2,3,4,5}$ 是某栈的压入顺序；</li>
+<li>序列 ${4,5,3,2,1}$ 是该压栈序列对应的一个弹出序列；</li>
+<li>但 ${4,3,5,1,2}$ 就不可能是该压栈序列的弹出序列。</li>
 </ul>
 <p>时间限制：C/C++ 1秒，其他语言2秒<br>空间限制：C/C++ 32M，其他语言64M<br>本题知识点： <code>栈</code></p>
 <h2 id="解题思路-20"><a href="#解题思路-20" class="headerlink" title="解题思路"></a>解题思路</h2><p>根据某入栈序列判断出栈序列，关键就是分析给出的出栈序列中，每个元素出栈时的位置，只要其所有元素的出栈位置合法（所谓合法：就是看是否满足栈的先进后出特点），那么该出栈序列就是一个合法的出栈序列；    </p>
@@ -938,7 +938,7 @@
 <ul>
 <li>求：$a \times fun(b,c)$，$b \times fun(a,c)$，$c \times fun(a,b)$</li>
 <li>$fun(b,c)=b \times fun(c)+c \times fun(b)$</li>
-<li>$fun(c)=\{c\}$</li>
+<li>$fun(c)={c}$</li>
 </ul>
 <p>采用递归的思想：</p>
 <ul>
@@ -953,7 +953,7 @@
 <h2 id="算法描述-26"><a href="#算法描述-26" class="headerlink" title="算法描述"></a>算法描述</h2><p>基于 <code>java</code>：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.util.ArrayList;</span><br><span class="line"><span class="keyword">import</span> java.util.Collections;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="comment">//主函数</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> ArrayList&lt;String&gt; <span class="title">Permutation</span><span class="params">(String str)</span> </span>&#123;</span><br><span class="line">        StringBuilder strbuilder = <span class="keyword">new</span> StringBuilder(str);</span><br><span class="line">        ArrayList&lt;String&gt; result = <span class="keyword">new</span> ArrayList&lt;String&gt;(); <span class="comment">//用来存放所有排序结果</span></span><br><span class="line">        result = PermutationSub(strbuilder);</span><br><span class="line">        Collections.sort(result);  <span class="comment">//按字典顺序排序</span></span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//递归调用</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> ArrayList&lt;String&gt; <span class="title">PermutationSub</span><span class="params">(StringBuilder str)</span></span>&#123;</span><br><span class="line">        ArrayList&lt;String&gt; result = <span class="keyword">new</span> ArrayList&lt;String&gt;(); <span class="comment">//用来存放所有排序结果</span></span><br><span class="line">        <span class="comment">//递归出口</span></span><br><span class="line">        <span class="keyword">if</span>(str.length() == <span class="number">1</span>)&#123;</span><br><span class="line">            result.add(str.toString());</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span>&#123;</span><br><span class="line">            <span class="comment">//递归处理：循环将字符串中的字符都提到最前面来进行递归</span></span><br><span class="line">            <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>;i&lt;str.length();i++)&#123;</span><br><span class="line">                <span class="comment">//和字符开头字符相同的字符，交换后是同一种排列，因此这里不做处理</span></span><br><span class="line">                <span class="keyword">if</span>(i == <span class="number">0</span> || str.charAt(i) != str.charAt(<span class="number">0</span>))&#123;</span><br><span class="line">                    <span class="comment">//开始交换</span></span><br><span class="line">                    swap(str,<span class="number">0</span>,i);</span><br><span class="line">                    <span class="comment">//递归给出，str除首字符外其他字符的排序情况</span></span><br><span class="line">                    ArrayList&lt;String&gt; subresult = PermutationSub(<span class="keyword">new</span> StringBuilder(str.substring(<span class="number">1</span>)));</span><br><span class="line">                    <span class="comment">//将子结果与首字符合并后，加入result</span></span><br><span class="line">                    <span class="keyword">for</span>(<span class="keyword">int</span> j=<span class="number">0</span>;j&lt;subresult.size();j++)</span><br><span class="line">                        result.add(str.substring(<span class="number">0</span>,<span class="number">1</span>)+subresult.get(j));</span><br><span class="line">                    <span class="comment">//完成后，回到原始状态</span></span><br><span class="line">                    swap(str,i,<span class="number">0</span>);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//用于字符交换</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">swap</span><span class="params">(StringBuilder str, <span class="keyword">int</span> a, <span class="keyword">int</span> b)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">char</span> temp = str.charAt(b);</span><br><span class="line">        str.setCharAt(b, str.charAt(a));</span><br><span class="line">        str.setCharAt(a, temp);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <h2 id="算法评价-12"><a href="#算法评价-12" class="headerlink" title="算法评价"></a>算法评价</h2><p>本题采用递归实现，每层递归都输出一个排列结果，没有造成额外的时间浪费；<br>每次提出字符串首字符，然后给出剩余字符串的排序结果，再与字符串的首字符合并，时间复杂度较高： $time(n)=n \times (time(n-1)+(n-1)+time(排序))$，为$O(n!)$</p>
 <hr>
-<h1 id="数组中出现次数超过一半的数组"><a href="#数组中出现次数超过一半的数组" class="headerlink" title="数组中出现次数超过一半的数组"></a>数组中出现次数超过一半的数组</h1><h2 id="题目描述-24"><a href="#题目描述-24" class="headerlink" title="题目描述"></a>题目描述</h2><p>数组中有一个数字出现的次数超过数组长度的一半，请找出这个数字。<br>例如：输入一个长度为 9 的数组 $\{1,2,3,2,2,2,5,4,2\}$。由于数字 2 在数组中出现了 5 次，超过数组长度的一半，因此输出 2。如果不存在则输出 0。    </p>
+<h1 id="数组中出现次数超过一半的数组"><a href="#数组中出现次数超过一半的数组" class="headerlink" title="数组中出现次数超过一半的数组"></a>数组中出现次数超过一半的数组</h1><h2 id="题目描述-24"><a href="#题目描述-24" class="headerlink" title="题目描述"></a>题目描述</h2><p>数组中有一个数字出现的次数超过数组长度的一半，请找出这个数字。<br>例如：输入一个长度为 9 的数组 ${1,2,3,2,2,2,5,4,2}$。由于数字 2 在数组中出现了 5 次，超过数组长度的一半，因此输出 2。如果不存在则输出 0。    </p>
 <p>时间限制：C/C++ 1秒，其他语言2秒<br>空间限制：C/C++ 32M，其他语言64M<br>本题知识点： <code>数组</code></p>
 <h2 id="解题思路-27"><a href="#解题思路-27" class="headerlink" title="解题思路"></a>解题思路</h2><p>采用『数量削减』方式寻找数组中出现次数最多的元素：</p>
 <ul>
@@ -968,7 +968,7 @@
 <h2 id="解题思路-28"><a href="#解题思路-28" class="headerlink" title="解题思路"></a>解题思路</h2><p>说白了，本题主要就是考查的各种排序算法，这里我选择时间复杂度为：$O(nlogn)$ 的快速排序算法。</p>
 <h2 id="算法描述-28"><a href="#算法描述-28" class="headerlink" title="算法描述"></a>算法描述</h2><p>基于 <code>java</code>：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.util.ArrayList;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> ArrayList&lt;Integer&gt; <span class="title">GetLeastNumbers_Solution</span><span class="params">(<span class="keyword">int</span> [] input, <span class="keyword">int</span> k)</span> </span>&#123;</span><br><span class="line">        <span class="comment">//存放最小的k个数</span></span><br><span class="line">        ArrayList&lt;Integer&gt; kminlist = <span class="keyword">new</span> ArrayList&lt;Integer&gt; ();</span><br><span class="line">        <span class="keyword">int</span> lenth = input.length; <span class="comment">//数组长度</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span>(k&gt;lenth || k==<span class="number">0</span> || lenth==<span class="number">0</span>)&#123;</span><br><span class="line">           <span class="keyword">return</span> kminlist;</span><br><span class="line">       &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">//对input进行快排</span></span><br><span class="line">        sort(input,<span class="number">0</span>,lenth-<span class="number">1</span>);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">//将低位的k个数放入kminlist</span></span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>;i&lt;k;i++)</span><br><span class="line">            kminlist.add(input[i]);</span><br><span class="line">        <span class="keyword">return</span> kminlist;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">sort</span><span class="params">(<span class="keyword">int</span> a[], <span class="keyword">int</span> low, <span class="keyword">int</span> hight)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> i, j, index;</span><br><span class="line">        <span class="keyword">if</span> (low &gt; hight) &#123;</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        i = low;</span><br><span class="line">        j = hight;</span><br><span class="line">        index = a[i]; <span class="comment">// 用子表的第一个记录做基准</span></span><br><span class="line">        <span class="keyword">while</span> (i &lt; j) &#123; <span class="comment">// 从表的两端交替向中间扫描</span></span><br><span class="line">            <span class="keyword">while</span> (i &lt; j &amp;&amp; a[j] &gt;= index)</span><br><span class="line">                j--;</span><br><span class="line">            <span class="keyword">if</span> (i &lt; j)</span><br><span class="line">                a[i++] = a[j];<span class="comment">// 用比基准小的记录替换低位记录</span></span><br><span class="line">            <span class="keyword">while</span> (i &lt; j &amp;&amp; a[i] &lt; index)</span><br><span class="line">                i++;</span><br><span class="line">            <span class="keyword">if</span> (i &lt; j) <span class="comment">// 用比基准大的记录替换高位记录</span></span><br><span class="line">                a[j--] = a[i];</span><br><span class="line">        &#125;</span><br><span class="line">        a[i] = index;<span class="comment">// 将基准数值替换回 a[i]</span></span><br><span class="line">        sort(a, low, i - <span class="number">1</span>); <span class="comment">// 对低子表进行递归排序</span></span><br><span class="line">        sort(a, i + <span class="number">1</span>, hight); <span class="comment">// 对高子表进行递归排序</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <hr>
-<h1 id="连续子数组的最大和"><a href="#连续子数组的最大和" class="headerlink" title="连续子数组的最大和"></a>连续子数组的最大和</h1><h2 id="题目描述-26"><a href="#题目描述-26" class="headerlink" title="题目描述"></a>题目描述</h2><p>在古老的一维模式识别中，常常需要计算连续子向量的最大和，当向量全为正数的时候，问题很好解决。<br>但是，如果向量中包含负数，是否应该包含某个负数，并期望旁边的正数会弥补它呢？<br>例如：$\{6,-3,-2,7,-15,1,2,2\}$，连续子向量的最大和为 8（从第 0 个开始，到第 3 个为止）。<br>给一个数组，返回它的最大连续子序列的和。(子向量的长度至少是1)       </p>
+<h1 id="连续子数组的最大和"><a href="#连续子数组的最大和" class="headerlink" title="连续子数组的最大和"></a>连续子数组的最大和</h1><h2 id="题目描述-26"><a href="#题目描述-26" class="headerlink" title="题目描述"></a>题目描述</h2><p>在古老的一维模式识别中，常常需要计算连续子向量的最大和，当向量全为正数的时候，问题很好解决。<br>但是，如果向量中包含负数，是否应该包含某个负数，并期望旁边的正数会弥补它呢？<br>例如：${6,-3,-2,7,-15,1,2,2}$，连续子向量的最大和为 8（从第 0 个开始，到第 3 个为止）。<br>给一个数组，返回它的最大连续子序列的和。(子向量的长度至少是1)       </p>
 <p>时间限制：C/C++ 1秒，其他语言2秒<br>空间限制：C/C++ 32M，其他语言64M<br>本题知识点： <code>数组</code></p>
 <h2 id="解题思路-29"><a href="#解题思路-29" class="headerlink" title="解题思路"></a>解题思路</h2><p>本题是一个简单的动态规划问题，并且只有保存值，不用保存路径：</p>
 <ul>
@@ -980,7 +980,7 @@
 </ul>
 <h2 id="算法描述-29"><a href="#算法描述-29" class="headerlink" title="算法描述"></a>算法描述</h2><p>基于 <code>java</code>：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.lang.Math;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">FindGreatestSumOfSubArray</span><span class="params">(<span class="keyword">int</span>[] array)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> result = array[<span class="number">0</span>];  <span class="comment">//当前最大连续子序列和</span></span><br><span class="line">        <span class="keyword">int</span> imax = array[<span class="number">0</span>];     <span class="comment">//包含了array[i]的最大连续子序列和</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; array.length; i++) &#123;</span><br><span class="line">            imax = Math.max(imax+array[i], array[i]);</span><br><span class="line">            result = Math.max(imax, result);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <hr>
-<h1 id="从-1-到-n-的整数中-1-出现的次数"><a href="#从-1-到-n-的整数中-1-出现的次数" class="headerlink" title="从 1 到 n 的整数中 1 出现的次数"></a>从 1 到 n 的整数中 1 出现的次数</h1><h2 id="题目描述-27"><a href="#题目描述-27" class="headerlink" title="题目描述"></a>题目描述</h2><p>求出任意非负整数区间中 1 出现的次数；<br>例如：$[1,13]$ 中包含 1 的数字有：$\{1,10,11,12,13\}$；    </p>
+<h1 id="从-1-到-n-的整数中-1-出现的次数"><a href="#从-1-到-n-的整数中-1-出现的次数" class="headerlink" title="从 1 到 n 的整数中 1 出现的次数"></a>从 1 到 n 的整数中 1 出现的次数</h1><h2 id="题目描述-27"><a href="#题目描述-27" class="headerlink" title="题目描述"></a>题目描述</h2><p>求出任意非负整数区间中 1 出现的次数；<br>例如：$[1,13]$ 中包含 1 的数字有：${1,10,11,12,13}$；    </p>
 <p>时间限制：C/C++ 1秒，其他语言2秒<br>空间限制：C/C++ 32M，其他语言64M<br>本题知识点： <code>查找</code> <code>数学</code></p>
 <h2 id="解题思路-30"><a href="#解题思路-30" class="headerlink" title="解题思路"></a>解题思路</h2><p>谈到这个题目，真是困扰了我很长一段时间，最开始解题失误，我以为是求 1 到 n 位的整数中，「1」出现的次数，我也不知道我怎么会想成这样，既然都想了，也与本题思考方式大同小异，这里先把这个思路记录一下：</p>
 <ul>
@@ -1003,7 +1003,7 @@
 </ul>
 </li>
 <li>继续采用同样的思路分析：<ul>
-<li>k 位数时，合计：<mark>$c_k=10^{k-1}+10 \times c_{k-1}$</mark></li>
+<li>k 位数时，合计：<mark>$c<em>k=10^{k-1}+10 \times c</em>{k-1}$</mark></li>
 </ul>
 </li>
 <li>现在递推关系式出来了，用递归实现？那当然是不存在的，高中数学，求数列通项公式（两边同时除以 $10^{k-1}$ 就可以了，最后求得：<mark>$c_n=10^{n-1} \times n$</mark></li>
@@ -1727,8 +1727,8 @@
 </div>
 
           <div class="post-tags">
-              <a href="/tags/java/" rel="tag"><i class="fa fa-tag"></i> java</a>
               <a href="/tags/Algorithm/" rel="tag"><i class="fa fa-tag"></i> Algorithm</a>
+              <a href="/tags/java/" rel="tag"><i class="fa fa-tag"></i> java</a>
               <a href="/tags/python/" rel="tag"><i class="fa fa-tag"></i> python</a>
           </div>
 
@@ -1736,8 +1736,8 @@
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/2020/04/04/Blog-Related/Blog-Establish/" rel="prev" title="Blog 搭建">
-                  <i class="fa fa-chevron-left"></i> Blog 搭建
+                <a href="/2020/04/04/Blog-Related/Markdown-Writing/" rel="prev" title="Markdown 写作指南">
+                  <i class="fa fa-chevron-left"></i> Markdown 写作指南
                 </a>
             </div>
             <div class="post-nav-item">
@@ -1805,13 +1805,13 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">486k</span>
+    <span title="站点总字数">494k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">7:21</span>
+    <span title="站点阅读时长">7:30</span>
   </span>
 </div>
 <div class="busuanzi-count">

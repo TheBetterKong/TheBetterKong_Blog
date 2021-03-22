@@ -53,7 +53,7 @@
 <meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/HuffmanTreeBuild.png">
 <meta property="og:image" content="http://img.thebetterkong.cn/blog/DataStructure-Tree/HuffmanCode.png">
 <meta property="article:published_time" content="2020-07-09T14:05:23.000Z">
-<meta property="article:modified_time" content="2020-08-14T09:28:31.984Z">
+<meta property="article:modified_time" content="2020-08-14T09:28:31.000Z">
 <meta property="article:author" content="TheBetterKong">
 <meta property="article:tag" content="DataStructure">
 <meta property="article:tag" content="java">
@@ -258,7 +258,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">56</span>
+          <span class="site-state-item-count">57</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -848,7 +848,7 @@
 <ul>
 <li><strong>结点的带权路径长度</strong>：从该结点到树根之间的路径长度与结点上权的乘积；</li>
 <li><strong>树的带权路径长度 WPL</strong>（weighted path length）：树中所有叶子结点的带权路径长度之和；<ul>
-<li>假设一个有 $n$ 个带权叶子结点的二叉树，其权值为 $\{w_1,w_2,….w_n\}$，每个叶子结点带权 $w_k$，每个叶子的路径长度为 $l_k$，则从根结点到各个叶子结点的路径长度与相应的权值的乘积之和叫做<strong>二叉树的带权路径长度</strong>，通常记作：<script type="math/tex">WPL = \sum^n_{k=1}\ w_kl_k</script></li>
+<li>假设一个有 $n$ 个带权叶子结点的二叉树，其权值为 ${w<em>1,w_2,….w_n}$，每个叶子结点带权 $w_k$，每个叶子的路径长度为 $l_k$，则从根结点到各个叶子结点的路径长度与相应的权值的乘积之和叫做<strong>二叉树的带权路径长度</strong>，通常记作：$$WPL = \sum^n</em>{k=1}\ w_kl_k$$</li>
 <li>示例：<br><img src="http://img.thebetterkong.cn/blog/DataStructure-Tree/HuffmanWPL.png" alt="HuffmanWPL"></li>
 </ul>
 </li>
@@ -859,7 +859,7 @@
 </ul>
 <h2 id="哈夫曼算法"><a href="#哈夫曼算法" class="headerlink" title="哈夫曼算法"></a>哈夫曼算法</h2><p>哈夫曼算法是用来构造二叉树的，其描述如下：</p>
 <ul>
-<li>根据给定的 $n$ 个叶子结点的权值 $\{w_1,w_2,….w_n\}$ 构成 $n$ 棵二叉树的集合 $F=\{T_1,T_2,…T_n\}$，其中每棵二叉树 $T_i$ 中只有一个带权为 $w_i$的根结点，其左右子树均为空;</li>
+<li>根据给定的 $n$ 个叶子结点的权值 ${w_1,w_2,….w_n}$ 构成 $n$ 棵二叉树的集合 $F={T_1,T_2,…T_n}$，其中每棵二叉树 $T_i$ 中只有一个带权为 $w_i$的根结点，其左右子树均为空;</li>
 <li>在 $F$ 中选取两棵根结点的权值最小的树作为左右子树构造一棵新的二叉树，且置新的二叉树的根结点的权值为左右子树上根结点的权值之和；</li>
 <li>在 $F$ 中删除这两棵树，同时将新得到的二叉树加入 $F$ 中；</li>
 <li>重复步骤 2、3，直到 $F$ 只含一棵树为止。这棵树便是哈夫曼树；</li>
@@ -1036,13 +1036,13 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">486k</span>
+    <span title="站点总字数">494k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">7:21</span>
+    <span title="站点阅读时长">7:30</span>
   </span>
 </div>
 <div class="busuanzi-count">

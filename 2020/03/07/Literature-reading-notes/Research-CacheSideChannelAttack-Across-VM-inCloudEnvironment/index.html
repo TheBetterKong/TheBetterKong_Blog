@@ -46,7 +46,7 @@
 <meta property="og:image" content="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Flush-Reload-method.png">
 <meta property="og:image" content="http://img.thebetterkong.cn/blog/CacheSideChannelAttackVM-Cloud/Comparison-Prime-Probe-Flush-Reload.png">
 <meta property="article:published_time" content="2020-03-07T10:10:25.000Z">
-<meta property="article:modified_time" content="2020-08-14T09:32:56.742Z">
+<meta property="article:modified_time" content="2020-08-14T09:32:56.000Z">
 <meta property="article:author" content="TheBetterKong">
 <meta property="article:tag" content="Computer Architecture">
 <meta property="article:tag" content="Cache侧信道攻击">
@@ -253,7 +253,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">56</span>
+          <span class="site-state-item-count">57</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -666,8 +666,8 @@
 </ul>
 </li>
 <li>分析Cache侧信道信息: <ul>
-<li>将攻击者想要获取的隐私信息标记为 $K = \{ K_1，K_2，K_3，…，K_n \}$。目标虚拟机中的应用为了响应攻击者的服务请求，将执行一些操作 $OP = \{ OP_1，OP_2，…，OP_n \}$，而操作OP与隐私信息K之间通常具有依赖关系，即由隐私信息K决定执行哪些操作，可以表示为函数$f：K-&gt;OP$，即 $OP=f(K)$；</li>
-<li>在执行OP时，目标虚拟机访问共享Cache，这将产生一些Cache侧信道信息 $L = \{ L_1，L_2，…，L_n \}$；当 Cache 初始状态相同时，不同的操作OP将产生不同的Cache行为，从而产生不同的Cache侧信道信息，即操作OP与执行操作OP产生的Cache侧信道信息L之间具有强相关性，可以表示为函数 $g：OP-&gt;L$，即 $L = g(OP)$。 </li>
+<li>将攻击者想要获取的隐私信息标记为 $K = { K_1，K_2，K_3，…，K_n }$。目标虚拟机中的应用为了响应攻击者的服务请求，将执行一些操作 $OP = { OP_1，OP_2，…，OP_n }$，而操作OP与隐私信息K之间通常具有依赖关系，即由隐私信息K决定执行哪些操作，可以表示为函数$f：K-&gt;OP$，即 $OP=f(K)$；</li>
+<li>在执行OP时，目标虚拟机访问共享Cache，这将产生一些Cache侧信道信息 $L = { L_1，L_2，…，L_n }$；当 Cache 初始状态相同时，不同的操作OP将产生不同的Cache行为，从而产生不同的Cache侧信道信息，即操作OP与执行操作OP产生的Cache侧信道信息L之间具有强相关性，可以表示为函数 $g：OP-&gt;L$，即 $L = g(OP)$。 </li>
 </ul>
 </li>
 </ol>
@@ -997,13 +997,13 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">486k</span>
+    <span title="站点总字数">494k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">7:21</span>
+    <span title="站点阅读时长">7:30</span>
   </span>
 </div>
 <div class="busuanzi-count">

@@ -46,7 +46,7 @@
 <meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/DriverDesign.png">
 <meta property="og:image" content="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/DistributedBuffering.png">
 <meta property="article:published_time" content="2020-03-31T08:01:24.000Z">
-<meta property="article:modified_time" content="2020-08-14T09:32:00.875Z">
+<meta property="article:modified_time" content="2020-08-14T09:32:00.000Z">
 <meta property="article:author" content="TheBetterKong">
 <meta property="article:tag" content="国科大研究生课程笔记">
 <meta property="article:tag" content="FPGA">
@@ -251,7 +251,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">56</span>
+          <span class="site-state-item-count">57</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -466,13 +466,13 @@
 <li>增加路由能力</li>
 <li>限制条件：开关数量最少，面积较小，延时较短</li>
 </ul>
-<h2 id="相关概念定义"><a href="#相关概念定义" class="headerlink" title="相关概念定义"></a>相关概念定义</h2><p>Connection Block 的邻接矩阵：<mark>$A_G=[a_{i,j}]_{n \times m}$</mark><br>  <img src="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/AdjacencyMatrix.png" alt="AdjacencyMatrix"></p>
+<h2 id="相关概念定义"><a href="#相关概念定义" class="headerlink" title="相关概念定义"></a>相关概念定义</h2><p>Connection Block 的邻接矩阵：<mark>$A<em>G=[a</em>{i,j}]_{n \times m}$</mark><br>  <img src="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/AdjacencyMatrix.png" alt="AdjacencyMatrix"></p>
 <p>Connection Block 的设计参数：</p>
 <ul>
 <li><mark>$fan_{out}(i)$</mark>：对于输入 i，它所能连接到的输出的数量；（邻接矩阵中，i 行有多少个 1）</li>
 <li><mark>$fan_{in}(j)$</mark>：对于输出 j，它所能连接到的输入的数量；（邻接矩阵中，j 列有多少个 1）</li>
-<li><mark>$\delta_c=\max_{1\leq i \leq n}(fan_{out}(i))-\min_{1\leq i \leq n}(fan_{out}(i))$</mark>；（对所有行：1 数量最大值减去最小值）</li>
-<li><mark>$\delta_p=\max_{1\leq j \leq m}(fan_{in}(j))-\min_{1\leq j \leq m}(fan_{in}(j))$</mark>；（对所有列：1 数量最大值减去最小值）</li>
+<li><mark>$\delta<em>c=\max</em>{1\leq i \leq n}(fan<em>{out}(i))-\min</em>{1\leq i \leq n}(fan_{out}(i))$</mark>；（对所有行：1 数量最大值减去最小值）</li>
+<li><mark>$\delta<em>p=\max</em>{1\leq j \leq m}(fan<em>{in}(j))-\min</em>{1\leq j \leq m}(fan_{in}(j))$</mark>；（对所有列：1 数量最大值减去最小值）</li>
 <li><mark>w</mark>：CB 中的开关总数<br><img src="http://img.thebetterkong.cn/blog/FPGA-RoutingDesignMethodology/ExampleParametersOfConnectionBlock.png" alt="ExampleParametersOfConnectionBlock"></li>
 </ul>
 <p>Connection Block 的设计约束：</p>
@@ -493,7 +493,7 @@
 <li>Area-delay product</li>
 </ol>
 <h2 id="设计-CB-架构的总体模型"><a href="#设计-CB-架构的总体模型" class="headerlink" title="设计 CB 架构的总体模型"></a>设计 CB 架构的总体模型</h2><ol>
-<li>给定 $n \times m$ 的 CB 的邻接矩阵：$A_G=[a_{i,j}]_{n \times m}$</li>
+<li>给定 $n \times m$ 的 CB 的邻接矩阵：$A<em>G=[a</em>{i,j}]_{n \times m}$</li>
 <li>给定约束，关于：固定的 w 和最小化 $\delta_c$，$\delta_p$ 的约束；</li>
 <li>获得最优的 routability 和 area-delay product；</li>
 </ol>
@@ -547,7 +547,7 @@
 </ul>
 <h2 id="互连延迟最小化"><a href="#互连延迟最小化" class="headerlink" title="互连延迟最小化"></a>互连延迟最小化</h2><ul>
 <li>给定金属导线RC特性和目标总物理导线长度L;    </li>
-<li>找出 inverters 的最佳数量 N，每个 inverter 的尺寸 ($B_0…B_{N-1}$) 和每个 inverter 之间的导线数量 ($L_0…L_{N-1}$)，以使从互连导线开始到结束的信号传播延迟最小;</li>
+<li>找出 inverters 的最佳数量 N，每个 inverter 的尺寸 ($B<em>0…B</em>{N-1}$) 和每个 inverter 之间的导线数量 ($L<em>0…L</em>{N-1}$)，以使从互连导线开始到结束的信号传播延迟最小;</li>
 </ul>
 
     </div>
@@ -606,8 +606,8 @@
                 </a>
             </div>
             <div class="post-nav-item">
-                <a href="/2020/04/04/Blog-Related/Markdown-Writing/" rel="next" title="Markdown 写作指南">
-                  Markdown 写作指南 <i class="fa fa-chevron-right"></i>
+                <a href="/2020/04/04/Blog-Related/Blog-Establish/" rel="next" title="Blog 搭建">
+                  Blog 搭建 <i class="fa fa-chevron-right"></i>
                 </a>
             </div>
           </div>
@@ -670,13 +670,13 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">486k</span>
+    <span title="站点总字数">494k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">7:21</span>
+    <span title="站点阅读时长">7:30</span>
   </span>
 </div>
 <div class="busuanzi-count">

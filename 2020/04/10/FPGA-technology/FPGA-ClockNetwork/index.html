@@ -607,20 +607,20 @@
 <ul>
 <li>第一阶段包括两个并行网络：一个用于全局时钟，一个用于本地时钟</li>
 <li>将全局时钟信号总数表示为：$W_{global}$</li>
-<li>全局时钟网络从每一侧的每个 $\frac{n<em>{source}}{4}$ 个潜在时钟源中选择 $\frac{W</em>{global}}{4}$ 个信号</li>
+<li>全局时钟网络从每一侧的每个 $\frac{n_{source}}{4}$ 个潜在时钟源中选择 $\frac{W_{global}}{4}$ 个信号</li>
 <li>所有 $W_{global}$ 信号均通过专用线路路由到芯片中心</li>
 </ul>
 <p>优势：由于信号源均来自芯片外围，因此信号源与芯片中心之间的连接几乎不会或根本不会产生偏斜;</p>
 <ul>
 <li>在某些来源来自芯片内部的架构中，可以调整驱动器的大小以使歪斜最小化</li>
 </ul>
-<p>通过带有 ny<em>region 肋的脊柱和肋骨分配网络，从芯片的中心开始将所有 $W</em>{global}$ 时钟分配到所有区域的中心；    </p>
+<p>通过带有 ny_region 肋的脊柱和肋骨分配网络，从芯片的中心开始将所有 $W_{global}$ 时钟分配到所有区域的中心；    </p>
 <p>尽管 H 型树拓扑具有较低的偏斜度，但将这种拓扑网格划分到具有任意行数和列数的平铺 FPGA 上更加困难；</p>
 <h3 id="第二阶段"><a href="#第二阶段" class="headerlink" title="第二阶段"></a>第二阶段</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-ClockNetwork/SecondStage.png" alt="Second stage"><br>时钟网络第二级以可编程方式将时钟信号从每个区域的中心连接到该区域内的逻辑块：</p>
 <ul>
-<li>每个第二级网络的输入均由第一级的 $W<em>{global}$ 全局时钟和 $W</em>{local}$ 本地时钟组成：<ul>
+<li>每个第二级网络的输入均由第一级的 $W_{global}$ 全局时钟和 $W_{local}$ 本地时钟组成：<ul>
 <li>这些时钟使用脊柱和肋骨拓扑分布</li>
-<li>脊柱包含 $W<em>{global}+W</em>{local}$ 导线</li>
+<li>脊柱包含 $W_{global}+W_{local}$ 导线</li>
 </ul>
 </li>
 <li>在每一行中，都使用 concentrator（集中器）网络从脊柱中选择任意一组 $W_{rib}$ clocks：<ul>

@@ -474,7 +474,7 @@
 </li>
 </ul>
 </li>
-<li><strong>以 ${e,n}$ 为公钥，${d,n}$ 为私钥；</strong><ul>
+<li><strong>以 $\{e,n\}$ 为公钥，$\{d,n\}$ 为私钥；</strong><ul>
 <li>本例中公钥为 （n，e) = (4757 , 101)，私钥为 （n，d) = (4757 ，1601)；</li>
 <li>仅（n，e) = (4757 , 101) 是公开的，其余数字均不公开。可以想像如果只有 n 和 e，如何推导出 d，目前只能靠暴力破解，位数越长，暴力破解的时间越长；</li>
 </ul>
@@ -544,7 +544,7 @@
 </ul>
 <p>一般的，求 $a^m$（其中 a，m 为正整数）可按如下过程进行：</p>
 <ul>
-<li>将 m 表示为二进制形式 $b<em>kb</em>{k-1}…b<em>0$ 则：$m=b_k2^k+b</em>{k-1}2^{k-1}+…+b<em>12+b_0$，因此：$$a^m = (…(\ (\ (a^{b_k})^2\ a^{b</em>{k-1}}\ )^2\ a^{b_{k-2}})^2…a^{b_1})^2\ a^{b_0}$$</li>
+<li>将 m 表示为二进制形式 $b_kb_{k-1}…b_0$ 则：$m=b_k2^k+b_{k-1}2^{k-1}+…+b_12+b_0$，因此：<script type="math/tex">a^m = (...(\ (\ (a^{b_k})^2\ a^{b_{k-1}}\ )^2\ a^{b_{k-2}})^2...a^{b_1})^2\ a^{b_0}</script></li>
 </ul>
 <p>得到以下快速指数算法：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">c&#x3D;0; d&#x3D;1;</span><br><span class="line">for i&#x3D;k downto 0 do &#123;</span><br><span class="line">    c &#x3D; 2 *c;           &#x2F;&#x2F; 指数的部分结果</span><br><span class="line">    d &#x3D; (d*d) mod n;    &#x2F;&#x2F; 中间结果，终值即为所求</span><br><span class="line">    if b_i&#x3D;1 then &#123;</span><br><span class="line">        c &#x3D; c+1;</span><br><span class="line">        d &#x3D; (d*a) mod n;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">return d;</span><br></pre></td></tr></table></figure>

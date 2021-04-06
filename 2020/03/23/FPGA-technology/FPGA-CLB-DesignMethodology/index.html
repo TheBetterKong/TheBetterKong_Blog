@@ -417,7 +417,7 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>3.9k</span>
+      <span>4k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -547,20 +547,20 @@
 <li>$20 \times 2 = 40$ transistors</li>
 </ul>
 </li>
-<li>最小transistor个数：$A<em>{LUT} = A</em>{SRAM} + A<em>{MUX} + A</em>{buffer} = 96+30+40 = 166$</li>
+<li>最小transistor个数：$A_{LUT} = A_{SRAM} + A_{MUX} + A_{buffer} = 96+30+40 = 166$</li>
 </ul>
 <p>FPGA的面积效率:</p>
 <ul>
 <li>给定一组目标benchmark circuits:$B_i$</li>
 <li>给定一组FPGA架构:$F_j$</li>
-<li>每个benchmark circuits $B<em>i$ 综合到架构 $F_j$，然后测量所需的结果区域并将其标记为$A</em>{i,j}$:<ul>
-<li>$A<em>{i,j} = N</em>{i,j} \times {LR}_{i,j}$</li>
+<li>每个benchmark circuits $B_i$ 综合到架构 $F_j$，然后测量所需的结果区域并将其标记为$A_{i,j}$:<ul>
+<li>$A_{i,j} = N_{i,j} \times {LR}_{i,j}$</li>
 <li>$N_{i,j}$：在体系结构 $F_j$ 上实现电路 $B_i$ 所需的逻辑块数</li>
 <li>${LR}_{i,j}$：去实现那些 blocks 时，所需的 logic block 区域和周围布线区域的面积总和</li>
 </ul>
 </li>
-<li>FPGA 的面积效率可以定义为：针对特定架构的<strong>通过所有benchmarks $B<em>i$ 的 $A</em>{i,j}$ 的几何平均值值</strong>：<ul>
-<li>Area efficiency：$F<em>j = (\prod</em>{B<em>i} A</em>{i,j})^{\frac{1}{n}}$</li>
+<li>FPGA 的面积效率可以定义为：针对特定架构的<strong>通过所有benchmarks $B_i$ 的 $A_{i,j}$ 的几何平均值值</strong>：<ul>
+<li>Area efficiency：$F_j = (\prod_{B_i} A_{i,j})^{\frac{1}{n}}$</li>
 </ul>
 </li>
 </ul>
@@ -632,8 +632,8 @@
 </li>
 </ul>
 <h4 id="Static-power-model"><a href="#Static-power-model" class="headerlink" title="Static power model"></a>Static power model</h4><p><img src="http://img.thebetterkong.cn/blog/FPGA-CLB-DesignMethodology/StaticPowerModel.png" alt="StaticPowerModel">  </p>
-<p>大多数泄漏功率来自亚阈值电流：$I<em>{drain}(weak inversion)= I</em>{on} \cdot e^{\frac{(V<em>{gs}-V</em>{on}) \cdot q}{nkT}}$</p>
-<p>总泄漏功率：$Leakage Power = I<em>{drain}(weak inversion) \cdot V</em>{suppy -voltage}$</p>
+<p>大多数泄漏功率来自亚阈值电流：$I_{drain}(weak inversion)= I_{on} \cdot e^{\frac{(V_{gs}-V_{on}) \cdot q}{nkT}}$</p>
+<p>总泄漏功率：$Leakage Power = I_{drain}(weak inversion) \cdot V_{suppy -voltage}$</p>
 <h4 id="Dynamic-power-model"><a href="#Dynamic-power-model" class="headerlink" title="Dynamic power model"></a>Dynamic power model</h4><p>转移密度模型（The Transition Density Model）是一种精确的估计动态功率的概率方法;</p>
 <ul>
 <li>transition density（跃迁密度）：单位时间内信号跃迁的平均次数</li>
@@ -649,7 +649,7 @@
 </ul>
 </li>
 <li>使用转移密度算法计算每个节点的转移密度，则总动态功率为：<ul>
-<li>$Dynamic-Power = \sum<em>{all-nodes} 0.5 \cdot C_y \cdot V</em>{supply} \cdot V<em>{swing} \cdot D(y) \cdot f</em>{clk}$</li>
+<li>$Dynamic-Power = \sum_{all-nodes} 0.5 \cdot C_y \cdot V_{supply} \cdot V_{swing} \cdot D(y) \cdot f_{clk}$</li>
 <li>其中$C_y$是负载电容</li>
 </ul>
 </li>
@@ -731,13 +731,13 @@
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/2020/03/22/FPGA-technology/FPGA-DesignFlow/" rel="prev" title="FPGA-DesignFlow">
-                  <i class="fa fa-chevron-left"></i> FPGA-DesignFlow
+                <a href="/2020/03/23/FPGA-technology/FPGA-CLB-Architecture/" rel="prev" title="FPGA-CLB-Architecture">
+                  <i class="fa fa-chevron-left"></i> FPGA-CLB-Architecture
                 </a>
             </div>
             <div class="post-nav-item">
-                <a href="/2020/03/23/FPGA-technology/FPGA-CLB-Architecture/" rel="next" title="FPGA-CLB-Architecture">
-                  FPGA-CLB-Architecture <i class="fa fa-chevron-right"></i>
+                <a href="/2020/03/25/FPGA-technology/FPGA-HardBlocks/" rel="next" title="FPGA-Hard Blocks">
+                  FPGA-Hard Blocks <i class="fa fa-chevron-right"></i>
                 </a>
             </div>
           </div>

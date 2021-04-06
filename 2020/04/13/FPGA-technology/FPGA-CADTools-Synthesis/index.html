@@ -722,7 +722,7 @@
 <li>『Vertex/Edge』（顶点/边）：每个门都是一个顶点，每个连接都是一个边</li>
 <li>『Primary Input』（PI，主要输入）：没有传入边的节点</li>
 <li>『Primary Output』（PO，主要输出）：没有传出边的节点</li>
-<li>『Topological Ordering』（拓扑排序）：${a,b,c,d,e,f,g,h,i,j,k,l}$<ul>
+<li>『Topological Ordering』（拓扑排序）：$\{a,b,c,d,e,f,g,h,i,j,k,l\}$<ul>
 <li>顶点的线性顺序，使得从顶点 u 到顶点 v 的每个有向边（u，v），u 都在 v 之前</li>
 </ul>
 </li>
@@ -733,7 +733,7 @@
 <h3 id="Edge-Cut-Size-和-Height"><a href="#Edge-Cut-Size-和-Height" class="headerlink" title="Edge Cut Size 和 Height"></a>Edge Cut Size 和 Height</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Synthesis/Example3-feasibleCut.png" alt="Example3-feasibleCut"><br><strong>Edge Cut Size</strong>：横切的等效前边的总和，即横切处的输入数；</p>
 <ul>
 <li>例如：上图中：n(edge cut size) = 3<br><strong>Height</strong>：X 中最大的标签，指示最大延迟。</li>
-<li>$h(X,\overline{X})=max{l(x):x \in X}$</li>
+<li>$h(X,\overline{X})=max\{l(x):x \in X\}$</li>
 <li>例如：上图中：$h(height) = 2$</li>
 </ul>
 <h2 id="Phase1：FlowMap-Labelling"><a href="#Phase1：FlowMap-Labelling" class="headerlink" title="Phase1：FlowMap_Labelling"></a>Phase1：FlowMap_Labelling</h2><p><code>Pre-mapping process</code>：根据一组特定规则为DAG中的每个节点计算标签。  </p>
@@ -1107,7 +1107,7 @@
 </ul>
 </li>
 <li>分别计算 6-LUT 的两个子 LUT：<ul>
-<li>$S_i=\begin{cases}0,\quad N_i=0 \\1-\frac{N_i}{8},\quad N_i \geq 0\end{cases}$</li>
+<li>$S_i=\begin{cases}0,\quad N_i=0 \\\\1-\frac{N_i}{8},\quad N_i \geq 0\end{cases}$</li>
 <li>$N_i$ 代表当前包装中 $SLICE_i$ 中已使用的 LUT 的数量（$N_i$ 最多为 8）；</li>
 </ul>
 </li>
@@ -1171,8 +1171,8 @@
                 </a>
             </div>
             <div class="post-nav-item">
-                <a href="/2020/04/18/Math-Basic-Notes/Linear-Algebra/" rel="next" title="线性代数笔记">
-                  线性代数笔记 <i class="fa fa-chevron-right"></i>
+                <a href="/2020/04/18/Math-Basic-Notes/Random-Mathematics/" rel="next" title="概率论笔记">
+                  概率论笔记 <i class="fa fa-chevron-right"></i>
                 </a>
             </div>
           </div>

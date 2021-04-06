@@ -460,9 +460,9 @@
 <p>基于 Morpheus LLVM 的编译器收到未修改的 C 源文件。 然后，在全局变量域分析，将静态初始化的数据部分中的每个内存对象标记为数据，代码指针或数据指针（使用 2 位域标记跟踪四个不同的域：代码(C)、代码指针(CP)、数据指针(DP)、其他数据(D)），之后，生成一个带标签的二进制文件和一个域标签文件，其中包含内存对象的初始标签。   </p>
 <p>对此，为体系结构也做出改变：所有寄存器都扩展 2 bit tags，并将 tag 附加到每个 64 位 aligned word；将 DRAM 和 cache 也搭配上 tag 域，其中，将标签集中到 DRAM 中的固定位置，以简化 churn 过程；所有 data cache blocks 都以每 64 位字扩展 2 位的方式扩展，以在每个缓存块中存储增加的域标签位。</p>
 <h2 id="EMTDs"><a href="#EMTDs" class="headerlink" title="EMTDs"></a>EMTDs</h2><h3 id="PART1：指针移位（Pointer-Displacement）"><a href="#PART1：指针移位（Pointer-Displacement）" class="headerlink" title="PART1：指针移位（Pointer Displacement）"></a>PART1：指针移位（Pointer Displacement）</h3><p><img src="http://img.thebetterkong.cn/blog/Morpheus-EMTDsWithChurn/PointerDisplacement.png" alt="PointerDisplacement"></p>
-<p>如图所示，就是在指针原来的位置上加上了一个 $d<em>{CODE}(DAS_C)$ 或 $d</em>{DATA}(DAS_D)$ 的偏移量，并且这个偏移量是随机产生的。</p>
+<p>如图所示，就是在指针原来的位置上加上了一个 $d_{CODE}(DAS_C)$ 或 $d_{DATA}(DAS_D)$ 的偏移量，并且这个偏移量是随机产生的。</p>
 <h3 id="PART2：域加密（Domain-Encryption）"><a href="#PART2：域加密（Domain-Encryption）" class="headerlink" title="PART2：域加密（Domain Encryption）"></a>PART2：域加密（Domain Encryption）</h3><p><img src="http://img.thebetterkong.cn/blog/Morpheus-EMTDsWithChurn/DomainEncryption.png" alt="DomainEncryption"></p>
-<p>使用强密码（由域标记选择的它们自己的域密钥，分别对应 $K<em>C、K</em>{CP}、K_{DP}$，并且他们会在内存里受到保护）将内存中的代码，代码指针和数据指针的表示随机化。</p>
+<p>使用强密码（由域标记选择的它们自己的域密钥，分别对应 $K_C、K_{CP}、K_{DP}$，并且他们会在内存里受到保护）将内存中的代码，代码指针和数据指针的表示随机化。</p>
 <p>如图所示，当在 L1-L2 边界之间读取内存（加载或取指令）时，将对受保护域进行解密，并在 L1-L2 边界之间写入（存储）内存时对受保护域进行加密，从而使 L2 缓存和 DRAM 保持加密状态。</p>
 <p>由 tag 选择适当的密码密钥，密钥和物理地址通过密码进行组合，让包含相同值的内存位置不相关。对地址进行加密后，就可以使用反向模式的密码，在这种模式下，会生成密钥流，并与受保护的 value 进行 XOR 运算，以对其进行加密或解密。</p>
 <h2 id="Churn"><a href="#Churn" class="headerlink" title="Churn"></a>Churn</h2><p><img src="http://img.thebetterkong.cn/blog/Morpheus-EMTDsWithChurn/Churn.png" alt="Churn"></p>
@@ -473,7 +473,7 @@
 <li>使用阈值寄存器来协调新位移和加密密钥下存储器中的更新值；</li>
 <li>churn 完成时，所有域都已更新，有效地处置了攻击者先前可能已获取的任何信息；</li>
 </ol>
-<p>总的来说，就是 churn 会周期性的更新加密用的域秘钥（$K<em>C、K</em>{CP}、K<em>{DP}$）和指针移位（$d</em>{CODE}$、$d_{DATA}$），但是更新后的这两项会与原先的旧值产生冲突，于是引入了一个<strong>阀值寄存器</strong>来协调，它将使用新 key 和 displacement 状态记为 “clean”，而旧值的记为 “stale”，以此进行区分。</p>
+<p>总的来说，就是 churn 会周期性的更新加密用的域秘钥（$K_C、K_{CP}、K_{DP}$）和指针移位（$d_{CODE}$、$d_{DATA}$），但是更新后的这两项会与原先的旧值产生冲突，于是引入了一个<strong>阀值寄存器</strong>来协调，它将使用新 key 和 displacement 状态记为 “clean”，而旧值的记为 “stale”，以此进行区分。</p>
 <h1 id="效果"><a href="#效果" class="headerlink" title="效果"></a>效果</h1><p><img src="http://img.thebetterkong.cn/blog/Morpheus-EMTDsWithChurn/Effect.png" alt="Effect"></p>
 <ul>
 <li>可以防御表 4 所示的所有攻击，并且他们都能触发攻击感测器进一步提高了防御效果；</li>

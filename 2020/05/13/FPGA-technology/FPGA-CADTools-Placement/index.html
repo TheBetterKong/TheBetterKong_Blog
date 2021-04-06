@@ -592,12 +592,12 @@
 </ul>
 <h3 id="Initial-Temperature"><a href="#Initial-Temperature" class="headerlink" title="Initial Temperature"></a>Initial Temperature</h3><ul>
 <li>$N_{blocks}$ 是所需的<u>逻辑块/群集</u>的数量加上<u>所需的 IO 焊盘</u>的数量；</li>
-<li>使用预定义的概率执行 $N<em>{blocks}$ 的<strong>移动</strong>，并针对这些关于 $N</em>{blocks}$ 的不同 placement <strong>计算 cost 的标准偏差</strong>；</li>
+<li>使用预定义的概率执行 $N_{blocks}$ 的<strong>移动</strong>，并针对这些关于 $N_{blocks}$ 的不同 placement <strong>计算 cost 的标准偏差</strong>；</li>
 <li><strong>初始温度</strong>设置为该标准偏差的 <strong>20 倍</strong>；</li>
 <li>由于高温特性，一开始就接受所有动作；</li>
 </ul>
 <h3 id="Temperature-Update-Strategy"><a href="#Temperature-Update-Strategy" class="headerlink" title="Temperature Update Strategy"></a>Temperature Update Strategy</h3><ul>
-<li>$T<em>{new} = \gamma \cdot T</em>{old}$<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/TemperatureUpdate.png" alt="TemperatureUpdate"><ul>
+<li>$T_{new} = \gamma \cdot T_{old}$<br><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/TemperatureUpdate.png" alt="TemperatureUpdate"><ul>
 <li>$R_{accept}$ 是当前温度下接受的尝试移动的一部分；</li>
 <li>算法开始时，几乎接受了所有的移动，因此，可以将 $\gamma$ 设置比较小，使温度变化快一些，但是随着算法的进行，接受的移动策略越来越少，此时，应该将温度的变化幅度减小；</li>
 </ul>
@@ -605,7 +605,7 @@
 </ul>
 <h3 id="Range-Limiter"><a href="#Range-Limiter" class="headerlink" title="Range Limiter"></a>Range Limiter</h3><ul>
 <li>$R_{limit}$ 是尝试交换块的范围跨度；</li>
-<li>$R<em>{limit}$ 最初设置为整个芯片的跨度，并在温度降低到一定水平以下时缩小($R</em>{accept} \leq 0.44$)；<script type="math/tex; mode=display">1(single\ block) \leq R_{limit} \leq  maximum\ FPGA\ dimension\ (R_{accept} \leq 0.44)</script></li>
+<li>$R_{limit}$ 最初设置为整个芯片的跨度，并在温度降低到一定水平以下时缩小($R_{accept} \leq 0.44$)；<script type="math/tex; mode=display">1(single\ block) \leq R_{limit} \leq  maximum\ FPGA\ dimension\ (R_{accept} \leq 0.44)</script></li>
 <li>更新方法：<script type="math/tex; mode=display">R_{limit\_new} = R_{limit\_old} \cdot \underbrace{(1-0.44+R_{accept})}_{\leq 1}(R_{accept} \leq 0.44)</script></li>
 </ul>
 <h3 id="Moves-per-Temperature"><a href="#Moves-per-Temperature" class="headerlink" title="Moves per Temperature"></a>Moves per Temperature</h3><script type="math/tex; mode=display">MovesPerTemperature = InnerNum \ast {N_{blocks}}^{\frac{3}{4}}</script><ul>
@@ -634,7 +634,7 @@
 <p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/ExampleBoundingBox.png" alt="ExampleBoundingBox"></p>
 <h3 id="Linear-Congestion-Wirelength-Driven"><a href="#Linear-Congestion-Wirelength-Driven" class="headerlink" title="Linear Congestion (Wirelength-Driven)"></a>Linear Congestion (Wirelength-Driven)</h3><script type="math/tex; mode=display">Cost=\sum^{num\_nets}_{i=1}q(i)(\frac{bb_x[i]}{[C_{av,x}(i)]^\beta}+\frac{bb_y[i]}{[C_{av,y}(i)]^\beta})</script><ul>
 <li>$q(i)$ 是 Net i 的权重，对于具有 3 个或更少 terminals 的 Net i，$q(i)$ 设置为 1。超过 3 个 terminals 的，线性增加的速率为：<script type="math/tex; mode=display">q(i)=2.79+0.02616 \cdot (\ Num\_Terminals-50\ )</script></li>
-<li>$C<em>{av,x}(i)$ 和 $C</em>{av,y}(i)$ 分别是 Net i 边界框上 x 和 y 方向的平均信道容量（通道宽度）；</li>
+<li>$C_{av,x}(i)$ 和 $C_{av,y}(i)$ 分别是 Net i 边界框上 x 和 y 方向的平均信道容量（通道宽度）；</li>
 <li>$\beta$ 允许调整使用窄通道和宽通道的相对成本。设置为1（经验值）；<ul>
 <li>$\beta=0$，恢复为标准 bounding box cost function，上一小节的情形；</li>
 <li>$\beta$ 的值越大，相对于较宽通道的布线，较窄通道的布线受到的惩罚越多（布局时，尽量选用更宽的通道）；</li>
@@ -666,9 +666,9 @@
 </ul>
 <h3 id="Incremental-Bounding-Box-Evaluation"><a href="#Incremental-Bounding-Box-Evaluation" class="headerlink" title="Incremental Bounding Box Evaluation"></a>Incremental Bounding Box Evaluation</h3><p><img src="http://img.thebetterkong.cn/blog/FPGA-CADTools-Placement/IncrementalBoundingBoxEvaluation.png" alt="IncrementalBoundingBoxEvaluation"></p>
 <ul>
-<li>$X<em>{min}，X</em>{max}，Y<em>{min}，Y</em>{max}$：对于每个网络，我们存储其边界框的四个边的每一边的坐标；</li>
-<li>$N<em>{xmin}，N</em>{xmax}，N<em>{ymin}，N</em>{ymax}$：位于每侧的 net terminals 数；</li>
-<li>假设此网络的 terminal 通过交换从 $(x<em>{old},y</em>{old})$ 移至 $(x<em>{new},y</em>{new})$；</li>
+<li>$X_{min}，X_{max}，Y_{min}，Y_{max}$：对于每个网络，我们存储其边界框的四个边的每一边的坐标；</li>
+<li>$N_{xmin}，N_{xmax}，N_{ymin}，N_{ymax}$：位于每侧的 net terminals 数；</li>
+<li>假设此网络的 terminal 通过交换从 $(x_{old},y_{old})$ 移至 $(x_{new},y_{new})$；</li>
 <li>可以仅通过查看移动的 terminal 而不是所有 k terminal 来确定新的边界框；</li>
 <li>如果移动的 terminal 是边界框一侧的唯一 terminal，并且现在已向内移动到边界框的中心，仅此情况需要完全重新计算；</li>
 <li>这样就减少了 CPU 时间；</li>
@@ -700,7 +700,7 @@
 </ul>
 <p><strong>Required Time</strong>：</p>
 <script type="math/tex; mode=display">T_{required}(i)=Min_{\forall j \in fanout(i)}\{T_{required}(j)-delay(i,j)\}</script><ul>
-<li>将所有接收器的 $T<em>{required}$ 设置为 $D</em>{max}$ 并向后计算；</li>
+<li>将所有接收器的 $T_{required}$ 设置为 $D_{max}$ 并向后计算；</li>
 </ul>
 <p><strong>Slack of a connection (i,j)</strong>：</p>
 <script type="math/tex; mode=display">Slack(i,j)=T_{required}(j)-T_{arrival}(i)-delay(i,j)</script><h2 id="Cost-Function-1"><a href="#Cost-Function-1" class="headerlink" title="Cost Function"></a>Cost Function</h2><h3 id="Timing-Cost"><a href="#Timing-Cost" class="headerlink" title="Timing Cost"></a>Timing Cost</h3><p>基于每个连接的 Criticality，每个连接的 Delay 和用户定义的 Criticality_Exponent：    </p>

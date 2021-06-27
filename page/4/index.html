@@ -231,20 +231,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">58</span>
+          <span class="site-state-item-count">59</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-count">14</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">28</span>
+        <span class="site-state-item-count">29</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -319,6 +319,133 @@
       
 
       
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/05/09/Blog-Related/Hexo-Next-FileOrganization/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/05/09/Blog-Related/Hexo-Next-FileOrganization/" class="post-title-link" itemprop="url">Hexo & Next 的配置，做自己的主人</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-05-09 16:48:14" itemprop="dateCreated datePublished" datetime="2020-05-09T16:48:14+08:00">2020-05-09</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2020-08-14 17:25:28" itemprop="dateModified" datetime="2020-08-14T17:25:28+08:00">2020-08-14</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Blog-%E7%9B%B8%E5%85%B3/" itemprop="url" rel="index"><span itemprop="name">Blog 相关</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/2020/05/09/Blog-Related/Hexo-Next-FileOrganization/" class="post-meta-item leancloud_visitors" data-flag-title="Hexo & Next 的配置，做自己的主人" title="阅读次数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/05/09/Blog-Related/Hexo-Next-FileOrganization/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/05/09/Blog-Related/Hexo-Next-FileOrganization/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>5 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <div align="center"> <img src="http://img.thebetterkong.cn/blog/Hexo-Next-FileOrganization/head1.png" width="100%" alt="header.png" /> </div>    
+
+<p>最开始接触 Blog，总会遇到各种各样大大小小的问题，但是在网络上查找各种解决办法的时候，往往都是只告诉了你怎么做，却没有说为什么？我们也就机械化的进行<kbd>ctrl+c</kbd>，<kbd>ctrl+v</kbd>，这是十分不可取的。因此本着「授人以鱼不如授人以渔」的想法，决定对整个  Hexo 和 Next 的文件组织进行一波系统的整理，既便于我们维护管理，也可以更好<strong>更官方</strong>的进行 Blog 主题优化。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/05/09/Blog-Related/Hexo-Next-FileOrganization/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
     
 
 
@@ -454,7 +581,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/04/18/Math-Basic-Notes/Combinatorial-Mathematics/">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/04/18/Math-Basic-Notes/Random-Mathematics/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -468,7 +595,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2020/04/18/Math-Basic-Notes/Combinatorial-Mathematics/" class="post-title-link" itemprop="url">组合数学笔记</a>
+            <a href="/2020/04/18/Math-Basic-Notes/Random-Mathematics/" class="post-title-link" itemprop="url">概率论笔记</a>
         </h2>
 
         <div class="post-meta-container">
@@ -486,7 +613,7 @@
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2020-08-14 17:33:30" itemprop="dateModified" datetime="2020-08-14T17:33:30+08:00">2020-08-14</time>
+        <time title="修改时间：2020-08-14 17:33:49" itemprop="dateModified" datetime="2020-08-14T17:33:49+08:00">2020-08-14</time>
       </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -499,7 +626,7 @@
     </span>
 
   
-    <span id="/2020/04/18/Math-Basic-Notes/Combinatorial-Mathematics/" class="post-meta-item leancloud_visitors" data-flag-title="组合数学笔记" title="阅读次数">
+    <span id="/2020/04/18/Math-Basic-Notes/Random-Mathematics/" class="post-meta-item leancloud_visitors" data-flag-title="概率论笔记" title="阅读次数">
       <span class="post-meta-item-icon">
         <i class="far fa-eye"></i>
       </span>
@@ -514,8 +641,8 @@
       </span>
       <span class="post-meta-item-text">Valine：</span>
     
-    <a title="valine" href="/2020/04/18/Math-Basic-Notes/Combinatorial-Mathematics/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2020/04/18/Math-Basic-Notes/Combinatorial-Mathematics/" itemprop="commentCount"></span>
+    <a title="valine" href="/2020/04/18/Math-Basic-Notes/Random-Mathematics/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/04/18/Math-Basic-Notes/Random-Mathematics/" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -527,7 +654,7 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>92</span>
+      <span>109</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -545,11 +672,11 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p>本人本科期间的数学笔记，虽然以后不怎么用的上，但是还是给自己做了个归纳整理，方便查看吧。         </p>
+          <p>本人考研期间的数学笔记，虽然以后不怎么用的上，但是还是给自己做了个归纳整理，方便查看吧。         </p>
 <p><strong><center><mark>多图警告！</mark></center></strong></p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2020/04/18/Math-Basic-Notes/Combinatorial-Mathematics/#more" rel="contents">
+              <a class="btn" href="/2020/04/18/Math-Basic-Notes/Random-Mathematics/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -706,6 +833,132 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/04/18/Math-Basic-Notes/Combinatorial-Mathematics/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="TheBetterKong">
+      <meta itemprop="description" content="知行合一">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TheBetterKong">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/04/18/Math-Basic-Notes/Combinatorial-Mathematics/" class="post-title-link" itemprop="url">组合数学笔记</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-04-18 13:13:14" itemprop="dateCreated datePublished" datetime="2020-04-18T13:13:14+08:00">2020-04-18</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2020-08-14 17:33:30" itemprop="dateModified" datetime="2020-08-14T17:33:30+08:00">2020-08-14</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">数学基础笔记</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/2020/04/18/Math-Basic-Notes/Combinatorial-Mathematics/" class="post-meta-item leancloud_visitors" data-flag-title="组合数学笔记" title="阅读次数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/04/18/Math-Basic-Notes/Combinatorial-Mathematics/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/04/18/Math-Basic-Notes/Combinatorial-Mathematics/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>92</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>1 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p>本人本科期间的数学笔记，虽然以后不怎么用的上，但是还是给自己做了个归纳整理，方便查看吧。         </p>
+<p><strong><center><mark>多图警告！</mark></center></strong></p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/04/18/Math-Basic-Notes/Combinatorial-Mathematics/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/04/18/Math-Basic-Notes/Linear-Algebra/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -802,132 +1055,6 @@
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2020/04/18/Math-Basic-Notes/Linear-Algebra/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/04/18/Math-Basic-Notes/Random-Mathematics/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="TheBetterKong">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="TheBetterKong">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/04/18/Math-Basic-Notes/Random-Mathematics/" class="post-title-link" itemprop="url">概率论笔记</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2020-04-18 13:13:14" itemprop="dateCreated datePublished" datetime="2020-04-18T13:13:14+08:00">2020-04-18</time>
-    </span>
-      <span class="post-meta-item">
-        <span class="post-meta-item-icon">
-          <i class="far fa-calendar-check"></i>
-        </span>
-        <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2020-08-14 17:33:49" itemprop="dateModified" datetime="2020-08-14T17:33:49+08:00">2020-08-14</time>
-      </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">数学基础笔记</span></a>
-        </span>
-    </span>
-
-  
-    <span id="/2020/04/18/Math-Basic-Notes/Random-Mathematics/" class="post-meta-item leancloud_visitors" data-flag-title="概率论笔记" title="阅读次数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-eye"></i>
-      </span>
-      <span class="post-meta-item-text">阅读次数：</span>
-      <span class="leancloud-visitors-count"></span>
-    </span>
-  
-  <span class="post-meta-item">
-    
-      <span class="post-meta-item-icon">
-        <i class="far fa-comment"></i>
-      </span>
-      <span class="post-meta-item-text">Valine：</span>
-    
-    <a title="valine" href="/2020/04/18/Math-Basic-Notes/Random-Mathematics/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2020/04/18/Math-Basic-Notes/Random-Mathematics/" itemprop="commentCount"></span>
-    </a>
-  </span>
-  
-  
-      </div>
-      <div class="post-meta">
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>109</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>1 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>本人考研期间的数学笔记，虽然以后不怎么用的上，但是还是给自己做了个归纳整理，方便查看吧。         </p>
-<p><strong><center><mark>多图警告！</mark></center></strong></p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2020/04/18/Math-Basic-Notes/Random-Mathematics/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1200,133 +1327,6 @@
 
 
 
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://www.thebetterkong.cn/2020/04/05/DataStructure-Algorithm/Finger-offer67/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="TheBetterKong">
-      <meta itemprop="description" content="知行合一">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="TheBetterKong">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/04/05/DataStructure-Algorithm/Finger-offer67/" class="post-title-link" itemprop="url">剑指 offer 67题</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2020-04-05 14:58:23" itemprop="dateCreated datePublished" datetime="2020-04-05T14:58:23+08:00">2020-04-05</time>
-    </span>
-      <span class="post-meta-item">
-        <span class="post-meta-item-icon">
-          <i class="far fa-calendar-check"></i>
-        </span>
-        <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2021-05-22 17:34:10" itemprop="dateModified" datetime="2021-05-22T17:34:10+08:00">2021-05-22</time>
-      </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/DataStructure-Algorithm/" itemprop="url" rel="index"><span itemprop="name">DataStructure & Algorithm</span></a>
-        </span>
-    </span>
-
-  
-    <span id="/2020/04/05/DataStructure-Algorithm/Finger-offer67/" class="post-meta-item leancloud_visitors" data-flag-title="剑指 offer 67题" title="阅读次数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-eye"></i>
-      </span>
-      <span class="post-meta-item-text">阅读次数：</span>
-      <span class="leancloud-visitors-count"></span>
-    </span>
-  
-  <span class="post-meta-item">
-    
-      <span class="post-meta-item-icon">
-        <i class="far fa-comment"></i>
-      </span>
-      <span class="post-meta-item-text">Valine：</span>
-    
-    <a title="valine" href="/2020/04/05/DataStructure-Algorithm/Finger-offer67/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2020/04/05/DataStructure-Algorithm/Finger-offer67/" itemprop="commentCount"></span>
-    </a>
-  </span>
-  
-  
-      </div>
-      <div class="post-meta">
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>94k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>1:26</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <div align="center"> <img src="http://img.thebetterkong.cn/blog/Finger-offer67/header.png" width="100%" alt="header.png" /> </div>     
-
-<p>为了提高自己算法能力，从今天起，这篇 Blog 持续更新，预计在 35 天后完成所有题目的一刷，立下 flag 保证每日更新两题！主要用 <code>Java</code> 完成，偶尔为了练习 <code>Python</code> 也会穿插一些 <code>Python</code> 算法。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2020/04/05/DataStructure-Algorithm/Finger-offer67/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
 
   
   <nav class="pagination">
@@ -1384,13 +1384,13 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">515k</span>
+    <span title="站点总字数">521k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">7:48</span>
+    <span title="站点阅读时长">7:53</span>
   </span>
 </div>
 <div class="busuanzi-count">
